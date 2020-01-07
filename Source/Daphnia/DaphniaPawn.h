@@ -3,7 +3,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+
 #include "DaphniaPawn.generated.h"
+
 
 UCLASS(Config=Game)
 class ADaphniaPawn : public APawn
@@ -11,16 +13,21 @@ class ADaphniaPawn : public APawn
 	GENERATED_BODY()
 
 	/** StaticMesh component that will be the visuals for our flying pawn */
-	UPROPERTY(Category = Mesh, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Category = Mesh, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UStaticMeshComponent* PlaneMesh;
 
 	/** Spring arm that will offset the camera */
-	UPROPERTY(Category = Camera, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Category = Camera, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* SpringArm;
 
 	/** Camera component that will be our viewpoint */
-	UPROPERTY(Category = Camera, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Category = Camera, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* Camera;
+
+	UPROPERTY()
+	class UTextureRenderTarget2D* EyeRenderTarget2D;
+	UPROPERTY(Category = CameraEye, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class USceneCaptureComponent2D* EyeSceneCaptureComponent2D;
 public:
 	ADaphniaPawn();
 
@@ -43,6 +50,9 @@ protected:
 
 	/** Bound to the horizontal axis */
 	void MoveRightInput(float Val);
+
+
+	virtual void BeginPlay() override;
 
 private:
 

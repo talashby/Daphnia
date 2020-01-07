@@ -8,6 +8,9 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Engine/World.h"
 #include "Engine/StaticMesh.h"
+#include "Kismet/KismetRenderingLibrary.h"
+#include "Engine/SceneCapture2D.h"
+#include "Components/SceneCaptureComponent2D.h"
 
 ADaphniaPawn::ADaphniaPawn()
 {
@@ -46,6 +49,23 @@ ADaphniaPawn::ADaphniaPawn()
 	MaxSpeed = 4000.f;
 	MinSpeed = 500.f;
 	CurrentForwardSpeed = 500.f;
+
+	EyeSceneCaptureComponent2D = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("EyeSceneCaptureComponent2D0"));
+	EyeSceneCaptureComponent2D->SetupAttachment(RootComponent);
+	FMinimalViewInfo MinimalViewInfo;
+	Camera->GetCameraView(1, MinimalViewInfo);
+	EyeSceneCaptureComponent2D->SetCameraView(MinimalViewInfo);
+	EyeSceneCaptureComponent2D->bCaptureEveryFrame = true;
+	auto EyeCoord = ConstructorStatics.PlaneMesh.Get()->GetBoundingBox().Max.X;
+	EyeSceneCaptureComponent2D->SetRelativeLocation(FVector(EyeCoord, 0, 0));
+}
+
+void ADaphniaPawn::BeginPlay()
+{
+	Super::BeginPlay();
+
+	EyeRenderTarget2D = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), 32, 32, ETextureRenderTargetFormat::RTF_RGBA8);
+	EyeSceneCaptureComponent2D->TextureTarget = EyeRenderTarget2D;
 }
 
 void ADaphniaPawn::Tick(float DeltaSeconds)
@@ -63,6 +83,10 @@ void ADaphniaPawn::Tick(float DeltaSeconds)
 
 	// Rotate plane
 	AddActorLocalRotation(DeltaRotation);
+
+	FTextureRenderTargetResource* Resource = EyeRenderTarget2D->GameThread_GetRenderTargetResource();
+	TArray<FColor> buf;
+	Resource->ReadPixels(buf);
 
 	// Call any parent class Tick implementation
 	Super::Tick(DeltaSeconds);
