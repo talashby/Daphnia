@@ -17,7 +17,6 @@ static ADaphniaPawn* s_InstancePtr;
 
 ADaphniaPawn::ADaphniaPawn()
 {
-	s_InstancePtr = this;
 	// Structure to hold one-time initialization
 	struct FConstructorStatics
 	{
@@ -53,7 +52,7 @@ ADaphniaPawn::ADaphniaPawn()
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera0"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);	// Attach the camera
 	Camera->bUsePawnControlRotation = false; // Don't rotate camera with controller
-	Camera->Deactivate();
+	Camera->Activate();
 
 	// Create camera eye component
 	CameraEye = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraEye"));
@@ -61,7 +60,7 @@ ADaphniaPawn::ADaphniaPawn()
 	CameraEye->SetRelativeLocation(FVector(EyeCoord, 0, 0));
 	CameraEye->SetupAttachment(RootComponent);	// Attach the camera
 	CameraEye->bUsePawnControlRotation = false; // Don't rotate camera with controller
-	CameraEye->Activate();
+	CameraEye->Deactivate();
 
 	EyeSceneCaptureComponent2D = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("EyeSceneCaptureComponent2D0"));
 	EyeSceneCaptureComponent2D->SetupAttachment(RootComponent);
@@ -73,32 +72,13 @@ ADaphniaPawn::ADaphniaPawn()
 
 ADaphniaPawn* ADaphniaPawn::Instance()
 {
+	checkSlow(s_InstancePtr);
 	return s_InstancePtr;
-}
-
-void ADaphniaPawn::SwitchView()
-{
-	auto InputController = AMyPlayerController::Instance();
-	verify(InputController);
-	if (InputController)
-	{
-		if (Camera->IsActive())
-		{
-			Camera->Deactivate();
-			CameraEye->Activate();
-			InputController->SetViewTargetWithBlend(this);
-		}
-		else
-		{
-			Camera->Activate();
-			CameraEye->Deactivate();
-			InputController->SetViewTargetWithBlend(this);
-		}
-	}
 }
 
 void ADaphniaPawn::BeginPlay()
 {
+	s_InstancePtr = this;
 	Super::BeginPlay();
 
 	EyeRenderTarget2D = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), 32, 32, ETextureRenderTargetFormat::RTF_RGBA8);
@@ -191,4 +171,25 @@ void ADaphniaPawn::MoveRightInput(float Val)
 
 	// Smoothly interpolate roll speed
 	CurrentRollSpeed = FMath::FInterpTo(CurrentRollSpeed, TargetRollSpeed, GetWorld()->GetDeltaSeconds(), 2.f);
+}
+
+void ADaphniaPawn::SwitchView()
+{
+	auto InputController = AMyPlayerController::Instance();
+	verify(InputController);
+	if (InputController)
+	{
+		if (Camera->IsActive())
+		{
+			Camera->Deactivate();
+			CameraEye->Activate();
+			InputController->SetViewTargetWithBlend(this);
+		}
+		else
+		{
+			Camera->Activate();
+			CameraEye->Deactivate();
+			InputController->SetViewTargetWithBlend(this);
+		}
+	}
 }

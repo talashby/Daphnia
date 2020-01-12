@@ -9,7 +9,6 @@ static AMyPlayerController* s_InstancePtr;
 
 AMyPlayerController::AMyPlayerController() : APlayerController()
 {
-	s_InstancePtr = this;
 	bEnableClickEvents = true;
 	bEnableTouchEvents = true;
 	bShowMouseCursor = true;
@@ -17,6 +16,7 @@ AMyPlayerController::AMyPlayerController() : APlayerController()
 
 AMyPlayerController* AMyPlayerController::Instance()
 {
+	checkSlow(s_InstancePtr);
 	return s_InstancePtr;
 }
 
@@ -47,6 +47,11 @@ bool AMyPlayerController::InputKey(FKey Key, EInputEvent EventType, float Amount
 void AMyPlayerController::TouchPressed(const ETouchIndex::Type FingerIndex, const FVector Location)
 {
 	ClickPressed(Location);
+}
+
+void AMyPlayerController::BeginPlay()
+{
+	s_InstancePtr = this;
 }
 
 void AMyPlayerController::ClickPressed(const FVector& Location)

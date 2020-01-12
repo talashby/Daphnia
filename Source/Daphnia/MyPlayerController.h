@@ -23,7 +23,7 @@ protected:
 	bool InputKey(FKey Key, EInputEvent EventType, float AmountDepressed, bool bGamepad) override;
 
 	void TouchPressed(const ETouchIndex::Type FingerIndex, const FVector Location);
-
+	virtual void BeginPlay() override;
 private:
 
 	void ClickPressed(const FVector& Location);
