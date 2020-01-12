@@ -11,9 +11,13 @@
 #include "Kismet/KismetRenderingLibrary.h"
 #include "Engine/SceneCapture2D.h"
 #include "Components/SceneCaptureComponent2D.h"
+#include "MyPlayerController.h"
+
+static ADaphniaPawn* s_InstancePtr;
 
 ADaphniaPawn::ADaphniaPawn()
 {
+	s_InstancePtr = this;
 	// Structure to hold one-time initialization
 	struct FConstructorStatics
 	{
@@ -38,11 +42,6 @@ ADaphniaPawn::ADaphniaPawn()
 	SpringArm->bEnableCameraLag = false;	// Do not allow camera to lag
 	SpringArm->CameraLagSpeed = 15.f;
 
-	// Create camera component 
-	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera0"));
-	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);	// Attach the camera
-	Camera->bUsePawnControlRotation = false; // Don't rotate camera with controller
-
 	// Set handling parameters
 	Acceleration = 500.f;
 	TurnSpeed = 50.f;
@@ -50,14 +49,52 @@ ADaphniaPawn::ADaphniaPawn()
 	MinSpeed = 500.f;
 	CurrentForwardSpeed = 500.f;
 
+	// Create camera component 
+	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera0"));
+	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);	// Attach the camera
+	Camera->bUsePawnControlRotation = false; // Don't rotate camera with controller
+	Camera->Deactivate();
+
+	// Create camera eye component
+	CameraEye = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraEye"));
+	auto EyeCoord = ConstructorStatics.PlaneMesh.Get()->GetBoundingBox().Max.X;
+	CameraEye->SetRelativeLocation(FVector(EyeCoord, 0, 0));
+	CameraEye->SetupAttachment(RootComponent);	// Attach the camera
+	CameraEye->bUsePawnControlRotation = false; // Don't rotate camera with controller
+	CameraEye->Activate();
+
 	EyeSceneCaptureComponent2D = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("EyeSceneCaptureComponent2D0"));
 	EyeSceneCaptureComponent2D->SetupAttachment(RootComponent);
 	FMinimalViewInfo MinimalViewInfo;
-	Camera->GetCameraView(1, MinimalViewInfo);
+	CameraEye->GetCameraView(1, MinimalViewInfo);
 	EyeSceneCaptureComponent2D->SetCameraView(MinimalViewInfo);
 	EyeSceneCaptureComponent2D->bCaptureEveryFrame = true;
-	auto EyeCoord = ConstructorStatics.PlaneMesh.Get()->GetBoundingBox().Max.X;
-	EyeSceneCaptureComponent2D->SetRelativeLocation(FVector(EyeCoord, 0, 0));
+}
+
+ADaphniaPawn* ADaphniaPawn::Instance()
+{
+	return s_InstancePtr;
+}
+
+void ADaphniaPawn::SwitchView()
+{
+	auto InputController = AMyPlayerController::Instance();
+	verify(InputController);
+	if (InputController)
+	{
+		if (Camera->IsActive())
+		{
+			Camera->Deactivate();
+			CameraEye->Activate();
+			InputController->SetViewTargetWithBlend(this);
+		}
+		else
+		{
+			Camera->Activate();
+			CameraEye->Deactivate();
+			InputController->SetViewTargetWithBlend(this);
+		}
+	}
 }
 
 void ADaphniaPawn::BeginPlay()

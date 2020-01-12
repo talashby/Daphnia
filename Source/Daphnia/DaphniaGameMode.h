@@ -13,6 +13,21 @@ class ADaphniaGameMode : public AGameModeBase
 
 public:
 	ADaphniaGameMode();
+
+	// Begin AActor interface
+	virtual void BeginPlay() override;
+
+protected:
+	enum class WidgetZOrder
+	{
+		Back = 0,
+		Modal,
+		Hud
+	};
+
+	UPROPERTY()
+	class UMyHudWidget *HUDWidget = nullptr;
+	TSubclassOf<class UMyHudWidget> HUDWidgetClass = nullptr; // blueprint class
 };
 
 

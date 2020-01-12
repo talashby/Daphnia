@@ -24,13 +24,18 @@ class ADaphniaPawn : public APawn
 	UPROPERTY(Category = Camera, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* Camera;
 
+	/** Camera eye component that will be our viewpoint */
+	UPROPERTY(Category = CameraEye, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class UCameraComponent* CameraEye;
+
 	UPROPERTY()
 	class UTextureRenderTarget2D* EyeRenderTarget2D;
-	UPROPERTY(Category = CameraEye, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Category = SceneCaptureEye, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class USceneCaptureComponent2D* EyeSceneCaptureComponent2D;
 public:
 	ADaphniaPawn();
-
+	static ADaphniaPawn* Instance();
+	void SwitchView();
 	// Begin AActor overrides
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void NotifyHit(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
