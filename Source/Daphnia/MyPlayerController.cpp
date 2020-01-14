@@ -27,6 +27,9 @@ void AMyPlayerController::SetupInputComponent()
 
 	// support touch devices 
 	InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &AMyPlayerController::TouchPressed);
+
+	SetInputMode(FInputModeGameOnly()); // to focus to game when starts in editor
+	SetInputMode(FInputModeGameAndUI()); // remove mouse capture
 }
 
 bool AMyPlayerController::InputKey(FKey Key, EInputEvent EventType, float AmountDepressed, bool bGamepad)

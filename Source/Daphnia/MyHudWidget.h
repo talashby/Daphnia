@@ -13,9 +13,25 @@ UCLASS()
 class DAPHNIA_API UMyHudWidget : public UUserWidget
 {
 	GENERATED_BODY()
-	
-protected:
 
+public:
+	UMyHudWidget();
+
+	static UMyHudWidget* Instance();
+protected:
+	void NativeOnInitialized() override;
+	void NativeTick(const FGeometry &MyGeometry, float InDeltaTime) override;
+	// Button_SwitchCamera
 	UFUNCTION(BlueprintCallable, Category = "BlueprintCallable")
 	void SwitchCameraView();
+
+	// Button_EyeState
+	//UPROPERTY(EditDefaultsOnly)
+
+
+private:
+	class UImage *EyeViewImage = nullptr;
+
+	UPROPERTY()
+	class UTexture2D* EyeViewTexture2D;
 };

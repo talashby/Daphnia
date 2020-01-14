@@ -12,6 +12,7 @@
 #include "Engine/SceneCapture2D.h"
 #include "Components/SceneCaptureComponent2D.h"
 #include "MyPlayerController.h"
+#include "MyHudWidget.h"
 
 static ADaphniaPawn* s_InstancePtr;
 
@@ -67,6 +68,7 @@ ADaphniaPawn::ADaphniaPawn()
 	FMinimalViewInfo MinimalViewInfo;
 	CameraEye->GetCameraView(1, MinimalViewInfo);
 	EyeSceneCaptureComponent2D->SetCameraView(MinimalViewInfo);
+	EyeSceneCaptureComponent2D->SetRelativeLocation(FVector(EyeCoord, 0, 0));
 	EyeSceneCaptureComponent2D->bCaptureEveryFrame = true;
 }
 
@@ -81,7 +83,7 @@ void ADaphniaPawn::BeginPlay()
 	s_InstancePtr = this;
 	Super::BeginPlay();
 
-	EyeRenderTarget2D = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), 32, 32, ETextureRenderTargetFormat::RTF_RGBA8);
+	EyeRenderTarget2D = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), 32, 32, RTF_RGBA8);
 	EyeSceneCaptureComponent2D->TextureTarget = EyeRenderTarget2D;
 }
 
@@ -100,10 +102,6 @@ void ADaphniaPawn::Tick(float DeltaSeconds)
 
 	// Rotate plane
 	AddActorLocalRotation(DeltaRotation);
-
-	FTextureRenderTargetResource* Resource = EyeRenderTarget2D->GameThread_GetRenderTargetResource();
-	TArray<FColor> buf;
-	Resource->ReadPixels(buf);
 
 	// Call any parent class Tick implementation
 	Super::Tick(DeltaSeconds);
@@ -192,4 +190,9 @@ void ADaphniaPawn::SwitchView()
 			InputController->SetViewTargetWithBlend(this);
 		}
 	}
+}
+
+class UTextureRenderTarget2D* ADaphniaPawn::GetEyeRenderTarget2D()
+{
+	return EyeRenderTarget2D;
 }
