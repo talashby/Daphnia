@@ -18,7 +18,7 @@ public:
 	virtual void BeginPlay() override;
 
 protected:
-	enum class WidgetZOrder
+	enum class EWidgetZOrder
 	{
 		Back = 0,
 		Modal,

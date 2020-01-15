@@ -61,7 +61,6 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-
 	/** How quickly forward speed changes */
 	UPROPERTY(Category=Plane, EditAnywhere)
 	float Acceleration;
@@ -89,4 +88,14 @@ private:
 
 	/** Current roll speed */
 	float CurrentRollSpeed;
+
+	enum class ECameraViewMode
+	{
+		TargetOffset = 0,
+		SocketOffset,
+		Eye,
+		Max
+	};
+
+	int32 CameraViewMode = 0;
 };

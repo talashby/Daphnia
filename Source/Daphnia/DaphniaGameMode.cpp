@@ -26,6 +26,6 @@ void ADaphniaGameMode::BeginPlay()
 	if (HUDWidgetClass)
 	{
 		HUDWidget = CreateWidget<UMyHudWidget>(GetWorld(), HUDWidgetClass);
-		HUDWidget->AddToViewport(static_cast<int32>(WidgetZOrder::Hud));
+		HUDWidget->AddToViewport(static_cast<int32>(EWidgetZOrder::Hud));
 	}
 }

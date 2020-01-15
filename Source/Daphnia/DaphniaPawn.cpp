@@ -38,16 +38,16 @@ ADaphniaPawn::ADaphniaPawn()
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm0"));
 	SpringArm->SetupAttachment(RootComponent);	// Attach SpringArm to RootComponent
 	SpringArm->TargetArmLength = 160.0f; // The camera follows at this distance behind the character	
-	SpringArm->SocketOffset = FVector(0.f,0.f,60.f);
+	SpringArm->TargetOffset = FVector(0.f,0.f,60.f);
 	SpringArm->bEnableCameraLag = false;	// Do not allow camera to lag
 	SpringArm->CameraLagSpeed = 15.f;
 
 	// Set handling parameters
 	Acceleration = 500.f;
 	TurnSpeed = 50.f;
-	MaxSpeed = 4000.f;
-	MinSpeed = 500.f;
-	CurrentForwardSpeed = 500.f;
+	MaxSpeed = 1000.f;
+	MinSpeed = 0.f;
+	CurrentForwardSpeed = 0.f;
 
 	// Create camera component 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera0"));
@@ -177,18 +177,36 @@ void ADaphniaPawn::SwitchView()
 	verify(InputController);
 	if (InputController)
 	{
-		if (Camera->IsActive())
+		++CameraViewMode;
+		if (CameraViewMode >= static_cast<int>(ECameraViewMode::Max))
+		{
+			CameraViewMode = 0;
+		}
+
+		if (CameraViewMode == static_cast<int>(ECameraViewMode::TargetOffset))
+		{
+			SpringArm->TargetOffset = FVector(0.f, 0.f, 60.f);
+			SpringArm->SocketOffset = FVector();
+			Camera->Activate();
+			CameraEye->Deactivate();
+		}
+		else if (CameraViewMode == static_cast<int>(ECameraViewMode::SocketOffset))
+		{
+			SpringArm->TargetOffset = FVector();
+			SpringArm->SocketOffset = FVector(-200.f, 0.f, 0.f);
+			Camera->Activate();
+			CameraEye->Deactivate();
+		}
+		else if (CameraViewMode == static_cast<int>(ECameraViewMode::Eye))
 		{
 			Camera->Deactivate();
 			CameraEye->Activate();
-			InputController->SetViewTargetWithBlend(this);
 		}
 		else
 		{
-			Camera->Activate();
-			CameraEye->Deactivate();
-			InputController->SetViewTargetWithBlend(this);
+			checkNoEntry();
 		}
+		InputController->SetViewTargetWithBlend(this);
 	}
 }
 
