@@ -44,8 +44,8 @@ ADaphniaPawn::ADaphniaPawn()
 
 	// Set handling parameters
 	Acceleration = 500.f;
-	TurnSpeed = 50.f;
-	MaxSpeed = 1000.f;
+	TurnSpeed = 150.f;
+	MaxSpeed = 2000.f;
 	MinSpeed = 0.f;
 	CurrentForwardSpeed = 0.f;
 
