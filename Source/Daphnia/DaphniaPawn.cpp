@@ -116,7 +116,6 @@ void ADaphniaPawn::NotifyHit(class UPrimitiveComponent* MyComp, class AActor* Ot
 	SetActorRotation(FQuat::Slerp(CurrentRotation.Quaternion(), HitNormal.ToOrientationQuat(), 0.025f));
 }
 
-
 void ADaphniaPawn::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
     // Check if PlayerInputComponent is valid (not NULL)
