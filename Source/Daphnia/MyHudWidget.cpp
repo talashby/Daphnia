@@ -32,8 +32,27 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 		if (RenderTarget2D)
 		{
 			EyeViewImage->SetBrushFromTexture(nullptr);
-			EyeViewTexture2D = RenderTarget2D->ConstructTexture2D(this, FString("Snapshot"), EObjectFlags::RF_NoFlags, CTF_ForceOpaque | CTF_Compress);
-			checkSlow(EyeViewTexture2D);
+			EyeViewTexture2D = nullptr;
+
+			FTextureRenderTargetResource* Resource = RenderTarget2D->GameThread_GetRenderTargetResource();
+			TArray<FColor> RawData;
+			Resource->ReadPixels(RawData);
+			for (int32 i = 0; i < (32 * 32); i++)
+			{
+				RawData[i].A = 255;
+			}
+
+			EyeViewTexture2D = UTexture2D::CreateTransient(32, 32);
+			check(EyeViewTexture2D);
+			if (EyeViewTexture2D)
+			{
+				FTexture2DMipMap& Mip = EyeViewTexture2D->PlatformData->Mips[0];
+				void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
+				FMemory::Memcpy(Data, RawData.GetData(), (32 * 32 * 4));
+				Mip.BulkData.Unlock();
+				EyeViewTexture2D->UpdateResource();
+			}
+			
 			EyeViewImage->SetBrushFromTexture(EyeViewTexture2D);
 		}
 	}

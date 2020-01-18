@@ -38,7 +38,7 @@ ADaphniaPawn::ADaphniaPawn()
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm0"));
 	SpringArm->SetupAttachment(RootComponent);	// Attach SpringArm to RootComponent
 	SpringArm->TargetArmLength = 160.0f; // The camera follows at this distance behind the character	
-	SpringArm->TargetOffset = FVector(0.f,0.f,60.f);
+	SpringArm->SocketOffset = FVector(0.f,0.f,60.f);
 	SpringArm->bEnableCameraLag = false;	// Do not allow camera to lag
 	SpringArm->CameraLagSpeed = 15.f;
 
@@ -184,15 +184,15 @@ void ADaphniaPawn::SwitchView()
 
 		if (CameraViewMode == static_cast<int>(ECameraViewMode::TargetOffset))
 		{
-			SpringArm->TargetOffset = FVector(0.f, 0.f, 60.f);
-			SpringArm->SocketOffset = FVector();
+			SpringArm->TargetArmLength = 160;
+			SpringArm->SocketOffset = FVector(0.f, 0.f, 60.f);
 			Camera->Activate();
 			CameraEye->Deactivate();
 		}
 		else if (CameraViewMode == static_cast<int>(ECameraViewMode::SocketOffset))
 		{
-			SpringArm->TargetOffset = FVector();
-			SpringArm->SocketOffset = FVector(-200.f, 0.f, 0.f);
+			SpringArm->TargetArmLength = 333.0f;
+			SpringArm->SocketOffset = FVector(0.f, 0.f, 111.f);
 			Camera->Activate();
 			CameraEye->Deactivate();
 		}
