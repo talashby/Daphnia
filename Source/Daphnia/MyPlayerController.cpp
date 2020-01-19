@@ -14,7 +14,7 @@ AMyPlayerController::AMyPlayerController() : APlayerController()
 	bShowMouseCursor = true;
 }
 
-AMyPlayerController* AMyPlayerController::Instance()
+AMyPlayerController* AMyPlayerController::GetInstance()
 {
 	checkSlow(s_InstancePtr);
 	return s_InstancePtr;

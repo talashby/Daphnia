@@ -72,7 +72,7 @@ ADaphniaPawn::ADaphniaPawn()
 	EyeSceneCaptureComponent2D->bCaptureEveryFrame = true;
 }
 
-ADaphniaPawn* ADaphniaPawn::Instance()
+ADaphniaPawn* ADaphniaPawn::GetInstance()
 {
 	checkSlow(s_InstancePtr);
 	return s_InstancePtr;
@@ -172,7 +172,7 @@ void ADaphniaPawn::MoveRightInput(float Val)
 
 void ADaphniaPawn::SwitchView()
 {
-	auto InputController = AMyPlayerController::Instance();
+	auto InputController = AMyPlayerController::GetInstance();
 	verify(InputController);
 	if (InputController)
 	{

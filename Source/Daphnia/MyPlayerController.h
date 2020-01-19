@@ -16,7 +16,7 @@ class DAPHNIA_API AMyPlayerController : public APlayerController
 	
 public:
 		AMyPlayerController();
-		static AMyPlayerController* Instance();
+		static AMyPlayerController* GetInstance();
 
 protected:
 	virtual void SetupInputComponent() override;

@@ -17,7 +17,7 @@ class DAPHNIA_API UMyHudWidget : public UUserWidget
 public:
 	UMyHudWidget();
 
-	static UMyHudWidget* Instance();
+	static UMyHudWidget* GetInstance();
 protected:
 	void NativeOnInitialized() override;
 	void NativeTick(const FGeometry &MyGeometry, float InDeltaTime) override;

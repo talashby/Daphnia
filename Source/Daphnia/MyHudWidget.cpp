@@ -28,7 +28,7 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 {
 	if (EyeViewImage && EyeViewImage->IsVisible())
 	{
-		auto RenderTarget2D = ADaphniaPawn::Instance()->GetEyeRenderTarget2D();
+		auto RenderTarget2D = ADaphniaPawn::GetInstance()->GetEyeRenderTarget2D();
 		if (RenderTarget2D)
 		{
 			EyeViewImage->SetBrushFromTexture(nullptr);
@@ -60,7 +60,7 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 	Super::NativeTick(MyGeometry, InDeltaTime);
 }
 
-UMyHudWidget* UMyHudWidget::Instance()
+UMyHudWidget* UMyHudWidget::GetInstance()
 {
 	checkSlow(s_InstancePtr);
 	return s_InstancePtr;
@@ -68,5 +68,5 @@ UMyHudWidget* UMyHudWidget::Instance()
 
 void UMyHudWidget::SwitchCameraView()
 {
-	ADaphniaPawn::Instance()->SwitchView();
+	ADaphniaPawn::GetInstance()->SwitchView();
 }
