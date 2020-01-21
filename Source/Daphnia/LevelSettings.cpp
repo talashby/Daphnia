@@ -1,8 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "LevelSettings.h"
-#include "../../../../Program Files/Epic Games/UE_4.24/Engine/Source/Runtime/CoreUObject/Public/UObject/ConstructorHelpers.h"
+#include "UObject/ConstructorHelpers.h"
 #include "DaphniaPawn.h"
+#include "Engine/TriggerVolume.h"
+#include "vector"
+#include "Engine/StaticMeshActor.h"
+#include "random"
 
 // **************************** FRoomVolumeSettings *********************************
 FRoomVolumeSettings::FRoomVolumeSettings()
@@ -50,6 +54,11 @@ void ALevelSettings::BeginPlay()
 {
 	s_InstancePtr = this;
 	Super::BeginPlay();
+
+	for (const auto & Settings : RoomVolumeSettings)
+	{
+		GenerateItems(Settings);
+	}
 }
 
 // Called every frame
@@ -84,4 +93,112 @@ void ALevelSettings::OnGameObjectOverlapBegin(UPrimitiveComponent* OverlappedCom
 	}
 }
 
+
+std::random_device rd;
+std::mt19937 e1(rd());
+
+int32 Rand32(int32 iRandMax)
+{
+	std::uniform_int_distribution<int32> dist(0, iRandMax);
+	return dist(e1);
+}
+
+
+std::random_device rd64;
+std::mt19937_64 e2(rd64());
+
+int64 Rand64(int64 iRandMax)
+{
+	std::uniform_int_distribution<int64> dist(0, iRandMax);
+	return dist(e2);
+}
+
+
+void ALevelSettings::GenerateItems(const FRoomVolumeSettings &Settings)
+{
+	int32 MaterialsNum = GameObjectMaterials.Num();
+	check(MaterialsNum);
+	if (!MaterialsNum)
+	{
+		return;
+	}
+	FVector vecOrigin, vecBoxExtent;
+
+	Settings.TriggerVolume->GetActorBounds(false, vecOrigin, vecBoxExtent);
+
+	// makes vecOrigin points to the corner
+	vecOrigin.X -= vecBoxExtent.X;
+	vecOrigin.Y -= vecBoxExtent.Y;
+	vecOrigin.Z -= vecBoxExtent.Z;
+
+	constexpr int32 NumObjectsBorder = 2;
+	int32 iPlacesForObjectsX = FMath::RoundToInt(vecBoxExtent.X * 2) / ObjectPlaceSize - NumObjectsBorder*2;
+	int32 iShiftX = (FMath::RoundToInt(vecBoxExtent.X * 2) % ObjectPlaceSize) / 2 + NumObjectsBorder*ObjectPlaceSize;
+	int32 iPlacesForObjectsY = FMath::RoundToInt(vecBoxExtent.Y * 2) / ObjectPlaceSize - NumObjectsBorder * 2;
+	int32 iShiftY = (FMath::RoundToInt(vecBoxExtent.Y * 2) % ObjectPlaceSize) / 2 + NumObjectsBorder*ObjectPlaceSize;
+	int32 iPlacesForObjectsZ = FMath::RoundToInt(vecBoxExtent.Z * 2) / ObjectPlaceSize - NumObjectsBorder * 2;
+	int32 iShiftZ = (FMath::RoundToInt(vecBoxExtent.Z * 2) % ObjectPlaceSize) / 2 + NumObjectsBorder*ObjectPlaceSize;
+
+	if (static_cast<int64>(iPlacesForObjectsX) * iPlacesForObjectsY * iPlacesForObjectsZ > std::numeric_limits<int32>::max())
+	{
+		check(false);
+		return;
+	}
+	std::vector<int32> ResultArray(Settings.GameObjectsNum);
+	{	// The Knuth algorithm to find random unique values
+		int32 M = Settings.GameObjectsNum;
+		int32 N = iPlacesForObjectsX * iPlacesForObjectsY * iPlacesForObjectsZ;
+		int32 in, im;
+
+		im = 0;
+
+		for (in = 0; in < N && im < M; ++in) {
+			int32 rn = N - in;
+			int32 rm = M - im;
+			if (Rand32(rn) < rm)
+				/* Take it */
+				ResultArray[im++] = in;
+		}
+
+		check(im == M);
+	}
+
+	// place objects
+	int32 iKeyPlace = ResultArray[rand() % ResultArray.size()];
+	for (int32 iRandPlaceNumber : ResultArray)
+	{
+		int32 XandY = iRandPlaceNumber % (iPlacesForObjectsX * iPlacesForObjectsY);
+		int32 iPlaceX = vecOrigin.X + iShiftX + (XandY % iPlacesForObjectsX) * ObjectPlaceSize;
+		int32 iPlaceY = vecOrigin.Y + iShiftY + (XandY / iPlacesForObjectsX) * ObjectPlaceSize;
+		int32 iPlaceZ = vecOrigin.Z + iShiftZ + (iRandPlaceNumber / (iPlacesForObjectsX * iPlacesForObjectsY)) * ObjectPlaceSize;
+
+		// Spawn!
+		AStaticMeshActor *pGameObject = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FVector(iPlaceX, iPlaceY, iPlaceZ), FRotator(0, 0, 0));
+		pGameObject->SetMobility(EComponentMobility::Movable);
+		TArray<UStaticMeshComponent*> Comps;
+		pGameObject->GetComponents(Comps);
+		if (Comps.Num() > 0)
+		{
+			UStaticMeshComponent* FoundComp = Comps[0];
+			FoundComp->SetStaticMesh(SphereMesh);
+			int32 iRnd = rand() % MaterialsNum;
+
+			FoundComp->SetMaterial(0, GameObjectMaterials[iRnd]);
+			FoundComp->SetCastShadow(false);
+			FoundComp->SetGenerateOverlapEvents(true);
+			FCollisionResponseContainer collision_response;
+			collision_response.SetAllChannels(ECollisionResponse::ECR_Overlap);
+			FoundComp->SetCollisionResponseToChannels(collision_response);
+			FoundComp->OnComponentBeginOverlap.AddUniqueDynamic(ALevelSettings::GetInstance(), &ALevelSettings::OnGameObjectOverlapBegin);
+		}
+
+		TSet<AActor*> aOverlapActors;
+		pGameObject->UpdateOverlaps();
+		pGameObject->GetOverlappingActors(aOverlapActors);
+		if (aOverlapActors.Num())
+		{
+			pGameObject->Destroy();
+		}
+	}
+}
 
