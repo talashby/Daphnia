@@ -13,7 +13,7 @@ struct FRoomVolumeSettings
 	FRoomVolumeSettings();
 
 	UPROPERTY(EditAnywhere, Category = "Settings")
-	class ATriggerVolume *TriggerVolume;
+	class ATriggerVolume *TriggerVolume = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	int32 GameObjectsNum;
@@ -42,34 +42,41 @@ public:
 	// ****************************************************
 	// **** Settings
 
+	// ****************************************************
+	// **** pickupable game objects
 
-	// pickupable game objects
+	UPROPERTY()
+	UStaticMesh *SphereMesh;
+
+	UPROPERTY(VisibleAnywhere, Category = "Variables")
+	TArray<UStaticMesh*> GameObjects;
+
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	TArray<class UMaterialInstance*> GameObjectMaterials;
 
-	// settings for placing game object
+	// rooms for placing game object
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	TArray<FRoomVolumeSettings> RoomVolumeSettings;
 
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	int32 ObjectPlaceSize;
 
+	UPROPERTY(EditAnywhere, Category = "Settings")
+	class USoundBase *EatCrumbSound;
 
-	// ****************************************************
-	// **** game objects initialized in code (visible in editor)
-	UPROPERTY(VisibleAnywhere, Category = "Variables")
-	TArray<UStaticMesh*> GameObjects;
 
 	// ************************************************************
 	// ************** other
-	UPROPERTY()
-	UStaticMesh *SphereMesh;
+	// every crumb sing song...
+	UPROPERTY(EditAnywhere, Category = "Settings")
+	class USoundBase *CrumbMusic;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 private:
+//	class AAmbientSound* SpawnAmbientSound();
 	void GenerateItems(const FRoomVolumeSettings &Settings);
 
 	int iCurrentDoorToOpen;

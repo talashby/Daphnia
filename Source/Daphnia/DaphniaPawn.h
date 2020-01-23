@@ -30,8 +30,11 @@ class ADaphniaPawn : public APawn
 
 	UPROPERTY()
 	class UTextureRenderTarget2D* EyeRenderTarget2D;
-	UPROPERTY(Category = SceneCaptureEye, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Category = CameraEye, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class USceneCaptureComponent2D* EyeSceneCaptureComponent2D;
+
+	UPROPERTY(Category = CameraEye, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	int32 EyeTextureSize = 16;
 public:
 	ADaphniaPawn();
 	static ADaphniaPawn* GetInstance();
@@ -41,6 +44,7 @@ public:
 	// End AActor overrides
 	void SwitchView();
 	class UTextureRenderTarget2D* GetEyeRenderTarget2D();
+	int32 GetEyeTextureSize() const;
 
 protected:
 

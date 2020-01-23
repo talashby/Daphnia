@@ -7,6 +7,10 @@
 #include "vector"
 #include "Engine/StaticMeshActor.h"
 #include "random"
+#include "Sound/AmbientSound.h"
+#include "Kismet/GameplayStatics.h"
+#include "Helper.h"
+#include "Components/AudioComponent.h"
 
 // **************************** FRoomVolumeSettings *********************************
 FRoomVolumeSettings::FRoomVolumeSettings()
@@ -88,7 +92,17 @@ void ALevelSettings::OnGameObjectOverlapBegin(UPrimitiveComponent* OverlappedCom
 		AActor *pActor = OverlappedComp->GetOwner();
 		if (pActor)
 		{
+			const TArray<UActorComponent *>& Comps = pActor->GetInstanceComponents();
+			for (auto& Comp : Comps)
+			{
+				UAudioComponent* Snd = Cast<UAudioComponent>(Comp);
+				if (Snd)
+				{
+					Snd->Stop();
+				}
+			}
 			pActor->Destroy();
+			UGameplayStatics::PlaySound2D(GetWorld(), EatCrumbSound);
 		}
 	}
 }
@@ -97,9 +111,10 @@ void ALevelSettings::OnGameObjectOverlapBegin(UPrimitiveComponent* OverlappedCom
 std::random_device rd;
 std::mt19937 e1(rd());
 
-int32 Rand32(int32 iRandMax)
+int32 Rand32(int32 iRandMax) // from [0; iRandMax-1]
 {
-	std::uniform_int_distribution<int32> dist(0, iRandMax);
+	checkSlow(iRandMax > 0);
+	std::uniform_int_distribution<int32> dist(0, iRandMax-1);
 	return dist(e1);
 }
 
@@ -107,12 +122,24 @@ int32 Rand32(int32 iRandMax)
 std::random_device rd64;
 std::mt19937_64 e2(rd64());
 
-int64 Rand64(int64 iRandMax)
+int64 Rand64(int64 iRandMax) // from [0; iRandMax-1]
 {
-	std::uniform_int_distribution<int64> dist(0, iRandMax);
+	checkSlow(iRandMax > 0);
+	std::uniform_int_distribution<int64> dist(0, iRandMax-1);
 	return dist(e2);
 }
 
+/*AAmbientSound* ALevelSettings::SpawnAmbientSound()
+{
+	// Spawn!
+	AAmbientSound *SoundObject = GetWorld()->SpawnActor<AAmbientSound>(AAmbientSound::StaticClass());
+	UAudioComponent* AudioComponent = SoundObject->GetAudioComponent();
+	if (AudioComponent)
+	{
+		//AudioComponent->Set
+	}
+	return SoundObject;
+}*/
 
 void ALevelSettings::GenerateItems(const FRoomVolumeSettings &Settings)
 {
@@ -174,7 +201,7 @@ void ALevelSettings::GenerateItems(const FRoomVolumeSettings &Settings)
 
 		// Spawn!
 		AStaticMeshActor *pGameObject = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FVector(iPlaceX, iPlaceY, iPlaceZ), FRotator(0, 0, 0));
-		pGameObject->SetMobility(EComponentMobility::Movable);
+		pGameObject->SetMobility(EComponentMobility::Static);
 		TArray<UStaticMeshComponent*> Comps;
 		pGameObject->GetComponents(Comps);
 		if (Comps.Num() > 0)
@@ -190,6 +217,22 @@ void ALevelSettings::GenerateItems(const FRoomVolumeSettings &Settings)
 			collision_response.SetAllChannels(ECollisionResponse::ECR_Overlap);
 			FoundComp->SetCollisionResponseToChannels(collision_response);
 			FoundComp->OnComponentBeginOverlap.AddUniqueDynamic(ALevelSettings::GetInstance(), &ALevelSettings::OnGameObjectOverlapBegin);
+			{ // add sound component
+				if (CrumbMusic)
+				{
+					UAudioComponent* NewAudioComponent = UGameplayStatics::SpawnSoundAtLocation(GetWorld(), CrumbMusic, pGameObject->GetActorLocation());
+					pGameObject->AddInstanceComponent(NewAudioComponent);
+					NewAudioComponent->Play();
+				}
+
+				/*UAudioComponent* AudioComponent = AmbientSoundCrumb->GetAudioComponent();
+				UAudioComponent* NewAudioComponent = DuplicateObject(AudioComponent, pGameObject);
+				NewAudioComponent->SetupAttachment(FoundComp);
+				NewAudioComponent->SetRelativeLocation(FVector());
+				NewAudioComponent->Play();
+				FVector Location = NewAudioComponent->GetComponentTransform().GetLocation();
+				int eee = 0;*/
+			}
 		}
 
 		TSet<AActor*> aOverlapActors;

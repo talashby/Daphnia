@@ -83,7 +83,7 @@ void ADaphniaPawn::BeginPlay()
 	s_InstancePtr = this;
 	Super::BeginPlay();
 
-	EyeRenderTarget2D = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), 32, 32, RTF_RGBA8);
+	EyeRenderTarget2D = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), GetEyeTextureSize(), GetEyeTextureSize(), RTF_RGBA8);
 	EyeSceneCaptureComponent2D->TextureTarget = EyeRenderTarget2D;
 }
 
@@ -212,4 +212,9 @@ void ADaphniaPawn::SwitchView()
 class UTextureRenderTarget2D* ADaphniaPawn::GetEyeRenderTarget2D()
 {
 	return EyeRenderTarget2D;
+}
+
+int32 ADaphniaPawn::GetEyeTextureSize() const
+{
+	return EyeTextureSize;
 }

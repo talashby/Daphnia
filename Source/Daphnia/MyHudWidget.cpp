@@ -37,18 +37,19 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 			FTextureRenderTargetResource* Resource = RenderTarget2D->GameThread_GetRenderTargetResource();
 			TArray<FColor> RawData;
 			Resource->ReadPixels(RawData);
-			for (int32 i = 0; i < (32 * 32); i++)
+			const int32 EyeTextureSize = ADaphniaPawn::GetInstance()->GetEyeTextureSize();
+			for (int32 i = 0; i < (EyeTextureSize * EyeTextureSize); i++)
 			{
 				RawData[i].A = 255;
 			}
 
-			EyeViewTexture2D = UTexture2D::CreateTransient(32, 32);
+			EyeViewTexture2D = UTexture2D::CreateTransient(EyeTextureSize, EyeTextureSize);
 			check(EyeViewTexture2D);
 			if (EyeViewTexture2D)
 			{
 				FTexture2DMipMap& Mip = EyeViewTexture2D->PlatformData->Mips[0];
 				void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
-				FMemory::Memcpy(Data, RawData.GetData(), (32 * 32 * 4));
+				FMemory::Memcpy(Data, RawData.GetData(), (EyeTextureSize * EyeTextureSize * 4));
 				Mip.BulkData.Unlock();
 				EyeViewTexture2D->UpdateResource();
 			}
