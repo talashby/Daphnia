@@ -177,7 +177,7 @@ void ADaphniaPawn::SwitchView()
 {
 	auto InputController = AMyPlayerController::GetInstance();
 	verify(InputController);
-	if (InputController)
+	if (InputController && SpringArm && Camera && CameraEye)
 	{
 		++CameraViewMode;
 		if (CameraViewMode >= static_cast<int>(ECameraViewMode::Max))
