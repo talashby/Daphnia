@@ -1,6 +1,8 @@
-.vs/
-Binaries/
-Intermediate/
-Saved/
+.vs
+Binaries
+Intermediate
+Saved
 Daphnia.sln
 /Build/WindowsNoEditor/FileOpenOrder
+DerivedDataCache
+Archive
