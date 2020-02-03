@@ -28,6 +28,10 @@ protected:
 	UPROPERTY()
 	class UMyHudWidget *HUDWidget = nullptr;
 	TSubclassOf<class UMyHudWidget> HUDWidgetClass = nullptr; // blueprint class
+
+	UPROPERTY()
+	class UPPSettings *PPSettings = nullptr;
+	TSubclassOf<class UPPSettings> PPSettingsClass = nullptr; // blueprint class
 };
 
 

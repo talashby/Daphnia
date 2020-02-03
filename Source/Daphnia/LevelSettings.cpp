@@ -11,6 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Helper.h"
 #include "Components/AudioComponent.h"
+#include "ParallelPhysics/PPSettings.h"
 
 // **************************** FRoomVolumeSettings *********************************
 FRoomVolumeSettings::FRoomVolumeSettings()
@@ -45,6 +46,40 @@ ALevelSettings::ALevelSettings()
 	static FConstructorStatics ConstructorStatics;
 	SphereMesh = ConstructorStatics.SphereMesh.Get();
 
+	{
+		static ConstructorHelpers::FObjectFinder<UClass> ItemBlueprint(TEXT("Blueprint'/Game/Blueprints/BP_PPSettings.BP_PPSettings_C'"));
+		if (ItemBlueprint.Object)
+		{
+			PPSettingsClass = ItemBlueprint.Object;
+			PPSettings = Cast<UPPSettings>(PPSettingsClass->GetDefaultObject());
+		}
+	}
+}
+
+void ALevelSettings::OnConstruction(const FTransform& Transform)
+{
+	OnMapLoaded();
+}
+
+void ALevelSettings::OnMapLoaded()
+{
+	UWorld* World = GetWorld();
+	if (World && PPSettings)
+	{
+		PPSettings->ObjectPlaceSize = 111;
+
+		if (PPSettings->bUseCppUniversitySize && 0 < RoomVolumeSettings.Num())
+		{
+			FVector vecOrigin, vecBoxExtent;
+			RoomVolumeSettings[0].TriggerVolume->GetActorBounds(false, vecOrigin, vecBoxExtent);
+			PPSettings->UniversitySize = FBox::BuildAABB(vecBoxExtent, vecOrigin);
+		}
+	}
+}
+
+ALevelSettings::~ALevelSettings()
+{
+	//FEditorDelegates::OnMapOpened.RemoveAll(this);
 }
 
 ALevelSettings* ALevelSettings::GetInstance()
@@ -69,7 +104,6 @@ void ALevelSettings::BeginPlay()
 void ALevelSettings::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void ALevelSettings::OnGameObjectOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -106,7 +140,6 @@ void ALevelSettings::OnGameObjectOverlapBegin(UPrimitiveComponent* OverlappedCom
 		}
 	}
 }
-
 
 std::random_device rd;
 std::mt19937 e1(rd());
@@ -244,4 +277,5 @@ void ALevelSettings::GenerateItems(const FRoomVolumeSettings &Settings)
 		}
 	}
 }
+
 

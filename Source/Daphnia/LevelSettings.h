@@ -20,13 +20,15 @@ struct FRoomVolumeSettings
 };
 
 UCLASS()
-class ALevelSettings : public AActor
+class DAPHNIA_API ALevelSettings : public AActor, public TSharedFromThis<ALevelSettings>
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this actor's properties
 	ALevelSettings();
+
+	~ALevelSettings();
 
 	static ALevelSettings* GetInstance();
 
@@ -38,6 +40,8 @@ public:
 	UFUNCTION()
 	void OnGameObjectOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 									int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	virtual void OnConstruction(const FTransform& Transform) override;
 
 	// ****************************************************
 	// **** Settings
@@ -78,6 +82,11 @@ protected:
 private:
 //	class AAmbientSound* SpawnAmbientSound();
 	void GenerateItems(const FRoomVolumeSettings &Settings);
+	void OnMapLoaded();
+
+	UPROPERTY()
+	class UPPSettings *PPSettings = nullptr;
+	TSubclassOf<class UPPSettings> PPSettingsClass = nullptr; // blueprint class
 
 	int iCurrentDoorToOpen;
 	bool bIsFinished;
