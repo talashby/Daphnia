@@ -63,7 +63,7 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 
 UMyHudWidget* UMyHudWidget::GetInstance()
 {
-	checkSlow(s_InstancePtr);
+	check(s_InstancePtr);
 	return s_InstancePtr;
 }
 

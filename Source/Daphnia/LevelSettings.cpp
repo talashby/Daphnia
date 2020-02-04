@@ -20,7 +20,7 @@ FRoomVolumeSettings::FRoomVolumeSettings()
 }
 
 // **************************** ALevelSettings *********************************
-static ALevelSettings *s_InstancePtr;
+static ALevelSettings *s_InstancePtr = nullptr;
 
 // Sets default values
 ALevelSettings::ALevelSettings()
@@ -58,22 +58,28 @@ ALevelSettings::ALevelSettings()
 
 void ALevelSettings::OnConstruction(const FTransform& Transform)
 {
-	OnMapLoaded();
+	OnMapLoaded(); // called on editor after load
+}
+
+void ALevelSettings::GetUniversityBounds(FVector& Origin, FVector& BoxExtent) const
+{
+	if (0 < RoomVolumeSettings.Num())
+	{
+		RoomVolumeSettings[0].TriggerVolume->GetActorBounds(false, Origin, BoxExtent);
+	}
+	else
+	{
+		check(false);
+	}
 }
 
 void ALevelSettings::OnMapLoaded()
 {
+	s_InstancePtr = this;
 	UWorld* World = GetWorld();
 	if (World && PPSettings)
 	{
-		PPSettings->ObjectPlaceSize = 111;
-
-		if (PPSettings->bUseCppUniversitySize && 0 < RoomVolumeSettings.Num())
-		{
-			FVector vecOrigin, vecBoxExtent;
-			RoomVolumeSettings[0].TriggerVolume->GetActorBounds(false, vecOrigin, vecBoxExtent);
-			PPSettings->UniversitySize = FBox::BuildAABB(vecBoxExtent, vecOrigin);
-		}
+		PPSettings->Init(World);
 	}
 }
 
@@ -84,15 +90,16 @@ ALevelSettings::~ALevelSettings()
 
 ALevelSettings* ALevelSettings::GetInstance()
 {
-	checkSlow(s_InstancePtr);
+	check(s_InstancePtr);
 	return s_InstancePtr;
 }
 
 // Called when the game starts or when spawned
 void ALevelSettings::BeginPlay()
 {
-	s_InstancePtr = this;
 	Super::BeginPlay();
+
+	OnMapLoaded();
 
 	for (const auto & Settings : RoomVolumeSettings)
 	{
@@ -146,7 +153,7 @@ std::mt19937 e1(rd());
 
 int32 Rand32(int32 iRandMax) // from [0; iRandMax-1]
 {
-	checkSlow(iRandMax > 0);
+	check(iRandMax > 0);
 	std::uniform_int_distribution<int32> dist(0, iRandMax-1);
 	return dist(e1);
 }
@@ -157,7 +164,7 @@ std::mt19937_64 e2(rd64());
 
 int64 Rand64(int64 iRandMax) // from [0; iRandMax-1]
 {
-	checkSlow(iRandMax > 0);
+	check(iRandMax > 0);
 	std::uniform_int_distribution<int64> dist(0, iRandMax-1);
 	return dist(e2);
 }

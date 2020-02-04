@@ -74,7 +74,7 @@ ADaphniaPawn::ADaphniaPawn()
 
 ADaphniaPawn* ADaphniaPawn::GetInstance()
 {
-	checkSlow(s_InstancePtr);
+	check(s_InstancePtr);
 	return s_InstancePtr;
 }
 

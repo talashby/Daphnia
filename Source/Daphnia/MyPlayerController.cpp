@@ -16,7 +16,7 @@ AMyPlayerController::AMyPlayerController() : APlayerController()
 
 AMyPlayerController* AMyPlayerController::GetInstance()
 {
-	checkSlow(s_InstancePtr);
+	check(s_InstancePtr);
 	return s_InstancePtr;
 }
 

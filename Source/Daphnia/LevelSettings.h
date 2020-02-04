@@ -43,11 +43,22 @@ public:
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 
-	// ****************************************************
-	// **** Settings
+	void GetUniversityBounds(FVector& Origin, FVector& BoxExtent) const;
 
-	// ****************************************************
-	// **** pickupable game objects
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
+private:
+//	class AAmbientSound* SpawnAmbientSound();
+	void GenerateItems(const FRoomVolumeSettings &Settings);
+	void OnMapLoaded();
+
+// ****************************************************
+// **** Settings
+
+// ****************************************************
+// **** pickupable game objects
 
 	UPROPERTY()
 	UStaticMesh *SphereMesh;
@@ -74,15 +85,6 @@ public:
 	// every crumb sing song...
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	class USoundBase *CrumbMusic;
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-private:
-//	class AAmbientSound* SpawnAmbientSound();
-	void GenerateItems(const FRoomVolumeSettings &Settings);
-	void OnMapLoaded();
 
 	UPROPERTY()
 	class UPPSettings *PPSettings = nullptr;

@@ -18,14 +18,18 @@ class UPPSettings : public UObject
 
 public:
 
+	void Init(UWorld *World);
+
+private:
+
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	int32 ObjectPlaceSize = 110;
 
 	/** Set university size from cpp code. */
-	UPROPERTY(EditAnywhere, NoClear, BlueprintReadOnly, Category = "Settings")
+	UPROPERTY(EditAnywhere, Category = "Settings")
 	bool bUseCppUniversitySize = false;
 
 	/** University size. */
-	UPROPERTY(EditAnywhere, NoClear, BlueprintReadOnly, Category = "Settings")
+	UPROPERTY(EditAnywhere, Category = "Settings")
 	FBox UniversitySize = FBox(EForceInit::ForceInit);
 };
