@@ -45,6 +45,8 @@ public:
 
 	void GetUniversityBounds(FVector& Origin, FVector& BoxExtent) const;
 
+	const TArray<class UMaterialInstance*>& GetGameObjectMaterials() const;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -74,7 +76,7 @@ private:
 	TArray<FRoomVolumeSettings> RoomVolumeSettings;
 
 	UPROPERTY(EditAnywhere, Category = "Settings")
-	int32 ObjectPlaceSize;
+	int32 ObjectPlaceSize = 100;
 
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	class USoundBase *EatCrumbSound;

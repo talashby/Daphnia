@@ -28,7 +28,6 @@ ALevelSettings::ALevelSettings()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	ObjectPlaceSize = 100;
 	iCurrentDoorToOpen = 0;
 	bIsFinished = false;
 
@@ -58,19 +57,30 @@ ALevelSettings::ALevelSettings()
 
 void ALevelSettings::OnConstruction(const FTransform& Transform)
 {
-	OnMapLoaded(); // called on editor after load
+	// Helper!
+	FString ActorName("BP_LevelSettings_5");
+	if (0 == ActorName.Compare(GetName())) // insure it is special object in the World not template!
+	{ // Used to set ParallelPhysics parameters after editor loaded map
+		OnMapLoaded(); // set parameters just editor loaded map so we can see it in the editor
+	}
 }
 
 void ALevelSettings::GetUniversityBounds(FVector& Origin, FVector& BoxExtent) const
 {
 	if (0 < RoomVolumeSettings.Num())
 	{
+		// GetComponentsBoundingBox
 		RoomVolumeSettings[0].TriggerVolume->GetActorBounds(false, Origin, BoxExtent);
 	}
 	else
 	{
 		check(false);
 	}
+}
+
+const TArray<class UMaterialInstance*>& ALevelSettings::GetGameObjectMaterials() const
+{
+	return GameObjectMaterials;
 }
 
 void ALevelSettings::OnMapLoaded()
@@ -104,6 +114,12 @@ void ALevelSettings::BeginPlay()
 	for (const auto & Settings : RoomVolumeSettings)
 	{
 		GenerateItems(Settings);
+	}
+
+	UWorld* World = GetWorld();
+	if (World && PPSettings)
+	{
+		PPSettings->ConvertGeometry(World);
 	}
 }
 

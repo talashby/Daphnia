@@ -19,17 +19,18 @@ class UPPSettings : public UObject
 public:
 
 	void Init(UWorld *World);
+	void ConvertGeometry(UWorld *World);
 
 private:
 
 	UPROPERTY(EditAnywhere, Category = "Settings")
-	int32 ObjectPlaceSize = 110;
+	int32 UniverseEtherCellSize = 100;
 
-	/** Set university size from cpp code. */
+	/** Set universe size from cpp code. */
 	UPROPERTY(EditAnywhere, Category = "Settings")
-	bool bUseCppUniversitySize = false;
+	bool bUseCppUniverseSize = false;
 
-	/** University size. */
+	/** Universe size. */
 	UPROPERTY(EditAnywhere, Category = "Settings")
-	FBox UniversitySize = FBox(EForceInit::ForceInit);
+	FBox UniverseBox = FBox(EForceInit::ForceInit);
 };
