@@ -65,17 +65,19 @@ void ALevelSettings::OnConstruction(const FTransform& Transform)
 	}
 }
 
-void ALevelSettings::GetUniversityBounds(FVector& Origin, FVector& BoxExtent) const
+FBox ALevelSettings::GetUniverseBoundingBox() const
 {
+	FBox Box;
+	Box.Init();
 	if (0 < RoomVolumeSettings.Num())
 	{
-		// GetComponentsBoundingBox
-		RoomVolumeSettings[0].TriggerVolume->GetActorBounds(false, Origin, BoxExtent);
+		Box = RoomVolumeSettings[0].TriggerVolume->GetComponentsBoundingBox();
 	}
 	else
 	{
 		check(false);
 	}
+	return Box;
 }
 
 const TArray<class UMaterialInstance*>& ALevelSettings::GetGameObjectMaterials() const

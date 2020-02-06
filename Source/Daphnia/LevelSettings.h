@@ -43,7 +43,7 @@ public:
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 
-	void GetUniversityBounds(FVector& Origin, FVector& BoxExtent) const;
+	FBox GetUniverseBoundingBox() const;
 
 	const TArray<class UMaterialInstance*>& GetGameObjectMaterials() const;
 

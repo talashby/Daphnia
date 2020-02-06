@@ -4,34 +4,35 @@
 
 namespace ParallelPhysics
 {
+
 struct EtherColor
 {
-	EtherColor() : colorB(0), colorG(0), colorR(0), colorA(0)
+	EtherColor() : m_colorB(0), m_colorG(0), m_colorR(0), m_colorA(0)
 	{}
 
-	union { struct { uint8_t colorB, colorG, colorR, colorA; }; uint32_t AlignmentDummy; };
+	union { struct { uint8_t m_colorB, m_colorG, m_colorR, m_colorA; }; uint32_t AlignmentDummy; };
 };
 
 struct EtherCell
 {
-	bool m_isSolid = false;
+	int32 m_type = EtherType::Space;
 	EtherColor m_color;
 };
 
 std::vector< std::vector< std::vector<EtherCell> > > universe;
 
 
-bool Init(int32_t xDimension, int32_t yDimension, int32_t zDimension)
+bool Init(int32_t dimensionX, int32_t dimensionY, int32_t dimensionZ)
 {
-	if (0 < xDimension && 0 < yDimension && 0 < yDimension)
+	if (0 < dimensionX && 0 < dimensionY && 0 < dimensionZ)
 	{
-		universe.resize(xDimension);
+		universe.resize(dimensionX);
 		for (auto &itY : universe)
 		{
-			itY.resize(yDimension);
+			itY.resize(dimensionY);
 			for (auto &itZ : itY)
 			{
-				itZ.resize(zDimension);
+				itZ.resize(dimensionZ);
 			}
 		}
 		return true;
@@ -39,12 +40,12 @@ bool Init(int32_t xDimension, int32_t yDimension, int32_t zDimension)
 	return false;
 }
 
-int32_t GetXDimension()
+int32_t GetDimensionX()
 {
 	return universe.size();
 }
 
-int32_t GetYDimension()
+int32_t GetDimensionY()
 {
 	if (universe.size())
 	{
@@ -53,7 +54,7 @@ int32_t GetYDimension()
 	return 0;
 }
 
-int32_t GetZDimension()
+int32_t GetDimensionZ()
 {
 	if (universe.size())
 	{
@@ -65,7 +66,7 @@ int32_t GetZDimension()
 	return 0;
 }
 
-bool InitEtherCell(int32_t xPos, int32_t yPos, int32_t zPos, int32_t colorR, int32_t colorG, int32_t colorB)
+bool InitEtherCell(int32_t xPos, int32_t yPos, int32_t zPos, EtherType::EEtherType type, int32_t colorR, int32_t colorG, int32_t colorB)
 {
 	if (universe.size() > xPos)
 	{
@@ -74,10 +75,10 @@ bool InitEtherCell(int32_t xPos, int32_t yPos, int32_t zPos, int32_t colorR, int
 			if (universe[xPos][yPos].size() > zPos)
 			{
 				EtherCell &cell = universe[xPos][yPos][zPos];
-				cell.m_isSolid = true;
-				cell.m_color.colorR = colorR;
-				cell.m_color.colorG = colorG;
-				cell.m_color.colorB = colorB;
+				cell.m_type = type;
+				cell.m_color.m_colorR = colorR;
+				cell.m_color.m_colorG = colorG;
+				cell.m_color.m_colorB = colorB;
 				return true;
 			}
 		}
