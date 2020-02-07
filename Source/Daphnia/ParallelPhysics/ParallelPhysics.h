@@ -8,6 +8,16 @@ namespace ParallelPhysics
 	int32_t GetDimensionY();
 	int32_t GetDimensionZ();
 
+	void StartSimulation();
+	void StopSimulation();
+
+	struct Observer
+	{
+		void Init(int32_t posX, int32_t posY, int32_t posZ, int32_t rotX, int32_t rotY, int32_t rotZ);
+
+		Observer* GetInstance();
+	};
+
 	struct EtherType
 	{
 		enum EEtherType
@@ -17,5 +27,5 @@ namespace ParallelPhysics
 			Block
 		};
 	};
-	bool InitEtherCell(int32_t xPos, int32_t yPos, int32_t zPos, EtherType::EEtherType type, int32_t colorR, int32_t colorG, int32_t colorB); // returns true if success
+	bool InitEtherCell(int32_t posX, int32_t posY, int32_t posZ, EtherType::EEtherType type, int32_t colorR, int32_t colorG, int32_t colorB); // returns true if success
 }

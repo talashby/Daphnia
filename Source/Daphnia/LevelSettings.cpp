@@ -207,22 +207,17 @@ void ALevelSettings::GenerateItems(const FRoomVolumeSettings &Settings)
 	{
 		return;
 	}
-	FVector vecOrigin, vecBoxExtent;
 
-	Settings.TriggerVolume->GetActorBounds(false, vecOrigin, vecBoxExtent);
-
-	// makes vecOrigin points to the corner
-	vecOrigin.X -= vecBoxExtent.X;
-	vecOrigin.Y -= vecBoxExtent.Y;
-	vecOrigin.Z -= vecBoxExtent.Z;
+	FBox VolumeBox = Settings.TriggerVolume->GetComponentsBoundingBox();
+	FVector VolumeBoxSize = VolumeBox.GetSize();
 
 	constexpr int32 NumObjectsBorder = 2;
-	int32 iPlacesForObjectsX = FMath::RoundToInt(vecBoxExtent.X * 2) / ObjectPlaceSize - NumObjectsBorder*2;
-	int32 iShiftX = (FMath::RoundToInt(vecBoxExtent.X * 2) % ObjectPlaceSize) / 2 + NumObjectsBorder*ObjectPlaceSize;
-	int32 iPlacesForObjectsY = FMath::RoundToInt(vecBoxExtent.Y * 2) / ObjectPlaceSize - NumObjectsBorder * 2;
-	int32 iShiftY = (FMath::RoundToInt(vecBoxExtent.Y * 2) % ObjectPlaceSize) / 2 + NumObjectsBorder*ObjectPlaceSize;
-	int32 iPlacesForObjectsZ = FMath::RoundToInt(vecBoxExtent.Z * 2) / ObjectPlaceSize - NumObjectsBorder * 2;
-	int32 iShiftZ = (FMath::RoundToInt(vecBoxExtent.Z * 2) % ObjectPlaceSize) / 2 + NumObjectsBorder*ObjectPlaceSize;
+	int32 iPlacesForObjectsX = FMath::RoundToInt(VolumeBoxSize.X) / ObjectPlaceSize - NumObjectsBorder*2;
+	int32 iShiftX = (FMath::RoundToInt(VolumeBoxSize.X) % ObjectPlaceSize) / 2 + NumObjectsBorder*ObjectPlaceSize;
+	int32 iPlacesForObjectsY = FMath::RoundToInt(VolumeBoxSize.Y) / ObjectPlaceSize - NumObjectsBorder * 2;
+	int32 iShiftY = (FMath::RoundToInt(VolumeBoxSize.Y) % ObjectPlaceSize) / 2 + NumObjectsBorder*ObjectPlaceSize;
+	int32 iPlacesForObjectsZ = FMath::RoundToInt(VolumeBoxSize.Z) / ObjectPlaceSize - NumObjectsBorder * 2;
+	int32 iShiftZ = (FMath::RoundToInt(VolumeBoxSize.Z) % ObjectPlaceSize) / 2 + NumObjectsBorder*ObjectPlaceSize;
 
 	if (static_cast<int64>(iPlacesForObjectsX) * iPlacesForObjectsY * iPlacesForObjectsZ > std::numeric_limits<int32>::max())
 	{
@@ -253,9 +248,9 @@ void ALevelSettings::GenerateItems(const FRoomVolumeSettings &Settings)
 	for (int32 iRandPlaceNumber : ResultArray)
 	{
 		int32 XandY = iRandPlaceNumber % (iPlacesForObjectsX * iPlacesForObjectsY);
-		int32 iPlaceX = vecOrigin.X + iShiftX + (XandY % iPlacesForObjectsX) * ObjectPlaceSize;
-		int32 iPlaceY = vecOrigin.Y + iShiftY + (XandY / iPlacesForObjectsX) * ObjectPlaceSize;
-		int32 iPlaceZ = vecOrigin.Z + iShiftZ + (iRandPlaceNumber / (iPlacesForObjectsX * iPlacesForObjectsY)) * ObjectPlaceSize;
+		int32 iPlaceX = VolumeBox.Min.X + iShiftX + (XandY % iPlacesForObjectsX) * ObjectPlaceSize;
+		int32 iPlaceY = VolumeBox.Min.Y + iShiftY + (XandY / iPlacesForObjectsX) * ObjectPlaceSize;
+		int32 iPlaceZ = VolumeBox.Min.Z + iShiftZ + (iRandPlaceNumber / (iPlacesForObjectsX * iPlacesForObjectsY)) * ObjectPlaceSize;
 
 		// Spawn!
 		AStaticMeshActor *pGameObject = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FVector(iPlaceX, iPlaceY, iPlaceZ), FRotator(0, 0, 0));
@@ -282,14 +277,6 @@ void ALevelSettings::GenerateItems(const FRoomVolumeSettings &Settings)
 					pGameObject->AddInstanceComponent(NewAudioComponent);
 					NewAudioComponent->Play();
 				}
-
-				/*UAudioComponent* AudioComponent = AmbientSoundCrumb->GetAudioComponent();
-				UAudioComponent* NewAudioComponent = DuplicateObject(AudioComponent, pGameObject);
-				NewAudioComponent->SetupAttachment(FoundComp);
-				NewAudioComponent->SetRelativeLocation(FVector());
-				NewAudioComponent->Play();
-				FVector Location = NewAudioComponent->GetComponentTransform().GetLocation();
-				int eee = 0;*/
 			}
 		}
 

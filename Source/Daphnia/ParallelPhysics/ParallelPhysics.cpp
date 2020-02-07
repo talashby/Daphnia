@@ -66,15 +66,15 @@ int32_t GetDimensionZ()
 	return 0;
 }
 
-bool InitEtherCell(int32_t xPos, int32_t yPos, int32_t zPos, EtherType::EEtherType type, int32_t colorR, int32_t colorG, int32_t colorB)
+bool InitEtherCell(int32_t posX, int32_t posY, int32_t posZ, EtherType::EEtherType type, int32_t colorR, int32_t colorG, int32_t colorB)
 {
-	if (universe.size() > xPos)
+	if (universe.size() > posX)
 	{
-		if (universe[xPos].size() > yPos)
+		if (universe[posX].size() > posY)
 		{
-			if (universe[xPos][yPos].size() > zPos)
+			if (universe[posX][posY].size() > posZ)
 			{
-				EtherCell &cell = universe[xPos][yPos][zPos];
+				EtherCell &cell = universe[posX][posY][posZ];
 				cell.m_type = type;
 				cell.m_color.m_colorR = colorR;
 				cell.m_color.m_colorG = colorG;

@@ -21,13 +21,14 @@ public:
 protected:
 	void NativeOnInitialized() override;
 	void NativeTick(const FGeometry &MyGeometry, float InDeltaTime) override;
+
 	// Button_SwitchCamera
 	UFUNCTION(BlueprintCallable, Category = "BlueprintCallable")
 	void SwitchCameraView();
 
-	// Button_EyeState
-	//UPROPERTY(EditDefaultsOnly)
-
+	// Button_ParallelPhysics
+	UFUNCTION(BlueprintCallable, Category = "BlueprintCallable")
+	void SwitchToParallelPhysics();
 
 private:
 	class UImage *EyeViewImage = nullptr;

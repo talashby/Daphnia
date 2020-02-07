@@ -71,3 +71,13 @@ void UMyHudWidget::SwitchCameraView()
 {
 	ADaphniaPawn::GetInstance()->SwitchView();
 }
+
+void UMyHudWidget::SwitchToParallelPhysics()
+{
+	UWorld* World = GetWorld();
+	if (World && World->IsGameWorld())
+	{
+		UGameViewportClient* ViewportClient = World->GetGameViewport();
+		ViewportClient->bDisableWorldRendering = true;
+	}
+}
