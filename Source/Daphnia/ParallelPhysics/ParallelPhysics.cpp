@@ -2,88 +2,71 @@
 #include "ParallelPhysics.h"
 #include "vector"
 
-namespace ParallelPhysics
+namespace PPh
 {
-
-struct EtherColor
-{
-	EtherColor() : m_colorB(0), m_colorG(0), m_colorR(0), m_colorA(0)
-	{}
-
-	union { struct { uint8_t m_colorB, m_colorG, m_colorR, m_colorA; }; uint32_t AlignmentDummy; };
-};
 
 struct EtherCell
 {
-	int32 m_type = EtherType::Space;
+	int32_t m_type = EtherType::Space;
 	EtherColor m_color;
 };
 
-std::vector< std::vector< std::vector<EtherCell> > > universe;
+std::vector< std::vector< std::vector<EtherCell> > > s_universe;
+ParallelPhysics *s_parallelPhysicsInstance = nullptr;
 
-
-bool Init(int32_t dimensionX, int32_t dimensionY, int32_t dimensionZ)
+bool ParallelPhysics::Init(const VectorIntMath &universeSize)
 {
-	if (0 < dimensionX && 0 < dimensionY && 0 < dimensionZ)
+	if (0 < universeSize.m_posX && 0 < universeSize.m_posY && 0 < universeSize.m_posZ)
 	{
-		universe.resize(dimensionX);
-		for (auto &itY : universe)
+		s_universe.resize(universeSize.m_posX);
+		for (auto &itY : s_universe)
 		{
-			itY.resize(dimensionY);
+			itY.resize(universeSize.m_posY);
 			for (auto &itZ : itY)
 			{
-				itZ.resize(dimensionZ);
+				itZ.resize(universeSize.m_posZ);
 			}
 		}
+		s_parallelPhysicsInstance = new ParallelPhysics();
+		GetInstance()->m_universeSize = universeSize;
 		return true;
 	}
 	return false;
 }
 
-int32_t GetDimensionX()
+ParallelPhysics* ParallelPhysics::GetInstance()
 {
-	return universe.size();
+	return s_parallelPhysicsInstance;
 }
 
-int32_t GetDimensionY()
+const PPh::VectorIntMath & ParallelPhysics::GetUniverseSize() const
 {
-	if (universe.size())
-	{
-		return universe[0].size();
-	}
-	return 0;
+	return m_universeSize;
 }
 
-int32_t GetDimensionZ()
+ParallelPhysics::ParallelPhysics()
+{}
+
+bool ParallelPhysics::InitEtherCell(const VectorIntMath &pos, EtherType::EEtherType type, const EtherColor &color)
 {
-	if (universe.size())
+	if (s_universe.size() > pos.m_posX)
 	{
-		if (universe[0].size())
+		if (s_universe[pos.m_posX].size() > pos.m_posY)
 		{
-			return universe[0][0].size();
-		}
-	}
-	return 0;
-}
-
-bool InitEtherCell(int32_t posX, int32_t posY, int32_t posZ, EtherType::EEtherType type, int32_t colorR, int32_t colorG, int32_t colorB)
-{
-	if (universe.size() > posX)
-	{
-		if (universe[posX].size() > posY)
-		{
-			if (universe[posX][posY].size() > posZ)
+			if (s_universe[pos.m_posX][pos.m_posY].size() > pos.m_posZ)
 			{
-				EtherCell &cell = universe[posX][posY][posZ];
+				EtherCell &cell = s_universe[pos.m_posX][pos.m_posY][pos.m_posZ];
 				cell.m_type = type;
-				cell.m_color.m_colorR = colorR;
-				cell.m_color.m_colorG = colorG;
-				cell.m_color.m_colorB = colorB;
+				cell.m_color = color;
 				return true;
 			}
 		}
 	}
 	return false;
+}
+
+void Observer::Init(const VectorIntMath &position, const VectorIntMath &direction)
+{
 }
 
 }

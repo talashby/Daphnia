@@ -26,7 +26,8 @@ void UPPSettings::ConvertGeometry(UWorld *World)
 {
 	check(World);
 	FVector UniverseSize = UniverseBox.GetSize();
-	bool bParallelPhysicsInit = ParallelPhysics::Init(UniverseSize.X/UniverseEtherCellSize, UniverseSize.Y/UniverseEtherCellSize, UniverseSize.Z/UniverseEtherCellSize);
+	PPh::VectorIntMath pphUniverseSize(UniverseSize.X / UniverseEtherCellSize, UniverseSize.Y / UniverseEtherCellSize, UniverseSize.Z / UniverseEtherCellSize);
+	bool bParallelPhysicsInit = PPh::ParallelPhysics::Init(pphUniverseSize);
 	check(bParallelPhysicsInit);
 
 	for (TActorIterator<AStaticMeshActor> ActorItr(World); ActorItr; ++ActorItr)
@@ -47,12 +48,13 @@ void UPPSettings::ConvertGeometry(UWorld *World)
 						{
 							check(1 == Comps.Num()); // Support one UStaticMeshComponent for now
 							// count universe coords
-							int32 universePosX = (ActorBox.Min.X + xx - UniverseBox.Min.X) / UniverseEtherCellSize;
-							check(0 <= universePosX && universePosX < ParallelPhysics::GetDimensionX());
-							int32 universePosY = (ActorBox.Min.Y + yy - UniverseBox.Min.Y) / UniverseEtherCellSize;
-							check(0 <= universePosY && universePosY < ParallelPhysics::GetDimensionY());
-							int32 universePosZ = (ActorBox.Min.Z + zz - UniverseBox.Min.Z) / UniverseEtherCellSize;
-							check(0 <= universePosZ && universePosZ < ParallelPhysics::GetDimensionX());
+							PPh::VectorIntMath universePos;
+							universePos.m_posX = (ActorBox.Min.X + xx - UniverseBox.Min.X) / UniverseEtherCellSize;
+							check(0 <= universePos.m_posX && universePos.m_posX < pphUniverseSize.m_posX);
+							universePos.m_posY = (ActorBox.Min.Y + yy - UniverseBox.Min.Y) / UniverseEtherCellSize;
+							check(0 <= universePos.m_posY && universePos.m_posY < pphUniverseSize.m_posY);
+							universePos.m_posZ = (ActorBox.Min.Z + zz - UniverseBox.Min.Z) / UniverseEtherCellSize;
+							check(0 <= universePos.m_posZ && universePos.m_posZ < pphUniverseSize.m_posZ);
 
 							const TArray<class UMaterialInstance *>& GameObjectMaterials = ALevelSettings::GetInstance()->GetGameObjectMaterials();
 							bool isCrumb = false;
@@ -63,8 +65,8 @@ void UPPSettings::ConvertGeometry(UWorld *World)
 									static std::array<FColor, 4> Colors = { FColor::Green, FColor::Yellow, FColor::Red, FColor::Blue };
 									if (ii < Colors.size())
 									{
-										bool bInitEtherCell = ParallelPhysics::InitEtherCell(universePosX, universePosY, universePosZ,
-											ParallelPhysics::EtherType::Crumb, Colors[ii].R, Colors[ii].G, Colors[ii].B);
+										PPh::EtherColor etherColor(Colors[ii].R, Colors[ii].G, Colors[ii].B);
+										bool bInitEtherCell = PPh::ParallelPhysics::GetInstance()->InitEtherCell(universePos, PPh::EtherType::Crumb, etherColor);
 										check(bInitEtherCell);
 										isCrumb = true;
 										break;
@@ -78,8 +80,8 @@ void UPPSettings::ConvertGeometry(UWorld *World)
 							if (!isCrumb)
 							{
 								constexpr uint8 blockGrayColor = 50;
-								bool bInitEtherCell = ParallelPhysics::InitEtherCell(universePosX, universePosY, universePosZ,
-									ParallelPhysics::EtherType::Block, blockGrayColor, blockGrayColor, blockGrayColor);
+								PPh::EtherColor etherColor(blockGrayColor, blockGrayColor, blockGrayColor);
+								bool bInitEtherCell = PPh::ParallelPhysics::GetInstance()->InitEtherCell(universePos, PPh::EtherType::Block, etherColor);
 								check(bInitEtherCell);
 							}
 						}

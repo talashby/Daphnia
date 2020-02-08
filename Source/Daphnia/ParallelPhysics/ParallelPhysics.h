@@ -1,31 +1,46 @@
 #pragma once
 
-namespace ParallelPhysics
-{
-	bool Init(int32_t dimensionX, int32_t dimensionY, int32_t dimensionZ); // returns true if success
+#include "PPhHelpers.h"
 
-	int32_t GetDimensionX();
-	int32_t GetDimensionY();
-	int32_t GetDimensionZ();
+namespace PPh
+{
+
+struct EtherType
+{
+	enum EEtherType
+	{
+		Space = 0,
+		Crumb,
+		Block
+	};
+};
+
+class ParallelPhysics
+{
+public:
+
+	static bool Init(const VectorIntMath &universeSize); // returns true if success
+	static ParallelPhysics* GetInstance();
+
+	bool InitEtherCell(const VectorIntMath &pos, EtherType::EEtherType type, const EtherColor &color); // returns true if success
+
+	const VectorIntMath & GetUniverseSize() const;
 
 	void StartSimulation();
 	void StopSimulation();
 
+private:
+	ParallelPhysics();
+
+	VectorIntMath m_universeSize = VectorIntMath::ZeroVector;
+};
+
+
+
 	struct Observer
 	{
-		void Init(int32_t posX, int32_t posY, int32_t posZ, int32_t rotX, int32_t rotY, int32_t rotZ);
+		void Init(const VectorIntMath &position, const VectorIntMath &direction);
 
 		Observer* GetInstance();
 	};
-
-	struct EtherType
-	{
-		enum EEtherType
-		{
-			Space = 0,
-			Crumb,
-			Block
-		};
-	};
-	bool InitEtherCell(int32_t posX, int32_t posY, int32_t posZ, EtherType::EEtherType type, int32_t colorR, int32_t colorG, int32_t colorB); // returns true if success
 }
