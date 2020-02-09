@@ -3,8 +3,7 @@
 
 #include "MyHudWidget.h"
 #include "DaphniaPawn.h"
-
-
+#include "ParallelPhysics/PPSettings.h"
 #include "MyPlayerController.h"
 #include "Components/Image.h"
 #include "Runtime/UMG/Public/UMG.h"
@@ -79,5 +78,7 @@ void UMyHudWidget::SwitchToParallelPhysics()
 	{
 		UGameViewportClient* ViewportClient = World->GetGameViewport();
 		ViewportClient->bDisableWorldRendering = true;
+		FRotator Rotator = ADaphniaPawn::GetInstance()->GetActorRotation();
+		PPh::VectorIntMath orientation = UPPSettings::ConvertRotationToPPhOrientation(Rotator);
 	}
 }

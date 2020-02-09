@@ -11,7 +11,8 @@ struct EtherType
 	{
 		Space = 0,
 		Crumb,
-		Block
+		Block,
+		Observer
 	};
 };
 
@@ -22,7 +23,7 @@ public:
 	static bool Init(const VectorIntMath &universeSize); // returns true if success
 	static ParallelPhysics* GetInstance();
 
-	bool InitEtherCell(const VectorIntMath &pos, EtherType::EEtherType type, const EtherColor &color); // returns true if success
+	bool InitEtherCell(const VectorIntMath &pos, EtherType::EEtherType type, const EtherColor &color = EtherColor()); // returns true if success
 
 	const VectorIntMath & GetUniverseSize() const;
 
@@ -37,10 +38,14 @@ private:
 
 
 
-	struct Observer
-	{
-		void Init(const VectorIntMath &position, const VectorIntMath &direction);
+class Observer
+{
+public:
+	void Init(const VectorIntMath &position, const VectorIntMath &orientation);
 
-		Observer* GetInstance();
-	};
+	static Observer* GetInstance();
+
+private:
+	VectorIntMath m_orientation = VectorIntMath::ZeroVector;
+};
 }

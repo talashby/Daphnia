@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "PPhHelpers.h"
 #include "PPSettings.generated.h"
 
 /**
@@ -19,7 +20,9 @@ class UPPSettings : public UObject
 public:
 
 	void Init(UWorld *World);
+	static UPPSettings* GetInstance();
 	void ConvertGeometry(UWorld *World);
+	static PPh::VectorIntMath ConvertRotationToPPhOrientation(const FRotator &Rotator);
 
 private:
 

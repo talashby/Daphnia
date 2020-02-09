@@ -4,6 +4,9 @@
 
 namespace PPh
 {
+	constexpr int MAX_INT = 2147483647;
+	constexpr int MIN_INT = -MAX_INT;
+
 	class VectorIntMath
 	{
 	public:

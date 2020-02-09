@@ -8,18 +8,26 @@
 #include "array"
 #include "ParallelPhysics.h"
 
+static UPPSettings *s_PPSettings = nullptr;
+
 UPPSettings::UPPSettings()
 {
 }
 
 void UPPSettings::Init(UWorld *World)
 {
+	s_PPSettings = this;
 	check(World);
 
 	if (bUseCppUniverseSize)
 	{
 		UniverseBox = ALevelSettings::GetInstance()->GetUniverseBoundingBox();
 	}
+}
+
+UPPSettings* UPPSettings::GetInstance()
+{
+	return s_PPSettings;
 }
 
 void UPPSettings::ConvertGeometry(UWorld *World)
@@ -89,24 +97,57 @@ void UPPSettings::ConvertGeometry(UWorld *World)
 				}
 			}
 		}
-		/*
-		if (pGameObjectComponent)
-		{
-			for (int ii = 0; ii < GameObjectMaterials.Num(); ++ii)
-			{
-				if (GameObjectMaterials[ii] == OverlappedComp->GetMaterial(0))
-				{
-					// todo
-				}
-			}
-		} */
-
-		
-		/*FString SceneActorName = ActorItr->GetName();
-		if (!SceneActorName.Compare(sActorName) || sActorName.IsEmpty())
-		{
-			pOutActor = *ActorItr;
-			return true;
-		}*/
 	}
+}
+
+int32 RoundToMinMaxPPhInt(double value)
+{
+	int64 val64 = (int64)(0.5 + value);
+	if (0 > val64)
+	{
+		val64 = std::max(val64, (int64)PPh::MIN_INT);
+	}
+	else
+	{
+		val64 = std::min(val64, (int64)PPh::MAX_INT);
+	}
+	return (int32)val64;
+}
+
+int32 FixFloatErrors(int32 component, int32 maxComponentValue)
+{
+	int32 componentCorrect = component;
+	if (std::abs(component) == maxComponentValue)
+	{
+		if (0 > component)
+		{
+			componentCorrect = PPh::MIN_INT;
+		}
+		else
+		{
+			componentCorrect = PPh::MAX_INT;
+		}
+	}
+	return componentCorrect;
+}
+
+PPh::VectorIntMath UPPSettings::ConvertRotationToPPhOrientation(const FRotator &Rotator)
+{
+	FVector orientationVector = Rotator.Vector();
+	float maxComponent = std::max(std::max(std::abs(orientationVector.X), std::abs(orientationVector.Y)), std::abs(orientationVector.Z));
+	double factor = 0;
+	if (maxComponent > 0)
+	{
+		factor = PPh::MAX_INT / (double)maxComponent;
+	}
+
+	PPh::VectorIntMath pphOrientation(RoundToMinMaxPPhInt(orientationVector.X*factor), RoundToMinMaxPPhInt(orientationVector.Y*factor),
+		RoundToMinMaxPPhInt(orientationVector.Z*factor));
+
+	int32 maxPPhComponent = std::max(std::max(std::abs(pphOrientation.m_posX), std::abs(pphOrientation.m_posY)), std::abs(pphOrientation.m_posZ));
+	pphOrientation.m_posX = FixFloatErrors(pphOrientation.m_posX, maxPPhComponent);
+	pphOrientation.m_posY = FixFloatErrors(pphOrientation.m_posY, maxPPhComponent);
+	pphOrientation.m_posZ = FixFloatErrors(pphOrientation.m_posZ, maxPPhComponent);
+
+	return pphOrientation;
 }

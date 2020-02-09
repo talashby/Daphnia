@@ -27,6 +27,10 @@ bool ParallelPhysics::Init(const VectorIntMath &universeSize)
 				itZ.resize(universeSize.m_posZ);
 			}
 		}
+		if (s_parallelPhysicsInstance)
+		{
+			delete s_parallelPhysicsInstance;
+		}
 		s_parallelPhysicsInstance = new ParallelPhysics();
 		GetInstance()->m_universeSize = universeSize;
 		return true;
@@ -65,8 +69,22 @@ bool ParallelPhysics::InitEtherCell(const VectorIntMath &pos, EtherType::EEtherT
 	return false;
 }
 
-void Observer::Init(const VectorIntMath &position, const VectorIntMath &direction)
+Observer* s_observer = nullptr;
+
+void Observer::Init(const VectorIntMath &position, const VectorIntMath &orientation)
 {
+	if (s_observer)
+	{
+		delete s_observer;
+	}
+	s_observer = new Observer();
+	s_observer->m_orientation = orientation;
+	ParallelPhysics::GetInstance()->InitEtherCell(position, EtherType::Observer);
+}
+
+PPh::Observer* Observer::GetInstance()
+{
+	return s_observer;
 }
 
 }
