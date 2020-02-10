@@ -56,13 +56,14 @@ void UPPSettings::ConvertGeometry(UWorld *World)
 						{
 							check(1 == Comps.Num()); // Support one UStaticMeshComponent for now
 							// count universe coords
-							PPh::VectorIntMath universePos;
-							universePos.m_posX = (ActorBox.Min.X + xx - UniverseBox.Min.X) / UniverseEtherCellSize;
+							FVector Location(ActorBox.Min.X + xx, ActorBox.Min.Y + yy, ActorBox.Min.Z + zz);
+							PPh::VectorIntMath universePos = ConvertLocationToPPhPosition(Location);
+							/*universePos.m_posX = (ActorBox.Min.X + xx - UniverseBox.Min.X) / UniverseEtherCellSize;
 							check(0 <= universePos.m_posX && universePos.m_posX < pphUniverseSize.m_posX);
 							universePos.m_posY = (ActorBox.Min.Y + yy - UniverseBox.Min.Y) / UniverseEtherCellSize;
 							check(0 <= universePos.m_posY && universePos.m_posY < pphUniverseSize.m_posY);
 							universePos.m_posZ = (ActorBox.Min.Z + zz - UniverseBox.Min.Z) / UniverseEtherCellSize;
-							check(0 <= universePos.m_posZ && universePos.m_posZ < pphUniverseSize.m_posZ);
+							check(0 <= universePos.m_posZ && universePos.m_posZ < pphUniverseSize.m_posZ);*/
 
 							const TArray<class UMaterialInstance *>& GameObjectMaterials = ALevelSettings::GetInstance()->GetGameObjectMaterials();
 							bool isCrumb = false;
@@ -129,6 +130,30 @@ int32 FixFloatErrors(int32 component, int32 maxComponentValue)
 		}
 	}
 	return componentCorrect;
+}
+
+PPh::VectorIntMath UPPSettings::ConvertLocationToPPhPosition(const FVector &Location)
+{
+	FVector UniverseBoxMin = UPPSettings::GetInstance()->UniverseBox.Min;
+	int32 UniverseEtherCellSize = UPPSettings::GetInstance()->UniverseEtherCellSize;
+	PPh::VectorIntMath universePos;
+	PPh::VectorIntMath pphUniverseSize = PPh::ParallelPhysics::GetInstance()->GetUniverseSize();
+	universePos.m_posX = (Location.X - UniverseBoxMin.X) / UniverseEtherCellSize;
+	check(0 <= universePos.m_posX && universePos.m_posX < pphUniverseSize.m_posX);
+	universePos.m_posX = std::max(0, universePos.m_posX);
+	universePos.m_posX = std::min(pphUniverseSize.m_posX - 1, universePos.m_posX);
+
+	universePos.m_posY = (Location.Y - UniverseBoxMin.Y) / UniverseEtherCellSize;
+	check(0 <= universePos.m_posY && universePos.m_posY < pphUniverseSize.m_posY);
+	universePos.m_posY = std::max(0, universePos.m_posY);
+	universePos.m_posY = std::min(pphUniverseSize.m_posY - 1, universePos.m_posY);
+
+	universePos.m_posZ = (Location.Z - UniverseBoxMin.Z) / UniverseEtherCellSize;
+	check(0 <= universePos.m_posZ && universePos.m_posZ < pphUniverseSize.m_posZ);
+	universePos.m_posZ = std::max(0, universePos.m_posZ);
+	universePos.m_posZ = std::min(pphUniverseSize.m_posZ - 1, universePos.m_posZ);
+
+	return universePos;
 }
 
 PPh::VectorIntMath UPPSettings::ConvertRotationToPPhOrientation(const FRotator &Rotator)

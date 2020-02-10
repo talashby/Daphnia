@@ -8,6 +8,7 @@
 #include "Components/Image.h"
 #include "Runtime/UMG/Public/UMG.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "ParallelPhysics/ParallelPhysics.h"
 
 static UMyHudWidget* s_InstancePtr;
 
@@ -78,7 +79,11 @@ void UMyHudWidget::SwitchToParallelPhysics()
 	{
 		UGameViewportClient* ViewportClient = World->GetGameViewport();
 		ViewportClient->bDisableWorldRendering = true;
+		FVector pawnLocation = ADaphniaPawn::GetInstance()->GetActorLocation();
+		PPh::VectorIntMath position = UPPSettings::ConvertLocationToPPhPosition(pawnLocation);
 		FRotator Rotator = ADaphniaPawn::GetInstance()->GetActorRotation();
 		PPh::VectorIntMath orientation = UPPSettings::ConvertRotationToPPhOrientation(Rotator);
+		PPh::Observer::Init(position, orientation);
+		PPh::ParallelPhysics::GetInstance()->StartSimulation();
 	}
 }

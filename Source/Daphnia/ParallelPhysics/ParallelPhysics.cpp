@@ -48,6 +48,16 @@ const PPh::VectorIntMath & ParallelPhysics::GetUniverseSize() const
 	return m_universeSize;
 }
 
+void ParallelPhysics::StartSimulation()
+{
+	Observer::GetInstance()->PPhTick();
+}
+
+void ParallelPhysics::StopSimulation()
+{
+
+}
+
 ParallelPhysics::ParallelPhysics()
 {}
 
@@ -69,6 +79,11 @@ bool ParallelPhysics::InitEtherCell(const VectorIntMath &pos, EtherType::EEtherT
 	return false;
 }
 
+bool ParallelPhysics::EmitPhoton(const VectorIntMath &pos, const VectorIntMath &orient)
+{
+	return true;
+}
+
 Observer* s_observer = nullptr;
 
 void Observer::Init(const VectorIntMath &position, const VectorIntMath &orientation)
@@ -78,6 +93,7 @@ void Observer::Init(const VectorIntMath &position, const VectorIntMath &orientat
 		delete s_observer;
 	}
 	s_observer = new Observer();
+	s_observer->m_position = position;
 	s_observer->m_orientation = orientation;
 	ParallelPhysics::GetInstance()->InitEtherCell(position, EtherType::Observer);
 }
@@ -85,6 +101,27 @@ void Observer::Init(const VectorIntMath &position, const VectorIntMath &orientat
 PPh::Observer* Observer::GetInstance()
 {
 	return s_observer;
+}
+
+void Observer::PPhTick()
+{
+	--m_echolocationCounter;
+	if (m_echolocationCounter <= 0)
+	{ // emit photons
+		m_echolocationCounter = ECHOLOCATION_FREQUENCY;
+		const uint32_t eyeNeuroneZoneLength = (EYE_FOV / EYE_SIZE) * 2;
+		const uint32_t halfEyeNeuroneZoneLength = eyeNeuroneZoneLength / 2;
+		for (int ii = 0; ii < EYE_SIZE; ++ii)
+		{
+			for (int jj = 0; jj < EYE_SIZE; ++jj)
+			{
+				int32_t shiftY = 0 - EYE_FOV + eyeNeuroneZoneLength * ii + halfEyeNeuroneZoneLength;
+				int32_t shiftZ = 0 - EYE_FOV + eyeNeuroneZoneLength * jj + halfEyeNeuroneZoneLength;
+				PPh::VectorIntMath orientation = PPh::OrientationRotation(m_orientation, shiftY, shiftZ);
+				ParallelPhysics::GetInstance()->EmitPhoton(m_position, orientation);
+			}
+		}
+	}
 }
 
 }

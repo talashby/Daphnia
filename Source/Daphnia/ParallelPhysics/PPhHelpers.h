@@ -4,7 +4,7 @@
 
 namespace PPh
 {
-	constexpr int MAX_INT = 2147483647;
+	constexpr int MAX_INT = 1073741824;
 	constexpr int MIN_INT = -MAX_INT;
 
 	class VectorIntMath
@@ -32,4 +32,8 @@ namespace PPh
 			uint32_t AlignmentDummy;
 		};
 	};
+
+	// Math
+
+	VectorIntMath OrientationRotation(const VectorIntMath &orient, int32_t shiftH, int32_t shiftV);
 }
