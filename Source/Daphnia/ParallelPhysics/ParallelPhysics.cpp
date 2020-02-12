@@ -1,6 +1,8 @@
 
 #include "ParallelPhysics.h"
 #include "vector"
+#include "algorithm"
+#include "array"
 
 namespace PPh
 {
@@ -86,7 +88,7 @@ bool ParallelPhysics::EmitPhoton(const VectorIntMath &pos, const VectorIntMath &
 
 Observer* s_observer = nullptr;
 
-void Observer::Init(const VectorIntMath &position, const VectorIntMath &orientation)
+void Observer::Init(const VectorIntMath &position, const SP_EyeState &eyeState)
 {
 	if (s_observer)
 	{
@@ -94,7 +96,7 @@ void Observer::Init(const VectorIntMath &position, const VectorIntMath &orientat
 	}
 	s_observer = new Observer();
 	s_observer->m_position = position;
-	s_observer->m_orientation = orientation;
+	s_observer->m_eyeState = eyeState;
 	ParallelPhysics::GetInstance()->InitEtherCell(position, EtherType::Observer);
 }
 
@@ -109,19 +111,97 @@ void Observer::PPhTick()
 	if (m_echolocationCounter <= 0)
 	{ // emit photons
 		m_echolocationCounter = ECHOLOCATION_FREQUENCY;
-		const uint32_t eyeNeuroneZoneLength = (EYE_FOV / EYE_SIZE) * 2;
-		const uint32_t halfEyeNeuroneZoneLength = eyeNeuroneZoneLength / 2;
-		for (int ii = 0; ii < EYE_SIZE; ++ii)
+
+		SP_EyeState newEyeState;
+		std::atomic_store(&newEyeState, m_newEyeState);
+		if (m_newEyeState && m_eyeState != m_newEyeState)
 		{
-			for (int jj = 0; jj < EYE_SIZE; ++jj)
+			m_eyeState = m_newEyeState;
+		}
+		const EyeArray &eyeArray = *m_eyeState;
+		for (int ii = 0; ii < eyeArray.size(); ++ii)
+		{
+			for (int jj = 0; jj < eyeArray[ii].size(); ++jj)
 			{
-				int32_t shiftY = 0 - EYE_FOV + eyeNeuroneZoneLength * ii + halfEyeNeuroneZoneLength;
-				int32_t shiftZ = 0 - EYE_FOV + eyeNeuroneZoneLength * jj + halfEyeNeuroneZoneLength;
-				PPh::VectorIntMath orientation = PPh::OrientationRotation(m_orientation, shiftY, shiftZ);
-				ParallelPhysics::GetInstance()->EmitPhoton(m_position, orientation);
+				ParallelPhysics::GetInstance()->EmitPhoton(m_position, eyeArray[ii][jj]);
 			}
 		}
 	}
 }
+
+void Observer::ChangeOrientation(const SP_EyeState &eyeState)
+{
+	std::atomic_store(&m_newEyeState, eyeState);
+}
+
+/*
+bool Observer::NormalizeHorizontal(VectorIntMath &orient)
+{
+	// check if exists bigger than max values
+	uint32_t absXY = std::max(std::abs(orient.m_posX), std::abs(orient.m_posY));
+	absXY = std::max((uint32_t)PPH_INT_MAX, absXY);
+	int32_t dif = absXY - PPH_INT_MAX;
+
+	if (0 < dif)
+	{
+		if (orient.m_posX == PPH_INT_MAX)
+		{
+			orient.m_posX -= dif;
+		}
+		else if (orient.m_posX == PPH_INT_MIN)
+		{
+			orient.m_posX += dif;
+		}
+		else if (orient.m_posY == PPH_INT_MAX)
+		{
+			orient.m_posY -= dif;
+		}
+		else if (orient.m_posY == PPH_INT_MIN)
+		{
+			orient.m_posY += dif;
+		}
+		else
+		{
+			return false; // error
+		}
+
+		orient.m_posX = std::min(orient.m_posX, PPH_INT_MAX);
+		orient.m_posX = std::max(orient.m_posX, PPH_INT_MIN);
+		orient.m_posY = std::min(orient.m_posY, PPH_INT_MAX);
+		orient.m_posY = std::max(orient.m_posY, PPH_INT_MIN);
+	}
+
+	return true;
+}
+
+VectorIntMath Observer::OrientationShift(const VectorIntMath &orient, int32_t shiftH, int32_t shiftV)
+{
+	VectorIntMath result = orient;
+
+	if (PPH_INT_MAX == orient.m_posX)
+	{
+		result.m_posY += shiftH;
+	}
+	else if (PPH_INT_MIN == orient.m_posX)
+	{
+		result.m_posY -= shiftH;
+	}
+	else if (PPH_INT_MAX == orient.m_posY)
+	{
+		result.m_posX -= shiftH;
+	}
+	else if (PPH_INT_MIN == orient.m_posY)
+	{
+		result.m_posX += shiftH;
+	}
+	else
+	{
+		return VectorIntMath::ZeroVector; // error
+	}
+
+	NormalizeHorizontal(result);
+
+	return result;
+}*/
 
 }

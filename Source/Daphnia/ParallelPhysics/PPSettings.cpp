@@ -106,11 +106,11 @@ int32 RoundToMinMaxPPhInt(double value)
 	int64 val64 = (int64)(0.5 + value);
 	if (0 > val64)
 	{
-		val64 = std::max(val64, (int64)PPh::MIN_INT);
+		val64 = std::max(val64, (int64)PPh::PPH_INT_MIN);
 	}
 	else
 	{
-		val64 = std::min(val64, (int64)PPh::MAX_INT);
+		val64 = std::min(val64, (int64)PPh::PPH_INT_MAX);
 	}
 	return (int32)val64;
 }
@@ -122,11 +122,11 @@ int32 FixFloatErrors(int32 component, int32 maxComponentValue)
 	{
 		if (0 > component)
 		{
-			componentCorrect = PPh::MIN_INT;
+			componentCorrect = PPh::PPH_INT_MIN;
 		}
 		else
 		{
-			componentCorrect = PPh::MAX_INT;
+			componentCorrect = PPh::PPH_INT_MAX;
 		}
 	}
 	return componentCorrect;
@@ -159,11 +159,16 @@ PPh::VectorIntMath UPPSettings::ConvertLocationToPPhPosition(const FVector &Loca
 PPh::VectorIntMath UPPSettings::ConvertRotationToPPhOrientation(const FRotator &Rotator)
 {
 	FVector orientationVector = Rotator.Vector();
+	return ConvertRotationToPPhOrientation(orientationVector);
+}
+
+PPh::VectorIntMath UPPSettings::ConvertRotationToPPhOrientation(const FVector &orientationVector)
+{
 	float maxComponent = std::max(std::max(std::abs(orientationVector.X), std::abs(orientationVector.Y)), std::abs(orientationVector.Z));
 	double factor = 0;
 	if (maxComponent > 0)
 	{
-		factor = PPh::MAX_INT / (double)maxComponent;
+		factor = PPh::PPH_INT_MAX / (double)maxComponent;
 	}
 
 	PPh::VectorIntMath pphOrientation(RoundToMinMaxPPhInt(orientationVector.X*factor), RoundToMinMaxPPhInt(orientationVector.Y*factor),

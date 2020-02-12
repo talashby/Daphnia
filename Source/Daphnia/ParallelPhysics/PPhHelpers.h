@@ -4,8 +4,8 @@
 
 namespace PPh
 {
-	constexpr int MAX_INT = 1073741824;
-	constexpr int MIN_INT = -MAX_INT;
+	constexpr int PPH_INT_MAX = 1073741824; // 2*MAX_INT-1 should be less or equal std::numeric_limits<int32_t>::max() because of arithmetics reasons
+	constexpr int PPH_INT_MIN = -PPH_INT_MAX; // 2*MIN_INT should be less or equal std::numeric_limits<int32_t>::min() because of arithmetics reasons
 
 	class VectorIntMath
 	{
@@ -33,7 +33,4 @@ namespace PPh
 		};
 	};
 
-	// Math
-
-	VectorIntMath OrientationRotation(const VectorIntMath &orient, int32_t shiftH, int32_t shiftV);
 }
