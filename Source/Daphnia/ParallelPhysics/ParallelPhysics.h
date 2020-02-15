@@ -21,13 +21,14 @@ class ParallelPhysics
 {
 public:
 
-	static bool Init(const VectorIntMath &universeSize); // returns true if success
+	static bool Init(const VectorIntMath &universeSize, uint8_t threadsCount); // returns true if success
 	static ParallelPhysics* GetInstance();
 
 	const VectorIntMath & GetUniverseSize() const;
 
 	void StartSimulation();
 	void StopSimulation();
+	bool IsSimulationRunning() const;
 
 	bool InitEtherCell(const VectorIntMath &pos, EtherType::EEtherType type, const EtherColor &color = EtherColor()); // returns true if success
 	bool EmitPhoton(const VectorIntMath &pos, const VectorIntMath &orient);
@@ -36,6 +37,8 @@ private:
 	ParallelPhysics();
 
 	VectorIntMath m_universeSize = VectorIntMath::ZeroVector;
+	uint8_t m_threadsCount = 1;
+	bool m_isSimulationRunning = false;
 };
 
 constexpr int32_t OBSERVER_EYE_SIZE = 32; // pixels

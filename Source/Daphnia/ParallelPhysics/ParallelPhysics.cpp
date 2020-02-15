@@ -3,6 +3,9 @@
 #include "vector"
 #include "algorithm"
 #include "array"
+#include "thread"
+#include "iostream"
+#include "atomic"
 
 namespace PPh
 {
@@ -10,7 +13,8 @@ namespace PPh
 ParallelPhysics *s_parallelPhysicsInstance = nullptr;
 
 std::vector< std::vector< std::vector<struct EtherCell> > > s_universe;
-uint64_t s_time = 0; // absolute universe time
+std::atomic<uint64_t> s_time = 0; // absolute universe time
+std::atomic<int32_t> s_waitThreadsCount = 0; // thread synchronization variable
 typedef std::vector<struct Photon> PhotonVector;
 typedef std::shared_ptr<PhotonVector> SP_PhotonVector;
 
@@ -28,7 +32,30 @@ struct EtherCell
 	std::array<SP_PhotonVector, 8> m_photonsOdd;
 };
 
-bool ParallelPhysics::Init(const VectorIntMath &universeSize)
+void UniverseThread(int32_t x1, int32_t x2, bool *isSimulationRunning)
+{
+	while (*isSimulationRunning)
+	{
+		int isTimeOdd = s_time % 2;
+
+		for (int32_t posX = x1; posX < x2; ++posX)
+		{
+			for (int32_t posY = 0; posY < ParallelPhysics::GetInstance()->GetUniverseSize().m_posY; ++posY)
+			{
+				for (int32_t posZ = 0; posZ < ParallelPhysics::GetInstance()->GetUniverseSize().m_posZ; ++posZ)
+				{
+				}
+			}
+		}
+		--s_waitThreadsCount;
+		while (s_time % 2 == isTimeOdd)
+		{
+		}
+	}
+	--s_waitThreadsCount;
+}
+
+bool ParallelPhysics::Init(const VectorIntMath &universeSize, uint8_t threadsCount)
 {
 	if (0 < universeSize.m_posX && 0 < universeSize.m_posY && 0 < universeSize.m_posZ)
 	{
@@ -47,6 +74,7 @@ bool ParallelPhysics::Init(const VectorIntMath &universeSize)
 		}
 		s_parallelPhysicsInstance = new ParallelPhysics();
 		GetInstance()->m_universeSize = universeSize;
+		GetInstance()->m_threadsCount = threadsCount;
 		return true;
 	}
 	return false;
@@ -62,14 +90,71 @@ const VectorIntMath & ParallelPhysics::GetUniverseSize() const
 	return m_universeSize;
 }
 
+std::thread s_simulationThread;
 void ParallelPhysics::StartSimulation()
 {
-	Observer::GetInstance()->PPhTick();
+	s_simulationThread = std::thread([this]() {
+		m_isSimulationRunning = true;
+		int32_t lengthForThread = m_universeSize.m_posX / m_threadsCount;
+
+		std::vector<std::thread> threads;
+		threads.resize(m_threadsCount);
+
+		s_waitThreadsCount = m_threadsCount + 1; // universe threads and observer thread
+		std::thread observerThread = std::thread([this]()
+		{
+			while (m_isSimulationRunning)
+			{
+				int32_t isTimeOdd = s_time % 2;
+				Observer::GetInstance()->PPhTick();
+				--s_waitThreadsCount;
+				while (s_time % 2 == isTimeOdd)
+				{
+				}
+			}
+			--s_waitThreadsCount;
+		});
+
+		int32_t lengthForThreadRemain = m_universeSize.m_posX - lengthForThread * m_threadsCount;
+		int32_t beginX = 0;
+		for (int ii = 0; ii < m_threadsCount; ++ii)
+		{
+			int32_t lengthX = lengthForThread;
+			if (0 < lengthForThreadRemain)
+			{
+				++lengthX;
+				--lengthForThreadRemain;
+			}
+			int32_t endX = beginX + lengthX;
+			threads[ii] = std::thread(UniverseThread, beginX, endX, &m_isSimulationRunning);
+			beginX = endX;
+		}
+
+		while (m_isSimulationRunning)
+		{
+			while (s_waitThreadsCount)
+			{
+			}
+			s_waitThreadsCount = m_threadsCount + 1; // universe threads and observer thread
+			++s_time;
+		}
+			/*observerThread.join();
+			for (int ii = 0; ii < m_threadsCount; ++ii)
+			{
+				threads[ii].join();
+			}*/
+	});
 }
 
 void ParallelPhysics::StopSimulation()
 {
+	m_isSimulationRunning = false;
+	s_simulationThread.join();
+}
 
+bool ParallelPhysics::IsSimulationRunning() const
+{
+	return m_isSimulationRunning;
 }
 
 ParallelPhysics::ParallelPhysics()
@@ -138,6 +223,7 @@ void Observer::PPhTick()
 				ParallelPhysics::GetInstance()->EmitPhoton(m_position, eyeArray[ii][jj]);
 			}
 		}
+		std::cout << "emit photons" << std::endl;
 	}
 }
 

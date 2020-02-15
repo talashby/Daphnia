@@ -76,37 +76,53 @@ void UMyHudWidget::SwitchCameraView()
 
 void UMyHudWidget::SwitchToParallelPhysics()
 {
-	UWorld* World = GetWorld();
-	if (World && World->IsGameWorld())
+	if (PPh::ParallelPhysics::GetInstance()->IsSimulationRunning())
 	{
-		PPh::SP_EyeState eyeState = std::make_shared<PPh::EyeArray>();
-		PPh::EyeArray &eyeArray = *eyeState;
-		UGameViewportClient* ViewportClient = World->GetGameViewport();
-		if (ViewportClient)
+		PPh::ParallelPhysics::GetInstance()->StopSimulation();
+		UWorld* World = GetWorld();
+		if (World && World->IsGameWorld())
 		{
-			ViewportClient->bDisableWorldRendering = true;
-			
-			FIntPoint Pos = ViewportClient->Viewport->GetInitialPositionXY();
-			FIntPoint Size = ViewportClient->Viewport->GetSizeXY();
-			FVector worldOrigin, worldDirection;
-			check(eyeArray.size() == PPh::OBSERVER_EYE_SIZE);
-			for (int ii = 0; ii < PPh::OBSERVER_EYE_SIZE; ++ii)
+			UGameViewportClient* ViewportClient = World->GetGameViewport();
+			if (ViewportClient)
 			{
-				check(eyeArray[ii].size() == PPh::OBSERVER_EYE_SIZE);
-				for (int jj = 0; jj < PPh::OBSERVER_EYE_SIZE; ++jj)
-				{
-					FVector2D PosFloat;
-					PosFloat.X = (float)Pos.X + Size.X * ((float)jj / (PPh::OBSERVER_EYE_SIZE - 1));
-					PosFloat.Y = (float)Pos.Y + Size.Y * ((float)ii / (PPh::OBSERVER_EYE_SIZE - 1));
-
-					UGameplayStatics::DeprojectScreenToWorld(AMyPlayerController::GetInstance(), PosFloat, worldOrigin, worldDirection);
-					eyeArray[ii][jj] = UPPSettings::ConvertRotationToPPhOrientation(worldDirection);
-				}
+				ViewportClient->bDisableWorldRendering = false;
 			}
-			FVector pawnLocation = ADaphniaPawn::GetInstance()->GetActorLocation();
-			PPh::VectorIntMath position = UPPSettings::ConvertLocationToPPhPosition(pawnLocation);
-			PPh::Observer::Init(position, eyeState);
-			PPh::ParallelPhysics::GetInstance()->StartSimulation();
+		}
+	}
+	else
+	{
+		UWorld* World = GetWorld();
+		if (World && World->IsGameWorld())
+		{
+			PPh::SP_EyeState eyeState = std::make_shared<PPh::EyeArray>();
+			PPh::EyeArray &eyeArray = *eyeState;
+			UGameViewportClient* ViewportClient = World->GetGameViewport();
+			if (ViewportClient)
+			{
+				ViewportClient->bDisableWorldRendering = true;
+
+				FIntPoint Pos = ViewportClient->Viewport->GetInitialPositionXY();
+				FIntPoint Size = ViewportClient->Viewport->GetSizeXY();
+				FVector worldOrigin, worldDirection;
+				check(eyeArray.size() == PPh::OBSERVER_EYE_SIZE);
+				for (int ii = 0; ii < PPh::OBSERVER_EYE_SIZE; ++ii)
+				{
+					check(eyeArray[ii].size() == PPh::OBSERVER_EYE_SIZE);
+					for (int jj = 0; jj < PPh::OBSERVER_EYE_SIZE; ++jj)
+					{
+						FVector2D PosFloat;
+						PosFloat.X = (float)Pos.X + Size.X * ((float)jj / (PPh::OBSERVER_EYE_SIZE - 1));
+						PosFloat.Y = (float)Pos.Y + Size.Y * ((float)ii / (PPh::OBSERVER_EYE_SIZE - 1));
+
+						UGameplayStatics::DeprojectScreenToWorld(AMyPlayerController::GetInstance(), PosFloat, worldOrigin, worldDirection);
+						eyeArray[ii][jj] = UPPSettings::ConvertRotationToPPhOrientation(worldDirection);
+					}
+				}
+				FVector pawnLocation = ADaphniaPawn::GetInstance()->GetActorLocation();
+				PPh::VectorIntMath position = UPPSettings::ConvertLocationToPPhPosition(pawnLocation);
+				PPh::Observer::Init(position, eyeState);
+				PPh::ParallelPhysics::GetInstance()->StartSimulation();
+			}
 		}
 	}
 }
