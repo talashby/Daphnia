@@ -7,14 +7,26 @@
 namespace PPh
 {
 
+ParallelPhysics *s_parallelPhysicsInstance = nullptr;
+
+std::vector< std::vector< std::vector<struct EtherCell> > > s_universe;
+uint64_t s_time = 0; // absolute universe time
+typedef std::vector<struct Photon> PhotonVector;
+typedef std::shared_ptr<PhotonVector> SP_PhotonVector;
+
+struct Photon
+{
+	VectorIntMath m_orientation;
+	EtherColor m_color;
+};
+
 struct EtherCell
 {
 	int32_t m_type = EtherType::Space;
 	EtherColor m_color;
+	std::array<SP_PhotonVector, 8> m_photonsEven; 
+	std::array<SP_PhotonVector, 8> m_photonsOdd;
 };
-
-std::vector< std::vector< std::vector<EtherCell> > > s_universe;
-ParallelPhysics *s_parallelPhysicsInstance = nullptr;
 
 bool ParallelPhysics::Init(const VectorIntMath &universeSize)
 {
@@ -45,7 +57,7 @@ ParallelPhysics* ParallelPhysics::GetInstance()
 	return s_parallelPhysicsInstance;
 }
 
-const PPh::VectorIntMath & ParallelPhysics::GetUniverseSize() const
+const VectorIntMath & ParallelPhysics::GetUniverseSize() const
 {
 	return m_universeSize;
 }
