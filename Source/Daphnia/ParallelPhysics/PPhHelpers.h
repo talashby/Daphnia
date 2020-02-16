@@ -33,4 +33,9 @@ namespace PPh
 		};
 	};
 
+	namespace RandomUniverse
+	{
+		void Init();
+		int32_t GetRandomNumber(); // from 0 to PPH_INT_MAX
+	};
 }

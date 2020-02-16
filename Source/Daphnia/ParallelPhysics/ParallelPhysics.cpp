@@ -59,6 +59,7 @@ bool ParallelPhysics::Init(const VectorIntMath &universeSize, uint8_t threadsCou
 {
 	if (0 < universeSize.m_posX && 0 < universeSize.m_posY && 0 < universeSize.m_posZ)
 	{
+		RandomUniverse::Init();
 		s_universe.resize(universeSize.m_posX);
 		for (auto &itY : s_universe)
 		{
@@ -138,11 +139,11 @@ void ParallelPhysics::StartSimulation()
 			s_waitThreadsCount = m_threadsCount + 1; // universe threads and observer thread
 			++s_time;
 		}
-			/*observerThread.join();
-			for (int ii = 0; ii < m_threadsCount; ++ii)
-			{
-				threads[ii].join();
-			}*/
+		observerThread.join();
+		for (int ii = 0; ii < m_threadsCount; ++ii)
+		{
+			threads[ii].join();
+		}
 	});
 }
 
