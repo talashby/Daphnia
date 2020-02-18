@@ -34,7 +34,7 @@ class ADaphniaPawn : public APawn
 	class USceneCaptureComponent2D* EyeSceneCaptureComponent2D;
 
 	UPROPERTY(Category = CameraEye, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	int32 EyeTextureSize = 16;
+	int32 EyeTextureSize = 32;
 public:
 	ADaphniaPawn();
 	static ADaphniaPawn* GetInstance();

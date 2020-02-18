@@ -15,6 +15,17 @@ namespace PPh
 		VectorIntMath() = default;
 		VectorIntMath(int32_t posX, int32_t posY, int32_t posZ);
 
+		__forceinline VectorIntMath operator+(const VectorIntMath& V) const
+		{
+			return VectorIntMath(m_posX + V.m_posX, m_posY + V.m_posY, m_posZ + V.m_posZ);
+		}
+
+		__forceinline VectorIntMath operator*=(const int32_t& scale)
+		{
+			m_posX *= scale; m_posY *= scale; m_posZ *= scale;
+			return *this;
+		}
+
 		int32_t m_posX;
 		int32_t m_posY;
 		int32_t m_posZ;
@@ -38,4 +49,11 @@ namespace PPh
 		void Init();
 		int32_t GetRandomNumber(); // from 0 to PPH_INT_MAX
 	};
+
+	__forceinline int sign(int32_t x)
+	{
+		return (x > 0) - (x < 0);
+	}
+
+	int64_t GetTimeMs();
 }

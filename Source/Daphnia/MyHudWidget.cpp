@@ -30,7 +30,27 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 {
 	if (EyeViewImage && EyeViewImage->IsVisible())
 	{
-		auto RenderTarget2D = ADaphniaPawn::GetInstance()->GetEyeRenderTarget2D();
+		if (PPh::Observer::GetInstance())
+		{
+			PPh::SP_EyeColorArray spEyeColorArray = PPh::Observer::GetInstance()->GrabTexture();
+			if (spEyeColorArray)
+			{
+				const int32 EyeTextureSize = ADaphniaPawn::GetInstance()->GetEyeTextureSize();
+				EyeViewTexture2D = UTexture2D::CreateTransient(EyeTextureSize, EyeTextureSize);
+				check(EyeViewTexture2D);
+				if (EyeViewTexture2D)
+				{
+					FTexture2DMipMap& Mip = EyeViewTexture2D->PlatformData->Mips[0];
+					void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
+					FMemory::Memcpy(Data, &(*spEyeColorArray)[0][0], (EyeTextureSize * EyeTextureSize * 4));
+					Mip.BulkData.Unlock();
+					EyeViewTexture2D->UpdateResource();
+				}
+
+				EyeViewImage->SetBrushFromTexture(EyeViewTexture2D);
+			}
+		}
+		/*auto RenderTarget2D = ADaphniaPawn::GetInstance()->GetEyeRenderTarget2D();
 		if (RenderTarget2D)
 		{
 			EyeViewImage->SetBrushFromTexture(nullptr);
@@ -57,7 +77,7 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 			}
 			
 			EyeViewImage->SetBrushFromTexture(EyeViewTexture2D);
-		}
+		}*/
 	}
 
 	Super::NativeTick(MyGeometry, InDeltaTime);

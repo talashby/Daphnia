@@ -2,6 +2,7 @@
 
 #include "PPhHelpers.h"
 #include "memory"
+#include "array"
 
 namespace PPh
 {
@@ -31,10 +32,13 @@ public:
 	bool IsSimulationRunning() const;
 
 	bool InitEtherCell(const VectorIntMath &pos, EtherType::EEtherType type, const EtherColor &color = EtherColor()); // returns true if success
-	bool EmitPhoton(const VectorIntMath &pos, const VectorIntMath &orient);
+	bool EmitPhoton(const VectorIntMath &pos, const struct Photon &photon);
 
 private:
 	ParallelPhysics();
+
+	static int32_t GetCellPhotonIndex(const VectorIntMath &unitVector);
+	bool IsPosBounds(const VectorIntMath &pos);
 
 	VectorIntMath m_universeSize = VectorIntMath::ZeroVector;
 	uint8_t m_threadsCount = 1;
@@ -42,8 +46,12 @@ private:
 };
 
 constexpr int32_t OBSERVER_EYE_SIZE = 32; // pixels
+constexpr int32_t UPDATE_EYE_TEXTURE_OUT = 200; // milliseconds
 typedef std::array< std::array<VectorIntMath, OBSERVER_EYE_SIZE>, OBSERVER_EYE_SIZE> EyeArray;
 typedef std::shared_ptr< EyeArray > SP_EyeState;
+typedef std::array< std::array<EtherColor, OBSERVER_EYE_SIZE>, OBSERVER_EYE_SIZE> EyeColorArray;
+typedef std::array< std::array<uint64_t, OBSERVER_EYE_SIZE>, OBSERVER_EYE_SIZE> EyeUpdateTimeArray;
+typedef std::shared_ptr< EyeColorArray > SP_EyeColorArray;
 
 class Observer
 {
@@ -55,6 +63,7 @@ public:
 	void PPhTick();
 
 	void ChangeOrientation(const SP_EyeState &eyeState);
+	SP_EyeColorArray GrabTexture();
 private:
 
 	// Math
@@ -66,10 +75,16 @@ private:
 	SP_EyeState m_eyeState;
 	SP_EyeState m_newEyeState; // Used from different threads
 
-	const int32_t EYE_IMAGE_DELAY = 300; // quantum of time
+	const int32_t EYE_IMAGE_DELAY = 10000; // quantum of time
 	//const uint32_t EYE_FOV = PPH_INT_MAX/2; // quantum of length (MAX_INT/2 - 90 degrees; MAX_INT - 180 degrees; 2*MAX_INT - 360 degrees)
 
-	const int32_t ECHOLOCATION_FREQUENCY = 1000; // quantum of time
+	const int32_t ECHOLOCATION_FREQUENCY = 100; // quantum of time
 	int32_t m_echolocationCounter = 0;
+
+	EyeColorArray m_eyeColorArray = EyeColorArray();
+	EyeUpdateTimeArray m_eyeUpdateTimeArray = EyeUpdateTimeArray();
+
+	int64_t m_lastTextureUpdateTime = 0;
+	SP_EyeColorArray m_spEyeColorArrayOut;
 };
 }
