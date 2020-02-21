@@ -9,8 +9,12 @@
 namespace PPh
 {
 const VectorIntMath VectorIntMath::ZeroVector(0, 0, 0);
+const VectorIntMath VectorIntMath::OneVector(1, 1, 1);
 
 VectorIntMath::VectorIntMath(int32_t posX, int32_t posY, int32_t posZ) : m_posX(posX), m_posY(posY), m_posZ(posZ)
+{}
+
+BoxIntMath::BoxIntMath(const VectorIntMath &minVector, const VectorIntMath &maxVector) : m_minVector(minVector), m_maxVector(maxVector)
 {}
 
 EtherColor::EtherColor() : m_colorB(0), m_colorG(0), m_colorR(0), m_colorA(0)

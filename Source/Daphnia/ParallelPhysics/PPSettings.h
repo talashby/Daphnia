@@ -42,4 +42,8 @@ private:
 	/** How many threads use to parallel physics simulation. */
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	int8 ThreadsCount = 6;
+
+	/** If true then physics calculates near observer. Forcedly use N threads. */
+	UPROPERTY(EditAnywhere, Category = "Settings")
+	bool bCalculateNearObserver = true;
 };

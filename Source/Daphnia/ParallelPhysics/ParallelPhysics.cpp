@@ -15,8 +15,10 @@ ParallelPhysics *s_parallelPhysicsInstance = nullptr;
 std::vector< std::vector< std::vector<struct EtherCell> > > s_universe;
 std::atomic<uint64_t> s_time = 0; // absolute universe time
 std::atomic<int32_t> s_waitThreadsCount = 0; // thread synchronization variable
+std::vector<BoxIntMath> s_threadSimulateBounds; // [minVector; maxVector)
 typedef std::vector<struct Photon> PhotonVector;
 typedef std::shared_ptr<PhotonVector> SP_PhotonVector;
+
 
 struct Photon
 {
@@ -35,17 +37,17 @@ struct EtherCell
 	std::array <std::array<SP_PhotonVector, 26>, 2> m_photons;
 };
 
-void UniverseThread(int32_t x1, int32_t x2, bool *isSimulationRunning)
+void UniverseThread(int32_t threadNum, bool *isSimulationRunning)
 {
 	while (*isSimulationRunning)
 	{
 		int isTimeOdd = s_time % 2;
 
-		for (int32_t posX = x1; posX < x2; ++posX)
+		for (int32_t posX = s_threadSimulateBounds[threadNum].m_minVector.m_posX; posX < s_threadSimulateBounds[threadNum].m_maxVector.m_posX; ++posX)
 		{
-			for (int32_t posY = 0; posY < ParallelPhysics::GetInstance()->GetUniverseSize().m_posY; ++posY)
+			for (int32_t posY = s_threadSimulateBounds[threadNum].m_minVector.m_posY; posY < s_threadSimulateBounds[threadNum].m_maxVector.m_posY; ++posY)
 			{
-				for (int32_t posZ = 0; posZ < ParallelPhysics::GetInstance()->GetUniverseSize().m_posZ; ++posZ)
+				for (int32_t posZ = s_threadSimulateBounds[threadNum].m_minVector.m_posZ; posZ < s_threadSimulateBounds[threadNum].m_maxVector.m_posZ; ++posZ)
 				{
 					EtherCell &cell = s_universe[posX][posY][posZ];
 					if (cell.m_type == EtherType::Observer)
@@ -65,9 +67,15 @@ void UniverseThread(int32_t x1, int32_t x2, bool *isSimulationRunning)
 							if (cell.m_type == EtherType::Crumb || cell.m_type == EtherType::Block)
 							{
 								it->m_orientation *= -1;
+								uint8_t tmpA = it->m_color.m_colorA;
 								it->m_color = cell.m_color;
+								it->m_color.m_colorA = tmpA;
 							}
-							ParallelPhysics::GetInstance()->EmitPhoton({ posX, posY, posZ }, *it);
+							if (it->m_color.m_colorA > 25)
+							{
+								it->m_color.m_colorA -= 25;
+								ParallelPhysics::GetInstance()->EmitPhoton({ posX, posY, posZ }, *it);
+							}
 							it = spPhotonVector->erase(it);
 						}
 						if (!spPhotonVector->size())
@@ -106,7 +114,34 @@ bool ParallelPhysics::Init(const VectorIntMath &universeSize, uint8_t threadsCou
 		}
 		s_parallelPhysicsInstance = new ParallelPhysics();
 		GetInstance()->m_universeSize = universeSize;
-		GetInstance()->m_threadsCount = threadsCount;
+		if (0 == threadsCount)
+		{
+			GetInstance()->m_bSimulateNearObserver = true;
+			GetInstance()->m_threadsCount = 4;
+		}
+		else
+		{
+			GetInstance()->m_threadsCount = threadsCount;
+		}
+		// fill bounds
+		s_threadSimulateBounds.resize(GetInstance()->m_threadsCount);
+		int32_t lengthForThread = GetInstance()->m_universeSize.m_posX / GetInstance()->m_threadsCount;
+		int32_t lengthForThreadRemain = GetInstance()->m_universeSize.m_posX - lengthForThread * GetInstance()->m_threadsCount;
+		int32_t beginX = 0;
+		for (int ii = 0; ii < GetInstance()->m_threadsCount; ++ii)
+		{
+			int32_t lengthX = lengthForThread;
+			if (0 < lengthForThreadRemain)
+			{
+				++lengthX;
+				--lengthForThreadRemain;
+			}
+			int32_t endX = beginX + lengthX;
+			s_threadSimulateBounds[ii].m_minVector = VectorIntMath(beginX, 0, 0);
+			s_threadSimulateBounds[ii].m_maxVector = VectorIntMath(endX, GetInstance()->m_universeSize.m_posY, GetInstance()->m_universeSize.m_posZ);
+			beginX = endX;
+		}
+
 		return true;
 	}
 	return false;
@@ -127,8 +162,6 @@ void ParallelPhysics::StartSimulation()
 {
 	s_simulationThread = std::thread([this]() {
 		m_isSimulationRunning = true;
-		int32_t lengthForThread = m_universeSize.m_posX / m_threadsCount;
-
 		std::vector<std::thread> threads;
 		threads.resize(m_threadsCount);
 
@@ -147,19 +180,25 @@ void ParallelPhysics::StartSimulation()
 			--s_waitThreadsCount;
 		});
 
-		int32_t lengthForThreadRemain = m_universeSize.m_posX - lengthForThread * m_threadsCount;
-		int32_t beginX = 0;
+		if (m_bSimulateNearObserver)
+		{
+			VectorIntMath observerPos = Observer::GetInstance()->GetPosition();
+			VectorIntMath boundSize(8, 8, 8);
+			VectorIntMath boundsMax = observerPos + boundSize;
+			boundSize *= -1;
+			VectorIntMath boundsMin = observerPos + boundSize;
+			AdjustSizeByBounds(boundsMax);
+			AdjustSizeByBounds(boundsMin);
+			s_threadSimulateBounds[0] = BoxIntMath(boundsMin, { boundsMax.m_posX, observerPos.m_posY, observerPos.m_posZ });
+			s_threadSimulateBounds[1] = BoxIntMath({ boundsMin.m_posX, observerPos.m_posY, boundsMin.m_posZ },
+				{ boundsMax.m_posX, boundsMax.m_posY, observerPos.m_posZ });
+			s_threadSimulateBounds[2] = BoxIntMath({ boundsMin.m_posX, observerPos.m_posY, observerPos.m_posZ }, boundsMax);
+			s_threadSimulateBounds[3] = BoxIntMath({ boundsMin.m_posX, boundsMin.m_posY, observerPos.m_posZ },
+				{ boundsMax.m_posX, observerPos.m_posY, boundsMax.m_posZ });
+		}
 		for (int ii = 0; ii < m_threadsCount; ++ii)
 		{
-			int32_t lengthX = lengthForThread;
-			if (0 < lengthForThreadRemain)
-			{
-				++lengthX;
-				--lengthForThreadRemain;
-			}
-			int32_t endX = beginX + lengthX;
-			threads[ii] = std::thread(UniverseThread, beginX, endX, &m_isSimulationRunning);
-			beginX = endX;
+			threads[ii] = std::thread(UniverseThread, ii, &m_isSimulationRunning);
 		}
 
 		while (m_isSimulationRunning)
@@ -169,6 +208,12 @@ void ParallelPhysics::StartSimulation()
 			}
 			s_waitThreadsCount = m_threadsCount + 1; // universe threads and observer thread
 			++s_time;
+			if (Observer::GetInstance()->GetPosition() != Observer::GetInstance()->GetNewPosition())
+			{
+				GetInstance()->InitEtherCell(Observer::GetInstance()->GetNewPosition(), EtherType::Observer);
+				GetInstance()->InitEtherCell(Observer::GetInstance()->GetPosition(), EtherType::Space);
+				Observer::GetInstance()->SetPosition(Observer::GetInstance()->GetNewPosition());
+			}
 		}
 		observerThread.join();
 		for (int ii = 0; ii < m_threadsCount; ++ii)
@@ -202,7 +247,7 @@ int32_t ParallelPhysics::GetCellPhotonIndex(const VectorIntMath &unitVector)
 	return index;
 }
 
-bool ParallelPhysics::IsPosBounds(const VectorIntMath &pos)
+bool ParallelPhysics::IsPosInBounds(const VectorIntMath &pos)
 {
 	const VectorIntMath &size = GetUniverseSize();
 	if (pos.m_posX < 0 || pos.m_posY < 0 || pos.m_posZ < 0)
@@ -214,6 +259,18 @@ bool ParallelPhysics::IsPosBounds(const VectorIntMath &pos)
 		return false;
 	}
 	return true;
+}
+
+void ParallelPhysics::AdjustSizeByBounds(VectorIntMath &size)
+{
+	const VectorIntMath &universeSize = GetUniverseSize();
+	size.m_posX = std::max(0, size.m_posX);
+	size.m_posY = std::max(0, size.m_posY);
+	size.m_posZ = std::max(0, size.m_posZ);
+
+	size.m_posX = std::min(universeSize.m_posX, size.m_posX);
+	size.m_posY = std::min(universeSize.m_posY, size.m_posY);
+	size.m_posZ = std::min(universeSize.m_posZ, size.m_posZ);
 }
 
 bool ParallelPhysics::InitEtherCell(const VectorIntMath &pos, EtherType::EEtherType type, const EtherColor &color)
@@ -252,7 +309,7 @@ bool ParallelPhysics::EmitPhoton(const VectorIntMath &pos, const Photon &photon)
 	}
 
 	VectorIntMath nextPos = pos + unitVector;
-	if (!IsPosBounds(nextPos))
+	if (!IsPosInBounds(nextPos))
 	{
 		return false;
 	}
@@ -281,6 +338,7 @@ void Observer::Init(const VectorIntMath &position, const SP_EyeState &eyeState)
 	}
 	s_observer = new Observer();
 	s_observer->m_position = position;
+	s_observer->m_newPosition = position;
 	s_observer->m_eyeState = eyeState;
 	ParallelPhysics::GetInstance()->InitEtherCell(position, EtherType::Observer);
 	s_observer->m_lastTextureUpdateTime = GetTimeMs();
@@ -311,6 +369,7 @@ void Observer::PPhTick()
 			{
 				Photon photon(eyeArray[ii][jj]);
 				photon.m_param = ii + jj * OBSERVER_EYE_SIZE;
+				photon.m_color.m_colorA = 255;
 				ParallelPhysics::GetInstance()->EmitPhoton(m_position, photon);
 			}
 		}
@@ -357,10 +416,14 @@ void Observer::PPhTick()
 				{
 					eyeColorArray[ii][jj] = m_eyeColorArray[ii][jj];
 					int64 timeDiff = s_time - m_eyeUpdateTimeArray[ii][jj];
-					uint8_t alpha = 0;
+					uint8_t alpha = m_eyeColorArray[ii][jj].m_colorA;
 					if (timeDiff < EYE_IMAGE_DELAY)
 					{
-						alpha = 255 * (EYE_IMAGE_DELAY - timeDiff) / EYE_IMAGE_DELAY;
+						alpha = alpha * (EYE_IMAGE_DELAY - timeDiff) / EYE_IMAGE_DELAY;
+					}
+					else
+					{
+						alpha = 0;
 					}
 					eyeColorArray[ii][jj].m_colorA = alpha;
 				}
@@ -382,6 +445,26 @@ SP_EyeColorArray Observer::GrabTexture()
 	SP_EyeColorArray spEyeColorArrayEmpty;
 	std::atomic_store(&m_spEyeColorArrayOut, spEyeColorArrayEmpty);
 	return spEyeColorArrayOut;
+}
+
+PPh::VectorIntMath Observer::GetPosition() const
+{
+	return m_position;
+}
+
+void Observer::SetNewPosition(const VectorIntMath &pos)
+{
+	m_newPosition = pos;
+}
+
+PPh::VectorIntMath Observer::GetNewPosition() const
+{
+	return m_newPosition;
+}
+
+void Observer::SetPosition(const VectorIntMath &pos)
+{
+	m_position = pos;
 }
 
 /*

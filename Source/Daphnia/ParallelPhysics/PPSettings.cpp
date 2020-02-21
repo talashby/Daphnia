@@ -35,7 +35,12 @@ void UPPSettings::ConvertGeometry(UWorld *World)
 	check(World);
 	FVector UniverseSize = UniverseBox.GetSize();
 	PPh::VectorIntMath pphUniverseSize(UniverseSize.X / UniverseEtherCellSize, UniverseSize.Y / UniverseEtherCellSize, UniverseSize.Z / UniverseEtherCellSize);
-	bool bParallelPhysicsInit = PPh::ParallelPhysics::Init(pphUniverseSize, ThreadsCount);
+	int8 ThreadsCountTmp = ThreadsCount;
+	if (bCalculateNearObserver)
+	{
+		ThreadsCountTmp = 0;
+	}
+	bool bParallelPhysicsInit = PPh::ParallelPhysics::Init(pphUniverseSize, ThreadsCountTmp);
 	check(bParallelPhysicsInit);
 
 	for (TActorIterator<AStaticMeshActor> ActorItr(World); ActorItr; ++ActorItr)

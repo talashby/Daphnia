@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "ParallelPhysics/PPhHelpers.h"
+
 #include "MyHudWidget.generated.h"
 
 /**
@@ -34,5 +36,8 @@ private:
 	class UImage *EyeViewImage = nullptr;
 
 	UPROPERTY()
-	class UTexture2D* EyeViewTexture2D;
+	class UTexture2D* EyeViewTexture2D = nullptr;
+
+	FRotator m_PawnRotation;
+	PPh::VectorIntMath m_ObserverPos;
 };

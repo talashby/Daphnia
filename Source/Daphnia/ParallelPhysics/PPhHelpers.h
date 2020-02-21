@@ -11,6 +11,7 @@ namespace PPh
 	{
 	public:
 		static const VectorIntMath ZeroVector;
+		static const VectorIntMath OneVector;
 
 		VectorIntMath() = default;
 		VectorIntMath(int32_t posX, int32_t posY, int32_t posZ);
@@ -26,9 +27,24 @@ namespace PPh
 			return *this;
 		}
 
+		__forceinline bool operator!=(const VectorIntMath& V) const
+		{
+			return m_posX != V.m_posX || m_posY != V.m_posY || m_posZ != V.m_posZ;
+		}
+
 		int32_t m_posX;
 		int32_t m_posY;
 		int32_t m_posZ;
+	};
+
+	class BoxIntMath
+	{
+	public:
+		BoxIntMath() = default;
+		BoxIntMath(const VectorIntMath &minVector, const VectorIntMath &maxVector);
+
+		VectorIntMath m_minVector = VectorIntMath::ZeroVector;
+		VectorIntMath m_maxVector = VectorIntMath::ZeroVector;
 	};
 
 	class EtherColor

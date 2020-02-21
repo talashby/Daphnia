@@ -22,7 +22,7 @@ class ParallelPhysics
 {
 public:
 
-	static bool Init(const VectorIntMath &universeSize, uint8_t threadsCount); // returns true if success
+	static bool Init(const VectorIntMath &universeSize, uint8_t threadsCount); // returns true if success. threadsCount 0 means simulate near observer
 	static ParallelPhysics* GetInstance();
 
 	const VectorIntMath & GetUniverseSize() const;
@@ -38,10 +38,12 @@ private:
 	ParallelPhysics();
 
 	static int32_t GetCellPhotonIndex(const VectorIntMath &unitVector);
-	bool IsPosBounds(const VectorIntMath &pos);
+	bool IsPosInBounds(const VectorIntMath &pos);
+	void AdjustSizeByBounds(VectorIntMath &size);
 
 	VectorIntMath m_universeSize = VectorIntMath::ZeroVector;
 	uint8_t m_threadsCount = 1;
+	bool m_bSimulateNearObserver = false;
 	bool m_isSimulationRunning = false;
 };
 
@@ -64,21 +66,26 @@ public:
 
 	void ChangeOrientation(const SP_EyeState &eyeState);
 	SP_EyeColorArray GrabTexture();
+	VectorIntMath GetPosition() const;
+	void SetNewPosition(const VectorIntMath &pos);
+	VectorIntMath GetNewPosition() const;
 private:
-
+	friend class ParallelPhysics;
+	void SetPosition(const VectorIntMath &pos);
 	// Math
 	//static bool NormalizeHorizontal(VectorIntMath &orient); // returns false if vector is not orientation vector
 // Calculate orientation shift by horizontal and vertical. Be sure shiftH < MAX_INT && shiftV < MAX_INT
 	//static VectorIntMath OrientationShift(const VectorIntMath &orient, int32_t shiftH, int32_t shiftV);
 
 	VectorIntMath m_position = VectorIntMath::ZeroVector;
+	VectorIntMath m_newPosition = VectorIntMath::ZeroVector;
 	SP_EyeState m_eyeState;
 	SP_EyeState m_newEyeState; // Used from different threads
 
-	const int32_t EYE_IMAGE_DELAY = 10000; // quantum of time
+	const int32_t EYE_IMAGE_DELAY = 500; // quantum of time
 	//const uint32_t EYE_FOV = PPH_INT_MAX/2; // quantum of length (MAX_INT/2 - 90 degrees; MAX_INT - 180 degrees; 2*MAX_INT - 360 degrees)
 
-	const int32_t ECHOLOCATION_FREQUENCY = 100; // quantum of time
+	const int32_t ECHOLOCATION_FREQUENCY = 50; // quantum of time
 	int32_t m_echolocationCounter = 0;
 
 	EyeColorArray m_eyeColorArray = EyeColorArray();
