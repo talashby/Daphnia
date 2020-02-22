@@ -71,9 +71,9 @@ void UniverseThread(int32_t threadNum, bool *isSimulationRunning)
 								it->m_color = cell.m_color;
 								it->m_color.m_colorA = tmpA;
 							}
-							if (it->m_color.m_colorA > 25)
+							if (it->m_color.m_colorA > 15)
 							{
-								it->m_color.m_colorA -= 25;
+								it->m_color.m_colorA -= 15;
 								ParallelPhysics::GetInstance()->EmitPhoton({ posX, posY, posZ }, *it);
 							}
 							it = spPhotonVector->erase(it);
@@ -183,7 +183,7 @@ void ParallelPhysics::StartSimulation()
 		if (m_bSimulateNearObserver)
 		{
 			VectorIntMath observerPos = Observer::GetInstance()->GetPosition();
-			VectorIntMath boundSize(8, 8, 8);
+			VectorIntMath boundSize(12, 12, 12);
 			VectorIntMath boundsMax = observerPos + boundSize;
 			boundSize *= -1;
 			VectorIntMath boundsMin = observerPos + boundSize;
