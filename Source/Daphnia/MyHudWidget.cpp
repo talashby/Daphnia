@@ -52,12 +52,15 @@ UMyHudWidget::UMyHudWidget() : UUserWidget(FObjectInitializer())
 void UMyHudWidget::NativeOnInitialized()
 {
 	s_InstancePtr = this;
-	EyeViewImage = WidgetTree->FindWidget<UImage>(TEXT("EyeCaptureImg"));
+	pEyeViewImage = WidgetTree->FindWidget<UImage>(TEXT("EyeCaptureImg"));
+	pTextBlockStats = WidgetTree->FindWidget<UTextBlock>(TEXT("TextBlock_Stats"));
 }
 
 void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 {
-	if (EyeViewImage && EyeViewImage->IsVisible())
+	ShowPPhStats();
+
+	if (pEyeViewImage && pEyeViewImage->IsVisible())
 	{
 		if (PPh::ParallelPhysics::GetInstance()->IsSimulationRunning() && PPh::Observer::GetInstance())
 		{
@@ -77,21 +80,21 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 			if (spEyeColorArray)
 			{
 				const int32 EyeTextureSize = ADaphniaPawn::GetInstance()->GetEyeTextureSize();
-				if (!EyeViewTexture2D)
+				if (!pEyeViewTexture2D)
 				{
-					EyeViewTexture2D = UTexture2D::CreateTransient(EyeTextureSize, EyeTextureSize);
-					check(EyeViewTexture2D);
+					pEyeViewTexture2D = UTexture2D::CreateTransient(EyeTextureSize, EyeTextureSize);
+					check(pEyeViewTexture2D);
 				}
-				if (EyeViewTexture2D)
+				if (pEyeViewTexture2D)
 				{
-					FTexture2DMipMap& Mip = EyeViewTexture2D->PlatformData->Mips[0];
+					FTexture2DMipMap& Mip = pEyeViewTexture2D->PlatformData->Mips[0];
 					void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
 					FMemory::Memcpy(Data, &(*spEyeColorArray)[0][0], (EyeTextureSize * EyeTextureSize * 4));
 					Mip.BulkData.Unlock();
-					EyeViewTexture2D->UpdateResource();
+					pEyeViewTexture2D->UpdateResource();
 				}
 
-				EyeViewImage->SetBrushFromTexture(EyeViewTexture2D);
+				pEyeViewImage->SetBrushFromTexture(pEyeViewTexture2D);
 			}
 		}
 		/*auto RenderTarget2D = ADaphniaPawn::GetInstance()->GetEyeRenderTarget2D();
@@ -126,6 +129,31 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 
 	Super::NativeTick(MyGeometry, InDeltaTime);
 }
+
+
+void UMyHudWidget::ShowPPhStats()
+{
+	static int64 lastTime = PPh::GetTimeMs();
+	if (PPh::GetTimeMs() - lastTime > 500)
+	{
+		lastTime = PPh::GetTimeMs();
+		if (pTextBlockStats && PPh::ParallelPhysics::GetInstance()->IsSimulationRunning())
+		{
+			FString sFps = FString("FPS: ") + FString::FromInt(PPh::ParallelPhysics::GetFPS());
+			if (PPh::ParallelPhysics::IsHighPrecisionStatsEnabled())
+			{
+				sFps += "\nTick time(ms). Observer thread: " + FString::SanitizeFloat(PPh::ParallelPhysics::GetTickTimeNsObserverThread()/1000000.0f);
+				std::vector<uint64_t> fpsUniverseThreads = PPh::ParallelPhysics::GetTickTimeNsUniverseThreads();
+				for (int ii = 0; ii < fpsUniverseThreads.size(); ++ii)
+				{
+					sFps += "\nTick time(ms). Universe thread " + FString::FromInt(ii) + ": " + FString::SanitizeFloat(fpsUniverseThreads[ii]/1000000.0f);
+				}
+			}
+			pTextBlockStats->SetText(FText::FromString(sFps));
+		}
+	}
+}
+
 
 UMyHudWidget* UMyHudWidget::GetInstance()
 {

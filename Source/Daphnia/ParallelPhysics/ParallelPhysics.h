@@ -3,6 +3,7 @@
 #include "PPhHelpers.h"
 #include "memory"
 #include "array"
+#include "vector"
 
 namespace PPh
 {
@@ -34,11 +35,17 @@ public:
 	bool InitEtherCell(const VectorIntMath &pos, EtherType::EEtherType type, const EtherColor &color = EtherColor()); // returns true if success
 	bool EmitPhoton(const VectorIntMath &pos, const struct Photon &photon);
 
+	static uint64_t GetFPS();
+	static bool IsHighPrecisionStatsEnabled();
+	static uint64_t GetTickTimeNsObserverThread(); // average tick time in nanoseconds
+	static std::vector<uint64_t> GetTickTimeNsUniverseThreads(); // average tick time in nanoseconds
+
 private:
 	ParallelPhysics();
 
 	static int32_t GetCellPhotonIndex(const VectorIntMath &unitVector);
 	bool IsPosInBounds(const VectorIntMath &pos);
+	void AdjustSimulationBoxes();
 	void AdjustSizeByBounds(VectorIntMath &size);
 
 	VectorIntMath m_universeSize = VectorIntMath::ZeroVector;

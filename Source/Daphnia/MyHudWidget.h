@@ -33,10 +33,13 @@ protected:
 	void SwitchToParallelPhysics();
 
 private:
-	class UImage *EyeViewImage = nullptr;
+	void ShowPPhStats();
+
+	class UImage *pEyeViewImage = nullptr;
+	class UTextBlock *pTextBlockStats = nullptr;
 
 	UPROPERTY()
-	class UTexture2D* EyeViewTexture2D = nullptr;
+	class UTexture2D* pEyeViewTexture2D = nullptr;
 
 	FRotator m_PawnRotation;
 	PPh::VectorIntMath m_ObserverPos;

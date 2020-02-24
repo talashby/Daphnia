@@ -6,6 +6,7 @@
 #include "thread"
 #include "iostream"
 #include "atomic"
+#include "chrono"
 
 namespace PPh
 {
@@ -19,6 +20,13 @@ std::vector<BoxIntMath> s_threadSimulateBounds; // [minVector; maxVector)
 typedef std::vector<struct Photon> PhotonVector;
 typedef std::shared_ptr<PhotonVector> SP_PhotonVector;
 
+// stats
+uint64_t s_quantumOfTimePerSecond = 0;
+#define HIGH_PRECISION_STATS 1
+std::vector<uint64_t> s_timingsUniverseThreads;
+std::vector<uint64_t> s_TickTimeNsAverageUniverseThreads;
+uint64_t s_timingsObserverThread;
+uint64_t s_TickTimeNsAverageObserverThread;
 
 struct Photon
 {
@@ -41,6 +49,9 @@ void UniverseThread(int32_t threadNum, bool *isSimulationRunning)
 {
 	while (*isSimulationRunning)
 	{
+#ifdef HIGH_PRECISION_STATS
+		auto beginTime = std::chrono::high_resolution_clock::now();
+#endif
 		int isTimeOdd = s_time % 2;
 
 		for (int32_t posX = s_threadSimulateBounds[threadNum].m_minVector.m_posX; posX < s_threadSimulateBounds[threadNum].m_maxVector.m_posX; ++posX)
@@ -86,6 +97,11 @@ void UniverseThread(int32_t threadNum, bool *isSimulationRunning)
 				}
 			}
 		}
+#ifdef HIGH_PRECISION_STATS
+		auto endTime = std::chrono::high_resolution_clock::now();
+		auto dif = endTime - beginTime;
+		s_timingsUniverseThreads[threadNum] += std::chrono::duration_cast<std::chrono::nanoseconds>(dif).count();
+#endif
 		--s_waitThreadsCount;
 		while(s_time % 2 == isTimeOdd)
 		{
@@ -123,7 +139,12 @@ bool ParallelPhysics::Init(const VectorIntMath &universeSize, uint8_t threadsCou
 		{
 			GetInstance()->m_threadsCount = threadsCount;
 		}
+#ifdef HIGH_PRECISION_STATS
+		s_timingsUniverseThreads.resize(GetInstance()->m_threadsCount);
+		s_TickTimeNsAverageUniverseThreads.resize(GetInstance()->m_threadsCount);
+#endif
 		// fill bounds
+
 		s_threadSimulateBounds.resize(GetInstance()->m_threadsCount);
 		int32_t lengthForThread = GetInstance()->m_universeSize.m_posX / GetInstance()->m_threadsCount;
 		int32_t lengthForThreadRemain = GetInstance()->m_universeSize.m_posX - lengthForThread * GetInstance()->m_threadsCount;
@@ -157,6 +178,23 @@ const VectorIntMath & ParallelPhysics::GetUniverseSize() const
 	return m_universeSize;
 }
 
+void ParallelPhysics::AdjustSimulationBoxes()
+{
+	VectorIntMath observerPos = Observer::GetInstance()->GetPosition();
+	VectorIntMath boundSize(12, 12, 12);
+	VectorIntMath boundsMax = observerPos + boundSize;
+	boundSize *= -1;
+	VectorIntMath boundsMin = observerPos + boundSize;
+	AdjustSizeByBounds(boundsMax);
+	AdjustSizeByBounds(boundsMin);
+	s_threadSimulateBounds[0] = BoxIntMath(boundsMin, { boundsMax.m_posX, observerPos.m_posY, observerPos.m_posZ });
+	s_threadSimulateBounds[1] = BoxIntMath({ boundsMin.m_posX, observerPos.m_posY, boundsMin.m_posZ },
+		{ boundsMax.m_posX, boundsMax.m_posY, observerPos.m_posZ });
+	s_threadSimulateBounds[2] = BoxIntMath({ boundsMin.m_posX, observerPos.m_posY, observerPos.m_posZ }, boundsMax);
+	s_threadSimulateBounds[3] = BoxIntMath({ boundsMin.m_posX, boundsMin.m_posY, observerPos.m_posZ },
+		{ boundsMax.m_posX, observerPos.m_posY, boundsMax.m_posZ });
+}
+
 std::thread s_simulationThread;
 void ParallelPhysics::StartSimulation()
 {
@@ -170,8 +208,15 @@ void ParallelPhysics::StartSimulation()
 		{
 			while (m_isSimulationRunning)
 			{
+#ifdef HIGH_PRECISION_STATS
+				auto beginTime = std::chrono::high_resolution_clock::now();
+#endif
 				int32_t isTimeOdd = s_time % 2;
 				Observer::GetInstance()->PPhTick();
+#ifdef HIGH_PRECISION_STATS
+				auto endTime = std::chrono::high_resolution_clock::now();
+				s_timingsObserverThread += std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - beginTime).count();
+#endif
 				--s_waitThreadsCount;
 				while (s_time % 2 == isTimeOdd)
 				{
@@ -182,38 +227,53 @@ void ParallelPhysics::StartSimulation()
 
 		if (m_bSimulateNearObserver)
 		{
-			VectorIntMath observerPos = Observer::GetInstance()->GetPosition();
-			VectorIntMath boundSize(12, 12, 12);
-			VectorIntMath boundsMax = observerPos + boundSize;
-			boundSize *= -1;
-			VectorIntMath boundsMin = observerPos + boundSize;
-			AdjustSizeByBounds(boundsMax);
-			AdjustSizeByBounds(boundsMin);
-			s_threadSimulateBounds[0] = BoxIntMath(boundsMin, { boundsMax.m_posX, observerPos.m_posY, observerPos.m_posZ });
-			s_threadSimulateBounds[1] = BoxIntMath({ boundsMin.m_posX, observerPos.m_posY, boundsMin.m_posZ },
-				{ boundsMax.m_posX, boundsMax.m_posY, observerPos.m_posZ });
-			s_threadSimulateBounds[2] = BoxIntMath({ boundsMin.m_posX, observerPos.m_posY, observerPos.m_posZ }, boundsMax);
-			s_threadSimulateBounds[3] = BoxIntMath({ boundsMin.m_posX, boundsMin.m_posY, observerPos.m_posZ },
-				{ boundsMax.m_posX, observerPos.m_posY, boundsMax.m_posZ });
+			AdjustSimulationBoxes();
 		}
 		for (int ii = 0; ii < m_threadsCount; ++ii)
 		{
 			threads[ii] = std::thread(UniverseThread, ii, &m_isSimulationRunning);
 		}
 
+		int64_t lastTime = GetTimeMs();
+		uint64_t lastTimeUniverse = 0;
 		while (m_isSimulationRunning)
 		{
 			while (s_waitThreadsCount)
 			{
 			}
 			s_waitThreadsCount = m_threadsCount + 1; // universe threads and observer thread
-			++s_time;
 			if (Observer::GetInstance()->GetPosition() != Observer::GetInstance()->GetNewPosition())
 			{
 				GetInstance()->InitEtherCell(Observer::GetInstance()->GetNewPosition(), EtherType::Observer);
 				GetInstance()->InitEtherCell(Observer::GetInstance()->GetPosition(), EtherType::Space);
 				Observer::GetInstance()->SetPosition(Observer::GetInstance()->GetNewPosition());
+				if (m_bSimulateNearObserver)
+				{
+					AdjustSimulationBoxes();
+				}
 			}
+			if (GetTimeMs() - lastTime >= 1000)
+			{
+				s_quantumOfTimePerSecond = s_time - lastTimeUniverse;
+#ifdef HIGH_PRECISION_STATS
+				for (int ii = 0; ii < s_timingsUniverseThreads.size(); ++ii)
+				{
+					if (s_timingsUniverseThreads[ii] > 0)
+					{
+						s_TickTimeNsAverageUniverseThreads[ii] = s_timingsUniverseThreads[ii] / s_quantumOfTimePerSecond;
+						s_timingsUniverseThreads[ii] = 0;
+					}
+				}
+				if (s_timingsObserverThread > 0)
+				{
+					s_TickTimeNsAverageObserverThread = s_timingsObserverThread / s_quantumOfTimePerSecond;
+					s_timingsObserverThread = 0;
+				}
+#endif
+				lastTime = GetTimeMs();
+				lastTimeUniverse = s_time;
+			}
+			++s_time;
 		}
 		observerThread.join();
 		for (int ii = 0; ii < m_threadsCount; ++ii)
@@ -326,6 +386,30 @@ bool ParallelPhysics::EmitPhoton(const VectorIntMath &pos, const Photon &photon)
 	spPhotonVector->push_back(photon);
 	
 	return true;
+}
+
+uint64_t ParallelPhysics::GetFPS()
+{
+	return s_quantumOfTimePerSecond;
+}
+
+bool ParallelPhysics::IsHighPrecisionStatsEnabled()
+{
+#ifdef HIGH_PRECISION_STATS
+	return true;
+#else
+	return false;
+#endif
+}
+
+uint64_t ParallelPhysics::GetTickTimeNsObserverThread()
+{
+	return s_TickTimeNsAverageObserverThread;
+}
+
+std::vector<uint64_t> ParallelPhysics::GetTickTimeNsUniverseThreads()
+{
+	return s_TickTimeNsAverageUniverseThreads;
 }
 
 Observer* s_observer = nullptr;
