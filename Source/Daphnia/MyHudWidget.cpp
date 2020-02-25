@@ -56,6 +56,14 @@ void UMyHudWidget::NativeOnInitialized()
 	pTextBlockStats = WidgetTree->FindWidget<UTextBlock>(TEXT("TextBlock_Stats"));
 }
 
+void UMyHudWidget::NativeDestruct()
+{
+	if (PPh::ParallelPhysics::GetInstance()->IsSimulationRunning())
+	{
+		PPh::ParallelPhysics::GetInstance()->StopSimulation();
+	}
+}
+
 void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 {
 	ShowPPhStats();
@@ -130,7 +138,6 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 	Super::NativeTick(MyGeometry, InDeltaTime);
 }
 
-
 void UMyHudWidget::ShowPPhStats()
 {
 	static int64 lastTime = PPh::GetTimeMs();
@@ -154,7 +161,6 @@ void UMyHudWidget::ShowPPhStats()
 	}
 }
 
-
 UMyHudWidget* UMyHudWidget::GetInstance()
 {
 	check(s_InstancePtr);
@@ -168,6 +174,7 @@ void UMyHudWidget::SwitchCameraView()
 
 void UMyHudWidget::SwitchToParallelPhysics()
 {
+	UWidget *BoxStats = WidgetTree->FindWidget<UWidget>(TEXT("VerticalBox_Stats"));
 	if (PPh::ParallelPhysics::GetInstance()->IsSimulationRunning())
 	{
 		PPh::ParallelPhysics::GetInstance()->StopSimulation();
@@ -179,6 +186,10 @@ void UMyHudWidget::SwitchToParallelPhysics()
 			{
 				ViewportClient->bDisableWorldRendering = false;
 			}
+		}
+		if (BoxStats)
+		{
+			BoxStats->SetVisibility(ESlateVisibility::Hidden);
 		}
 	}
 	else
@@ -199,6 +210,10 @@ void UMyHudWidget::SwitchToParallelPhysics()
 				PPh::ParallelPhysics::GetInstance()->StartSimulation();
 				m_PawnRotation = ADaphniaPawn::GetInstance()->GetActorRotation();
 				m_ObserverPos = PPh::Observer::GetInstance()->GetPosition();
+			}
+			if (BoxStats)
+			{
+				BoxStats->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 			}
 		}
 	}

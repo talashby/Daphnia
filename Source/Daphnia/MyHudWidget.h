@@ -22,6 +22,7 @@ public:
 	static UMyHudWidget* GetInstance();
 protected:
 	void NativeOnInitialized() override;
+	void NativeDestruct() override;
 	void NativeTick(const FGeometry &MyGeometry, float InDeltaTime) override;
 
 	// Button_SwitchCamera

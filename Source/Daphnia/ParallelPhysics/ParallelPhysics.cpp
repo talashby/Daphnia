@@ -122,6 +122,7 @@ bool ParallelPhysics::Init(const VectorIntMath &universeSize, uint8_t threadsCou
 			for (auto &itZ : itY)
 			{
 				itZ.resize(universeSize.m_posZ);
+				std::fill(itZ.begin(), itZ.end(), PPh::EtherCell());
 			}
 		}
 		if (s_parallelPhysicsInstance)
