@@ -23,17 +23,17 @@ class ParallelPhysics
 {
 public:
 
-	static bool Init(const VectorIntMath &universeSize, uint8_t threadsCount); // returns true if success. threadsCount 0 means simulate near observer
+	static bool Init(const VectorInt32Math &universeSize, uint8_t threadsCount); // returns true if success. threadsCount 0 means simulate near observer
 	static ParallelPhysics* GetInstance();
 
-	const VectorIntMath & GetUniverseSize() const;
+	const VectorInt32Math & GetUniverseSize() const;
 
 	void StartSimulation();
 	void StopSimulation();
 	bool IsSimulationRunning() const;
 
-	bool InitEtherCell(const VectorIntMath &pos, EtherType::EEtherType type, const EtherColor &color = EtherColor()); // returns true if success
-	bool EmitPhoton(const VectorIntMath &pos, const struct Photon &photon);
+	bool InitEtherCell(const VectorInt32Math &pos, EtherType::EEtherType type, const EtherColor &color = EtherColor()); // returns true if success
+	bool EmitPhoton(const VectorInt32Math &pos, const struct Photon &photon);
 
 	static uint64_t GetFPS();
 	static bool IsHighPrecisionStatsEnabled();
@@ -43,12 +43,12 @@ public:
 private:
 	ParallelPhysics();
 
-	static int32_t GetCellPhotonIndex(const VectorIntMath &unitVector);
-	bool IsPosInBounds(const VectorIntMath &pos);
+	static int32_t GetCellPhotonIndex(const VectorInt32Math &unitVector);
+	bool IsPosInBounds(const VectorInt32Math &pos);
 	void AdjustSimulationBoxes();
-	void AdjustSizeByBounds(VectorIntMath &size);
+	void AdjustSizeByBounds(VectorInt32Math &size);
 
-	VectorIntMath m_universeSize = VectorIntMath::ZeroVector;
+	VectorInt32Math m_universeSize = VectorInt32Math::ZeroVector;
 	uint8_t m_threadsCount = 1;
 	bool m_bSimulateNearObserver = false;
 	bool m_isSimulationRunning = false;
@@ -65,7 +65,7 @@ typedef std::shared_ptr< EyeColorArray > SP_EyeColorArray;
 class Observer
 {
 public:
-	static void Init(const VectorIntMath &position, const SP_EyeState &eyeState);
+	static void Init(const VectorInt32Math &position, const SP_EyeState &eyeState);
 
 	static Observer* GetInstance();
 
@@ -73,19 +73,19 @@ public:
 
 	void ChangeOrientation(const SP_EyeState &eyeState);
 	SP_EyeColorArray GrabTexture();
-	VectorIntMath GetPosition() const;
-	void SetNewPosition(const VectorIntMath &pos);
-	VectorIntMath GetNewPosition() const;
+	VectorInt32Math GetPosition() const;
+	void SetNewPosition(const VectorInt32Math &pos);
+	VectorInt32Math GetNewPosition() const;
 private:
 	friend class ParallelPhysics;
-	void SetPosition(const VectorIntMath &pos);
+	void SetPosition(const VectorInt32Math &pos);
 	// Math
 	//static bool NormalizeHorizontal(VectorIntMath &orient); // returns false if vector is not orientation vector
 // Calculate orientation shift by horizontal and vertical. Be sure shiftH < MAX_INT && shiftV < MAX_INT
 	//static VectorIntMath OrientationShift(const VectorIntMath &orient, int32_t shiftH, int32_t shiftV);
 
-	VectorIntMath m_position = VectorIntMath::ZeroVector;
-	VectorIntMath m_newPosition = VectorIntMath::ZeroVector;
+	VectorInt32Math m_position = VectorInt32Math::ZeroVector;
+	VectorInt32Math m_newPosition = VectorInt32Math::ZeroVector;
 	SP_EyeState m_eyeState;
 	SP_EyeState m_newEyeState; // Used from different threads
 

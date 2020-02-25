@@ -4,8 +4,8 @@
 
 namespace PPh
 {
-	constexpr int PPH_INT_MAX = 1073741824; // 2*MAX_INT-1 should be less or equal std::numeric_limits<int32_t>::max() because of arithmetics reasons
-	constexpr int PPH_INT_MIN = -PPH_INT_MAX; // 2*MIN_INT should be less or equal std::numeric_limits<int32_t>::min() because of arithmetics reasons
+	constexpr int8_t PPH_INT_MAX = 127;
+	constexpr int8_t PPH_INT_MIN = -127;
 
 	class VectorIntMath
 	{
@@ -14,20 +14,51 @@ namespace PPh
 		static const VectorIntMath OneVector;
 
 		VectorIntMath() = default;
-		VectorIntMath(int32_t posX, int32_t posY, int32_t posZ);
+		VectorIntMath(int8_t posX, int8_t posY, int8_t posZ);
 
 		__forceinline VectorIntMath operator+(const VectorIntMath& V) const
 		{
 			return VectorIntMath(m_posX + V.m_posX, m_posY + V.m_posY, m_posZ + V.m_posZ);
 		}
 
-		__forceinline VectorIntMath operator*=(const int32_t& scale)
+		__forceinline VectorIntMath operator*=(const int8_t& scale)
 		{
 			m_posX *= scale; m_posY *= scale; m_posZ *= scale;
 			return *this;
 		}
 
 		__forceinline bool operator!=(const VectorIntMath& V) const
+		{
+			return m_posX != V.m_posX || m_posY != V.m_posY || m_posZ != V.m_posZ;
+		}
+
+		union
+		{
+			struct { int8_t m_posX, m_posY, m_posZ, m_tmp; };
+			uint32_t AlignmentDummy;
+		};
+	};
+
+	class VectorInt32Math
+	{
+	public:
+		static const VectorInt32Math ZeroVector;
+
+		VectorInt32Math() = default;
+		VectorInt32Math(int32_t posX, int32_t posY, int32_t posZ);
+
+		__forceinline VectorInt32Math operator+(const VectorInt32Math& V) const
+		{
+			return VectorInt32Math(m_posX + V.m_posX, m_posY + V.m_posY, m_posZ + V.m_posZ);
+		}
+
+		__forceinline VectorInt32Math operator*=(const int32_t& scale)
+		{
+			m_posX *= scale; m_posY *= scale; m_posZ *= scale;
+			return *this;
+		}
+
+		__forceinline bool operator!=(const VectorInt32Math& V) const
 		{
 			return m_posX != V.m_posX || m_posY != V.m_posY || m_posZ != V.m_posZ;
 		}
@@ -41,10 +72,10 @@ namespace PPh
 	{
 	public:
 		BoxIntMath() = default;
-		BoxIntMath(const VectorIntMath &minVector, const VectorIntMath &maxVector);
+		BoxIntMath(const VectorInt32Math &minVector, const VectorInt32Math &maxVector);
 
-		VectorIntMath m_minVector = VectorIntMath::ZeroVector;
-		VectorIntMath m_maxVector = VectorIntMath::ZeroVector;
+		VectorInt32Math m_minVector = VectorInt32Math::ZeroVector;
+		VectorInt32Math m_maxVector = VectorInt32Math::ZeroVector;
 	};
 
 	class EtherColor
@@ -63,10 +94,10 @@ namespace PPh
 	namespace RandomUniverse
 	{
 		void Init();
-		int32_t GetRandomNumber(); // from 0 to PPH_INT_MAX
+		int8_t GetRandomNumber(); // from 0 to PPH_INT_MAX
 	};
 
-	__forceinline int sign(int32_t x)
+	__forceinline int sign(int8_t x)
 	{
 		return (x > 0) - (x < 0);
 	}

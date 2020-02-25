@@ -43,5 +43,5 @@ private:
 	class UTexture2D* pEyeViewTexture2D = nullptr;
 
 	FRotator m_PawnRotation;
-	PPh::VectorIntMath m_ObserverPos;
+	PPh::VectorInt32Math m_ObserverPos;
 };

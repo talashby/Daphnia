@@ -34,7 +34,7 @@ void UPPSettings::ConvertGeometry(UWorld *World)
 {
 	check(World);
 	FVector UniverseSize = UniverseBox.GetSize();
-	PPh::VectorIntMath pphUniverseSize(UniverseSize.X / UniverseEtherCellSize, UniverseSize.Y / UniverseEtherCellSize, UniverseSize.Z / UniverseEtherCellSize);
+	PPh::VectorInt32Math pphUniverseSize(UniverseSize.X / UniverseEtherCellSize, UniverseSize.Y / UniverseEtherCellSize, UniverseSize.Z / UniverseEtherCellSize);
 	int8 ThreadsCountTmp = ThreadsCount;
 	if (bCalculateNearObserver)
 	{
@@ -62,7 +62,7 @@ void UPPSettings::ConvertGeometry(UWorld *World)
 							check(1 == Comps.Num()); // Support one UStaticMeshComponent for now
 							// count universe coords
 							FVector Location(ActorBox.Min.X + xx, ActorBox.Min.Y + yy, ActorBox.Min.Z + zz);
-							PPh::VectorIntMath universePos = ConvertLocationToPPhPosition(Location);
+							PPh::VectorInt32Math universePos = ConvertLocationToPPhPosition(Location);
 							/*universePos.m_posX = (ActorBox.Min.X + xx - UniverseBox.Min.X) / UniverseEtherCellSize;
 							check(0 <= universePos.m_posX && universePos.m_posX < pphUniverseSize.m_posX);
 							universePos.m_posY = (ActorBox.Min.Y + yy - UniverseBox.Min.Y) / UniverseEtherCellSize;
@@ -137,12 +137,12 @@ int32 FixFloatErrors(int32 component, int32 maxComponentValue)
 	return componentCorrect;
 }
 
-PPh::VectorIntMath UPPSettings::ConvertLocationToPPhPosition(const FVector &Location)
+PPh::VectorInt32Math UPPSettings::ConvertLocationToPPhPosition(const FVector &Location)
 {
 	FVector UniverseBoxMin = UPPSettings::GetInstance()->UniverseBox.Min;
 	int32 UniverseEtherCellSize = UPPSettings::GetInstance()->UniverseEtherCellSize;
-	PPh::VectorIntMath universePos;
-	PPh::VectorIntMath pphUniverseSize = PPh::ParallelPhysics::GetInstance()->GetUniverseSize();
+	PPh::VectorInt32Math universePos;
+	PPh::VectorInt32Math pphUniverseSize = PPh::ParallelPhysics::GetInstance()->GetUniverseSize();
 	universePos.m_posX = (Location.X - UniverseBoxMin.X) / UniverseEtherCellSize;
 	check(0 <= universePos.m_posX && universePos.m_posX < pphUniverseSize.m_posX);
 	universePos.m_posX = std::max(0, universePos.m_posX);
