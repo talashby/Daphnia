@@ -30,10 +30,10 @@ uint64_t s_TickTimeNsAverageObserverThread;
 
 struct Photon
 {
-	explicit Photon(const VectorIntMath &orientation) : m_orientation(orientation)
+	explicit Photon(const OrientationVectorMath &orientation) : m_orientation(orientation)
 	{
 	}
-	VectorIntMath m_orientation;
+	OrientationVectorMath m_orientation;
 	EtherColor m_color;
 	int32_t m_param;
 };
@@ -49,7 +49,7 @@ bool ParallelPhysics::Init(const VectorInt32Math &universeSize, uint8_t threadsC
 {
 	if (0 < universeSize.m_posX && 0 < universeSize.m_posY && 0 < universeSize.m_posZ)
 	{
-		RandomUniverse::Init();
+		OrientationVectorMath::InitRandom();
 		s_universe.resize(universeSize.m_posX);
 		for (auto &itY : s_universe)
 		{
@@ -142,7 +142,7 @@ void UniverseThread(int32_t threadNum, bool *isSimulationRunning)
 								it->m_color = cell.m_color;
 								it->m_color.m_colorA = tmpA;
 							}
-							if (it->m_color.m_colorA > 15)
+    						if (it->m_color.m_colorA > 15)
 							{
 								it->m_color.m_colorA -= 15;
 								ParallelPhysics::GetInstance()->EmitPhoton({ posX, posY, posZ }, *it);
@@ -355,19 +355,19 @@ bool ParallelPhysics::InitEtherCell(const VectorInt32Math &pos, EtherType::EEthe
 
 bool ParallelPhysics::EmitPhoton(const VectorInt32Math &pos, const Photon &photon)
 {
-	const VectorIntMath &orient = photon.m_orientation;
+	const OrientationVectorMath &orient = photon.m_orientation;
 	VectorInt32Math unitVector = VectorInt32Math::ZeroVector;
-	if (std::abs(orient.m_posX) > RandomUniverse::GetRandomNumber())
+	if (std::abs(orient.m_posX) > OrientationVectorMath::GetRandomNumber())
 	{
-		unitVector.m_posX = sign(orient.m_posX);
+		unitVector.m_posX = OrientationVectorMath::Sign(orient.m_posX);
 	}
-	if (std::abs(orient.m_posY) > RandomUniverse::GetRandomNumber())
+	if (std::abs(orient.m_posY) > OrientationVectorMath::GetRandomNumber())
 	{
-		unitVector.m_posY = sign(orient.m_posY);
+		unitVector.m_posY = OrientationVectorMath::Sign(orient.m_posY);
 	}
-	if (std::abs(orient.m_posZ) > RandomUniverse::GetRandomNumber())
+	if (std::abs(orient.m_posZ) > OrientationVectorMath::GetRandomNumber())
 	{
-		unitVector.m_posZ = sign(orient.m_posZ);
+		unitVector.m_posZ = OrientationVectorMath::Sign(orient.m_posZ);
 	}
 
 	VectorInt32Math nextPos = pos + unitVector;

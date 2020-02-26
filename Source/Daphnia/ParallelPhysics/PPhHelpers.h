@@ -4,24 +4,26 @@
 
 namespace PPh
 {
-	constexpr int8_t PPH_INT_MAX = 127;
-	constexpr int8_t PPH_INT_MIN = -127;
-
+	template<class T, class D>
 	class VectorIntMath
 	{
 	public:
-		static const VectorIntMath ZeroVector;
-		static const VectorIntMath OneVector;
 
 		VectorIntMath() = default;
-		VectorIntMath(int8_t posX, int8_t posY, int8_t posZ);
+		VectorIntMath(T posX, T posY, T posZ) : m_posX(posX), m_posY(posY), m_posZ(posZ)
+		{}
 
-		__forceinline VectorIntMath operator+(const VectorIntMath& V) const
+		static __forceinline int Sign(T x)
 		{
-			return VectorIntMath(m_posX + V.m_posX, m_posY + V.m_posY, m_posZ + V.m_posZ);
+			return (x > 0) - (x < 0);
 		}
 
-		__forceinline VectorIntMath operator*=(const int8_t& scale)
+		__forceinline D operator+(const VectorIntMath& V) const
+		{
+			return D(m_posX + V.m_posX, m_posY + V.m_posY, m_posZ + V.m_posZ);
+		}
+
+		__forceinline VectorIntMath operator*=(const T& scale)
 		{
 			m_posX *= scale; m_posY *= scale; m_posZ *= scale;
 			return *this;
@@ -34,39 +36,42 @@ namespace PPh
 
 		union
 		{
-			struct { int8_t m_posX, m_posY, m_posZ, m_tmp; };
+			struct { T m_posX, m_posY, m_posZ, m_tmp; };
 			uint32_t AlignmentDummy;
 		};
 	};
 
-	class VectorInt32Math
+	class VectorInt8Math : public VectorIntMath<int8_t, VectorInt8Math>
 	{
 	public:
+		static const int8_t PPH_INT_MAX = 127;
+		static const int8_t PPH_INT_MIN = -PPH_INT_MAX;
+		static const VectorInt8Math ZeroVector;
+		static const VectorInt8Math OneVector;
+
+		VectorInt8Math() = default;
+		VectorInt8Math(int8_t posX, int8_t posY, int8_t posZ);
+
+		static void InitRandom();
+		static int8_t GetRandomNumber(); // from 0 to PPH_INT_MAX
+	};
+
+	class VectorInt32Math : public VectorIntMath<int32_t, VectorInt32Math>
+	{
+	public:
+		static const int32_t PPH_INT_MAX = 1073741824;
+		static const int32_t PPH_INT_MIN = -PPH_INT_MAX;
+
 		static const VectorInt32Math ZeroVector;
 
 		VectorInt32Math() = default;
 		VectorInt32Math(int32_t posX, int32_t posY, int32_t posZ);
 
-		__forceinline VectorInt32Math operator+(const VectorInt32Math& V) const
-		{
-			return VectorInt32Math(m_posX + V.m_posX, m_posY + V.m_posY, m_posZ + V.m_posZ);
-		}
-
-		__forceinline VectorInt32Math operator*=(const int32_t& scale)
-		{
-			m_posX *= scale; m_posY *= scale; m_posZ *= scale;
-			return *this;
-		}
-
-		__forceinline bool operator!=(const VectorInt32Math& V) const
-		{
-			return m_posX != V.m_posX || m_posY != V.m_posY || m_posZ != V.m_posZ;
-		}
-
-		int32_t m_posX;
-		int32_t m_posY;
-		int32_t m_posZ;
+		static void InitRandom();
+		static int32_t GetRandomNumber(); // from 0 to PPH_INT_MAX
 	};
+
+	typedef VectorInt32Math OrientationVectorMath;
 
 	class BoxIntMath
 	{
@@ -90,17 +95,6 @@ namespace PPh
 			uint32_t AlignmentDummy;
 		};
 	};
-
-	namespace RandomUniverse
-	{
-		void Init();
-		int8_t GetRandomNumber(); // from 0 to PPH_INT_MAX
-	};
-
-	__forceinline int sign(int8_t x)
-	{
-		return (x > 0) - (x < 0);
-	}
 
 	int64_t GetTimeMs();
 }

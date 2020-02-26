@@ -8,30 +8,6 @@
 
 namespace PPh
 {
-const VectorIntMath VectorIntMath::ZeroVector(0, 0, 0);
-const VectorIntMath VectorIntMath::OneVector(1, 1, 1);
-
-VectorIntMath::VectorIntMath(int8_t posX, int8_t posY, int8_t posZ) : m_posX(posX), m_posY(posY), m_posZ(posZ)
-{}
-
-const VectorInt32Math VectorInt32Math::ZeroVector(0, 0, 0);
-
-VectorInt32Math::VectorInt32Math(int32_t posX, int32_t posY, int32_t posZ) : m_posX(posX), m_posY(posY), m_posZ(posZ)
-{}
-
-BoxIntMath::BoxIntMath(const VectorInt32Math &minVector, const VectorInt32Math &maxVector) : m_minVector(minVector), m_maxVector(maxVector)
-{}
-
-EtherColor::EtherColor() : m_colorB(0), m_colorG(0), m_colorR(0), m_colorA(0)
-{}
-
-
-EtherColor::EtherColor(int8_t colorR, int8_t colorG, int8_t colorB) : m_colorB(colorR), m_colorG(colorG), m_colorR(colorB), m_colorA(0)
-{}
-
-
-std::vector<int8_t> s_randomUniverseNumbers;
-int8_t s_randomIndex = 0;
 
 std::random_device rd;
 std::mt19937 e1(rd());
@@ -41,16 +17,27 @@ int32_t Rand32(int32_t iRandMax) // from [0; iRandMax-1]
 	return dist(e1);
 }
 
-void RandomUniverse::Init()
+// ---------------------------------------------------------------------------------
+// ------------------------------ VectorInt8Math -----------------------------------
+const VectorInt8Math VectorInt8Math::ZeroVector(0, 0, 0);
+const VectorInt8Math VectorInt8Math::OneVector(1, 1, 1);
+
+VectorInt8Math::VectorInt8Math(int8_t posX, int8_t posY, int8_t posZ) : VectorIntMath(posX, posY, posZ)
+{}
+
+std::vector<int8_t> s_randomUniverseNumbersInt8;
+int8_t s_randomIndexInt8 = 0;
+
+void VectorInt8Math::InitRandom()
 {
 	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 	std::default_random_engine generator(seed);
-	if (s_randomUniverseNumbers.empty())
+	if (s_randomUniverseNumbersInt8.empty())
 	{
-		s_randomUniverseNumbers.resize((PPH_INT_MAX+1)*2);
-		for (int ii = 0; ii < PPH_INT_MAX+1; ++ii)
+		s_randomUniverseNumbersInt8.resize((PPH_INT_MAX + 1) * 2);
+		for (int ii = 0; ii < PPH_INT_MAX + 1; ++ii)
 		{
-			s_randomUniverseNumbers[ii] = ii;
+			s_randomUniverseNumbersInt8[ii] = ii;
 		}
 	}
 
@@ -58,18 +45,88 @@ void RandomUniverse::Init()
 	{
 		// Pick a random index from 0 to i  
 		int8_t jj = Rand32(ii + 1);
-		std::swap(s_randomUniverseNumbers[ii], s_randomUniverseNumbers[jj]);
+		std::swap(s_randomUniverseNumbersInt8[ii], s_randomUniverseNumbersInt8[jj]);
 	}
-	
-	std::copy(s_randomUniverseNumbers.begin(), s_randomUniverseNumbers.begin() + PPH_INT_MAX + 1, s_randomUniverseNumbers.begin() + PPH_INT_MAX + 1);
+
+	std::copy(s_randomUniverseNumbersInt8.begin(), s_randomUniverseNumbersInt8.begin() + PPH_INT_MAX + 1,
+		s_randomUniverseNumbersInt8.begin() + PPH_INT_MAX + 1);
 }
 
-int8_t RandomUniverse::GetRandomNumber()
+int8_t VectorInt8Math::GetRandomNumber()
 {
-	int8_t number = s_randomUniverseNumbers[s_randomIndex];
-	++s_randomIndex;
+	int8_t number = s_randomUniverseNumbersInt8[s_randomIndexInt8];
+	++s_randomIndexInt8;
 	return number;
 }
+// ------------------------------ VectorInt8Math -----------------------------------
+// ---------------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------------
+// ------------------------------ VectorInt32Math ----------------------------------
+const VectorInt32Math VectorInt32Math::ZeroVector(0, 0, 0);
+
+VectorInt32Math::VectorInt32Math(int32_t posX, int32_t posY, int32_t posZ) : VectorIntMath(posX, posY, posZ)
+{}
+
+std::vector<int> s_randomUniverseNumbersInt32;
+int32_t s_randomIndexInt32 = VectorInt32Math::PPH_INT_MAX;
+bool s_isRandomGeneratedInt32 = false;
+void VectorInt32Math::InitRandom()
+{
+	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+	std::default_random_engine generator(seed);
+	if (s_randomUniverseNumbersInt32.empty())
+	{
+		s_randomUniverseNumbersInt32.resize(PPH_INT_MAX);
+		for (int ii = 0; ii < PPH_INT_MAX; ++ii)
+		{
+			s_randomUniverseNumbersInt32[ii] = ii;
+		}
+	}
+}
+
+void GenerateNumbersStepByStep()
+{
+	static int32_t ii = VectorInt32Math::PPH_INT_MAX - 1;
+	// Pick a random index from 0 to i  
+	int32_t jj = Rand32(ii + 1);
+	std::swap(s_randomUniverseNumbersInt32[ii], s_randomUniverseNumbersInt32[jj]);
+	--ii;
+	if (0 >= ii)
+	{
+		s_isRandomGeneratedInt32 = true;
+	}
+}
+
+int32_t VectorInt32Math::GetRandomNumber()
+{
+	int32_t number = s_randomUniverseNumbersInt32[s_randomIndexInt32];
+	++s_randomIndexInt32;
+	if (s_randomIndexInt32 > PPH_INT_MAX)
+	{
+		if (s_isRandomGeneratedInt32)
+		{
+			s_randomIndexInt32 = 0;
+		}
+		else
+		{
+			s_randomIndexInt32 = PPH_INT_MAX;
+			return Rand32(PPH_INT_MAX);
+		}
+	}
+	return number;
+}
+// ------------------------------ VectorInt32Math ----------------------------------
+// ---------------------------------------------------------------------------------
+
+BoxIntMath::BoxIntMath(const VectorInt32Math &minVector, const VectorInt32Math &maxVector) : m_minVector(minVector), m_maxVector(maxVector)
+{}
+
+EtherColor::EtherColor() : m_colorB(0), m_colorG(0), m_colorR(0), m_colorA(0)
+{}
+
+EtherColor::EtherColor(int8_t colorR, int8_t colorG, int8_t colorB) : m_colorB(colorR), m_colorG(colorG), m_colorR(colorB), m_colorA(0)
+{}
 
 int64_t GetTimeMs()
 {

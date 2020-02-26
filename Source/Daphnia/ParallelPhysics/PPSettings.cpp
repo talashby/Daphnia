@@ -111,11 +111,11 @@ int32 RoundToMinMaxPPhInt(double value)
 	int64 val64 = (int64)(0.5 + value);
 	if (0 > val64)
 	{
-		val64 = std::max(val64, (int64)PPh::PPH_INT_MIN);
+		val64 = std::max(val64, (int64)PPh::OrientationVectorMath::PPH_INT_MIN);
 	}
 	else
 	{
-		val64 = std::min(val64, (int64)PPh::PPH_INT_MAX);
+		val64 = std::min(val64, (int64)PPh::OrientationVectorMath::PPH_INT_MAX);
 	}
 	return (int32)val64;
 }
@@ -127,11 +127,11 @@ int32 FixFloatErrors(int32 component, int32 maxComponentValue)
 	{
 		if (0 > component)
 		{
-			componentCorrect = PPh::PPH_INT_MIN;
+			componentCorrect = PPh::OrientationVectorMath::PPH_INT_MIN;
 		}
 		else
 		{
-			componentCorrect = PPh::PPH_INT_MAX;
+			componentCorrect = PPh::OrientationVectorMath::PPH_INT_MAX;
 		}
 	}
 	return componentCorrect;
@@ -161,22 +161,22 @@ PPh::VectorInt32Math UPPSettings::ConvertLocationToPPhPosition(const FVector &Lo
 	return universePos;
 }
 
-PPh::VectorIntMath UPPSettings::ConvertRotationToPPhOrientation(const FRotator &Rotator)
+PPh::OrientationVectorMath UPPSettings::ConvertRotationToPPhOrientation(const FRotator &Rotator)
 {
 	FVector orientationVector = Rotator.Vector();
 	return ConvertRotationToPPhOrientation(orientationVector);
 }
 
-PPh::VectorIntMath UPPSettings::ConvertRotationToPPhOrientation(const FVector &orientationVector)
+PPh::OrientationVectorMath UPPSettings::ConvertRotationToPPhOrientation(const FVector &orientationVector)
 {
 	float maxComponent = std::max(std::max(std::abs(orientationVector.X), std::abs(orientationVector.Y)), std::abs(orientationVector.Z));
 	double factor = 0;
 	if (maxComponent > 0)
 	{
-		factor = PPh::PPH_INT_MAX / (double)maxComponent;
+		factor = PPh::OrientationVectorMath::PPH_INT_MAX / (double)maxComponent;
 	}
 
-	PPh::VectorIntMath pphOrientation(RoundToMinMaxPPhInt(orientationVector.X*factor), RoundToMinMaxPPhInt(orientationVector.Y*factor),
+	PPh::OrientationVectorMath pphOrientation(RoundToMinMaxPPhInt(orientationVector.X*factor), RoundToMinMaxPPhInt(orientationVector.Y*factor),
 		RoundToMinMaxPPhInt(orientationVector.Z*factor));
 
 	int32 maxPPhComponent = std::max(std::max(std::abs(pphOrientation.m_posX), std::abs(pphOrientation.m_posY)), std::abs(pphOrientation.m_posZ));

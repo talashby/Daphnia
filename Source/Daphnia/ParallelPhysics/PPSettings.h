@@ -23,8 +23,8 @@ public:
 	static UPPSettings* GetInstance();
 	void ConvertGeometry(UWorld *World);
 	static PPh::VectorInt32Math ConvertLocationToPPhPosition(const FVector &Location);
-	static PPh::VectorIntMath ConvertRotationToPPhOrientation(const FVector &orientationVector);
-	static PPh::VectorIntMath ConvertRotationToPPhOrientation(const FRotator &Rotator);
+	static PPh::OrientationVectorMath ConvertRotationToPPhOrientation(const FVector &orientationVector);
+	static PPh::OrientationVectorMath ConvertRotationToPPhOrientation(const FRotator &Rotator);
 	
 private:
 

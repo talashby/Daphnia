@@ -56,7 +56,7 @@ private:
 
 constexpr int32_t OBSERVER_EYE_SIZE = 32; // pixels
 constexpr int32_t UPDATE_EYE_TEXTURE_OUT = 200; // milliseconds
-typedef std::array< std::array<VectorIntMath, OBSERVER_EYE_SIZE>, OBSERVER_EYE_SIZE> EyeArray;
+typedef std::array< std::array<OrientationVectorMath, OBSERVER_EYE_SIZE>, OBSERVER_EYE_SIZE> EyeArray;
 typedef std::shared_ptr< EyeArray > SP_EyeState;
 typedef std::array< std::array<EtherColor, OBSERVER_EYE_SIZE>, OBSERVER_EYE_SIZE> EyeColorArray;
 typedef std::array< std::array<uint64_t, OBSERVER_EYE_SIZE>, OBSERVER_EYE_SIZE> EyeUpdateTimeArray;
