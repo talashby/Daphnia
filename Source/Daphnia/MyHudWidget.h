@@ -33,6 +33,13 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "BlueprintCallable")
 	void SwitchToParallelPhysics();
 
+	// Button_ParallelPhysics
+	UFUNCTION(BlueprintCallable, Category = "BlueprintCallable")
+	void DisableRenderCheckBoxPressed();
+
+	UPROPERTY(Category = Menu, VisibleDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	bool m_bDisableRenderCheckBox = true;
+
 private:
 	void ShowPPhStats();
 

@@ -178,15 +178,6 @@ void UMyHudWidget::SwitchToParallelPhysics()
 	if (PPh::ParallelPhysics::GetInstance()->IsSimulationRunning())
 	{
 		PPh::ParallelPhysics::GetInstance()->StopSimulation();
-		UWorld* World = GetWorld();
-		if (World && World->IsGameWorld())
-		{
-			UGameViewportClient* ViewportClient = World->GetGameViewport();
-			if (ViewportClient)
-			{
-				ViewportClient->bDisableWorldRendering = false;
-			}
-		}
 		if (BoxStats)
 		{
 			BoxStats->SetVisibility(ESlateVisibility::Hidden);
@@ -197,24 +188,33 @@ void UMyHudWidget::SwitchToParallelPhysics()
 		UWorld* World = GetWorld();
 		if (World && World->IsGameWorld())
 		{
+			DisableRenderCheckBoxPressed();
 			PPh::SP_EyeState eyeState;
-			UGameViewportClient* ViewportClient = World->GetGameViewport();
-			if (ViewportClient)
-			{
-				ViewportClient->bDisableWorldRendering = true;
-				eyeState = GetPawnEyeState(World);
+			eyeState = GetPawnEyeState(World);
+			FVector pawnLocation = ADaphniaPawn::GetInstance()->GetActorLocation();
+			PPh::VectorInt32Math position = UPPSettings::ConvertLocationToPPhPosition(pawnLocation);
+			PPh::Observer::Init(position, eyeState);
+			PPh::ParallelPhysics::GetInstance()->StartSimulation();
+			m_PawnRotation = ADaphniaPawn::GetInstance()->GetActorRotation();
+			m_ObserverPos = PPh::Observer::GetInstance()->GetPosition();
 
-				FVector pawnLocation = ADaphniaPawn::GetInstance()->GetActorLocation();
-				PPh::VectorInt32Math position = UPPSettings::ConvertLocationToPPhPosition(pawnLocation);
-				PPh::Observer::Init(position, eyeState);
-				PPh::ParallelPhysics::GetInstance()->StartSimulation();
-				m_PawnRotation = ADaphniaPawn::GetInstance()->GetActorRotation();
-				m_ObserverPos = PPh::Observer::GetInstance()->GetPosition();
-			}
 			if (BoxStats)
 			{
 				BoxStats->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 			}
+		}
+	}
+}
+
+void UMyHudWidget::DisableRenderCheckBoxPressed()
+{
+	UWorld* World = GetWorld();
+	if (World && World->IsGameWorld())
+	{
+		UGameViewportClient* ViewportClient = World->GetGameViewport();
+		if (ViewportClient)
+		{
+			ViewportClient->bDisableWorldRendering = m_bDisableRenderCheckBox;
 		}
 	}
 }

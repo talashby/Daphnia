@@ -20,7 +20,6 @@ int32_t Rand32(int32_t iRandMax) // from [0; iRandMax-1]
 // ---------------------------------------------------------------------------------
 // ------------------------------ VectorInt8Math -----------------------------------
 const VectorInt8Math VectorInt8Math::ZeroVector(0, 0, 0);
-const VectorInt8Math VectorInt8Math::OneVector(1, 1, 1);
 
 VectorInt8Math::VectorInt8Math(int8_t posX, int8_t posY, int8_t posZ) : VectorIntMath(posX, posY, posZ)
 {}
@@ -56,6 +55,49 @@ int8_t VectorInt8Math::GetRandomNumber()
 {
 	int8_t number = s_randomUniverseNumbersInt8[s_randomIndexInt8];
 	++s_randomIndexInt8;
+	return number;
+}
+// ------------------------------ VectorInt8Math -----------------------------------
+// ---------------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------------
+// ------------------------------ VectorInt16Math -----------------------------------
+const VectorInt16Math VectorInt16Math::ZeroVector(0, 0, 0);
+
+VectorInt16Math::VectorInt16Math(int16_t posX, int16_t posY, int16_t posZ) : VectorIntMath(posX, posY, posZ)
+{}
+
+std::vector<int16_t> s_randomUniverseNumbersInt16;
+int16_t s_randomIndexInt16 = 0;
+
+void VectorInt16Math::InitRandom()
+{
+	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+	std::default_random_engine generator(seed);
+	if (s_randomUniverseNumbersInt16.empty())
+	{
+		s_randomUniverseNumbersInt16.resize((PPH_INT_MAX + 1) * 2);
+		for (int ii = 0; ii < PPH_INT_MAX + 1; ++ii)
+		{
+			s_randomUniverseNumbersInt16[ii] = ii;
+		}
+	}
+
+	for (int16_t ii = PPH_INT_MAX; ii > 0; --ii)
+	{
+		// Pick a random index from 0 to i  
+		int16_t jj = Rand32(ii + 1);
+		std::swap(s_randomUniverseNumbersInt16[ii], s_randomUniverseNumbersInt16[jj]);
+	}
+
+	std::copy(s_randomUniverseNumbersInt16.begin(), s_randomUniverseNumbersInt16.begin() + PPH_INT_MAX + 1,
+		s_randomUniverseNumbersInt16.begin() + PPH_INT_MAX + 1);
+}
+
+int16_t VectorInt16Math::GetRandomNumber()
+{
+	int16_t number = s_randomUniverseNumbersInt16[s_randomIndexInt16];
+	++s_randomIndexInt16;
 	return number;
 }
 // ------------------------------ VectorInt8Math -----------------------------------

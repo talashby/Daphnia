@@ -8,6 +8,7 @@ namespace PPh
 	class VectorIntMath
 	{
 	public:
+		static const D ZeroVector;
 
 		VectorIntMath() = default;
 		VectorIntMath(T posX, T posY, T posZ) : m_posX(posX), m_posY(posY), m_posZ(posZ)
@@ -46,8 +47,6 @@ namespace PPh
 	public:
 		static const int8_t PPH_INT_MAX = 127;
 		static const int8_t PPH_INT_MIN = -PPH_INT_MAX;
-		static const VectorInt8Math ZeroVector;
-		static const VectorInt8Math OneVector;
 
 		VectorInt8Math() = default;
 		VectorInt8Math(int8_t posX, int8_t posY, int8_t posZ);
@@ -56,13 +55,24 @@ namespace PPh
 		static int8_t GetRandomNumber(); // from 0 to PPH_INT_MAX
 	};
 
+	class VectorInt16Math : public VectorIntMath<int16_t, VectorInt16Math>
+	{
+	public:
+		static const int16_t PPH_INT_MAX = 32767;
+		static const int16_t PPH_INT_MIN = -PPH_INT_MAX;
+
+		VectorInt16Math() = default;
+		VectorInt16Math(int16_t posX, int16_t posY, int16_t posZ);
+
+		static void InitRandom();
+		static int16_t GetRandomNumber(); // from 0 to PPH_INT_MAX
+	};
+
 	class VectorInt32Math : public VectorIntMath<int32_t, VectorInt32Math>
 	{
 	public:
 		static const int32_t PPH_INT_MAX = 1073741824;
 		static const int32_t PPH_INT_MIN = -PPH_INT_MAX;
-
-		static const VectorInt32Math ZeroVector;
 
 		VectorInt32Math() = default;
 		VectorInt32Math(int32_t posX, int32_t posY, int32_t posZ);
