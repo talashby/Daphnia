@@ -54,7 +54,7 @@ private:
 	bool m_isSimulationRunning = false;
 };
 
-constexpr int32_t OBSERVER_EYE_SIZE = 32; // pixels
+constexpr int32_t OBSERVER_EYE_SIZE = 16; // pixels
 constexpr int32_t UPDATE_EYE_TEXTURE_OUT = 200; // milliseconds
 typedef std::array< std::array<OrientationVectorMath, OBSERVER_EYE_SIZE>, OBSERVER_EYE_SIZE> EyeArray;
 typedef std::shared_ptr< EyeArray > SP_EyeState;
@@ -89,7 +89,7 @@ private:
 	SP_EyeState m_eyeState;
 	SP_EyeState m_newEyeState; // Used from different threads
 
-	const int32_t EYE_IMAGE_DELAY = 3000; // quantum of time
+	const int32_t EYE_IMAGE_DELAY = 1500; // quantum of time
 	//const uint32_t EYE_FOV = PPH_INT_MAX/2; // quantum of length (MAX_INT/2 - 90 degrees; MAX_INT - 180 degrees; 2*MAX_INT - 360 degrees)
 
 	const int32_t ECHOLOCATION_FREQUENCY = 50; // quantum of time

@@ -28,13 +28,6 @@ class ADaphniaPawn : public APawn
 	UPROPERTY(Category = CameraEye, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* CameraEye;
 
-	UPROPERTY()
-	class UTextureRenderTarget2D* EyeRenderTarget2D;
-	UPROPERTY(Category = CameraEye, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	class USceneCaptureComponent2D* EyeSceneCaptureComponent2D;
-
-	UPROPERTY(Category = CameraEye, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	int32 EyeTextureSize = 32;
 public:
 	ADaphniaPawn();
 	static ADaphniaPawn* GetInstance();
@@ -43,8 +36,6 @@ public:
 	virtual void NotifyHit(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
 	// End AActor overrides
 	void SwitchView();
-	class UTextureRenderTarget2D* GetEyeRenderTarget2D();
-	int32 GetEyeTextureSize() const;
 
 protected:
 

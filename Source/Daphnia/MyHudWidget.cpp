@@ -87,7 +87,7 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 			PPh::SP_EyeColorArray spEyeColorArray = PPh::Observer::GetInstance()->GrabTexture();
 			if (spEyeColorArray)
 			{
-				const int32 EyeTextureSize = ADaphniaPawn::GetInstance()->GetEyeTextureSize();
+				const int32 EyeTextureSize = PPh::OBSERVER_EYE_SIZE;
 				if (!pEyeViewTexture2D)
 				{
 					pEyeViewTexture2D = UTexture2D::CreateTransient(EyeTextureSize, EyeTextureSize);

@@ -62,14 +62,6 @@ ADaphniaPawn::ADaphniaPawn()
 	CameraEye->SetupAttachment(RootComponent);	// Attach the camera
 	CameraEye->bUsePawnControlRotation = false; // Don't rotate camera with controller
 	CameraEye->Deactivate();
-
-	EyeSceneCaptureComponent2D = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("EyeSceneCaptureComponent2D0"));
-	EyeSceneCaptureComponent2D->SetupAttachment(RootComponent);
-	FMinimalViewInfo MinimalViewInfo;
-	CameraEye->GetCameraView(1, MinimalViewInfo);
-	EyeSceneCaptureComponent2D->SetCameraView(MinimalViewInfo);
-	EyeSceneCaptureComponent2D->SetRelativeLocation(FVector(EyeCoord, 0, 0));
-	EyeSceneCaptureComponent2D->bCaptureEveryFrame = true;
 }
 
 ADaphniaPawn* ADaphniaPawn::GetInstance()
@@ -82,12 +74,6 @@ void ADaphniaPawn::BeginPlay()
 {
 	s_InstancePtr = this;
 	Super::BeginPlay();
-
-	if (EyeSceneCaptureComponent2D)
-	{
-		EyeRenderTarget2D = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), GetEyeTextureSize(), GetEyeTextureSize(), RTF_RGBA8);
-		EyeSceneCaptureComponent2D->TextureTarget = EyeRenderTarget2D;
-	}
 }
 
 void ADaphniaPawn::Tick(float DeltaSeconds)
@@ -210,14 +196,4 @@ void ADaphniaPawn::SwitchView()
 		}
 		InputController->SetViewTargetWithBlend(this);
 	}
-}
-
-class UTextureRenderTarget2D* ADaphniaPawn::GetEyeRenderTarget2D()
-{
-	return EyeRenderTarget2D;
-}
-
-int32 ADaphniaPawn::GetEyeTextureSize() const
-{
-	return EyeTextureSize;
 }
