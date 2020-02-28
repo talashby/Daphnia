@@ -25,7 +25,7 @@ VectorInt8Math::VectorInt8Math(int8_t posX, int8_t posY, int8_t posZ) : VectorIn
 {}
 
 std::vector<int8_t> s_randomUniverseNumbersInt8;
-int8_t s_randomIndexInt8 = 0;
+uint8_t s_randomIndexInt8 = 0;
 
 void VectorInt8Math::InitRandom()
 {
@@ -68,7 +68,7 @@ VectorInt16Math::VectorInt16Math(int16_t posX, int16_t posY, int16_t posZ) : Vec
 {}
 
 std::vector<int16_t> s_randomUniverseNumbersInt16;
-int16_t s_randomIndexInt16 = 0;
+uint16_t s_randomIndexInt16 = 0;
 
 void VectorInt16Math::InitRandom()
 {

@@ -4,6 +4,8 @@
 
 namespace PPh
 {
+	typedef class VectorInt8Math OrientationVectorMath;
+
 	template<class T, class D>
 	class VectorIntMath
 	{
@@ -80,8 +82,6 @@ namespace PPh
 		static void InitRandom();
 		static int32_t GetRandomNumber(); // from 0 to PPH_INT_MAX
 	};
-
-	typedef VectorInt32Math OrientationVectorMath;
 
 	class BoxIntMath
 	{
