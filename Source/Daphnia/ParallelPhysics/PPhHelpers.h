@@ -39,7 +39,7 @@ namespace PPh
 
 		union
 		{
-			struct { T m_posX, m_posY, m_posZ, m_tmp; };
+			struct { T m_posX, m_posY, m_posZ; };
 			uint32_t AlignmentDummy;
 		};
 	};
@@ -98,6 +98,8 @@ namespace PPh
 	public:
 		EtherColor();
 		EtherColor(int8_t colorR, int8_t colorG, int8_t colorB);
+
+		static const EtherColor ZeroColor;
 
 		union
 		{

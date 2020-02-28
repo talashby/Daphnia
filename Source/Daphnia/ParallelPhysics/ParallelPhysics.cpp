@@ -17,8 +17,6 @@ std::vector< std::vector< std::vector<struct EtherCell> > > s_universe;
 std::atomic<uint64_t> s_time = 0; // absolute universe time
 std::atomic<int32_t> s_waitThreadsCount = 0; // thread synchronization variable
 std::vector<BoxIntMath> s_threadSimulateBounds; // [minVector; maxVector)
-typedef std::vector<struct Photon> PhotonVector;
-typedef std::shared_ptr<PhotonVector> SP_PhotonVector;
 
 // stats
 uint64_t s_quantumOfTimePerSecond = 0;
@@ -30,19 +28,20 @@ uint64_t s_TickTimeNsAverageObserverThread;
 
 struct Photon
 {
+	Photon()
+	{}
 	explicit Photon(const OrientationVectorMath &orientation) : m_orientation(orientation)
-	{
-	}
-	OrientationVectorMath m_orientation;
+	{}
 	EtherColor m_color;
-	int32_t m_param;
+	OrientationVectorMath m_orientation;
+	PhotonParam m_param;
 };
 
 struct EtherCell
 {
 	int32_t m_type = EtherType::Space;
 	EtherColor m_color;
-	std::array <std::array<SP_PhotonVector, 26>, 2> m_photons;
+	std::array <std::array<Photon, 26>, 2> m_photons;
 };
 
 bool ParallelPhysics::Init(const VectorInt32Math &universeSize, uint8_t threadsCount)
@@ -56,8 +55,8 @@ bool ParallelPhysics::Init(const VectorInt32Math &universeSize, uint8_t threadsC
 			itY.resize(universeSize.m_posY);
 			for (auto &itZ : itY)
 			{
-				itZ.resize(universeSize.m_posZ);
-				std::fill(itZ.begin(), itZ.end(), PPh::EtherCell());
+				EtherCell cell; // color is zero by default
+				itZ.resize(universeSize.m_posZ, cell);
 			}
 		}
 		if (s_parallelPhysicsInstance)
@@ -127,31 +126,29 @@ void UniverseThread(int32_t threadNum, bool *isSimulationRunning)
 					}
 					for (int ii = 0; ii < cell.m_photons[isTimeOdd].size(); ++ii)
 					{
-						auto &spPhotonVector = cell.m_photons[isTimeOdd][ii];
-						if (!spPhotonVector)
-						{
-							continue;
-						}
-						auto it = spPhotonVector->begin();
-						while (it != spPhotonVector->end())
+						Photon &photon = cell.m_photons[isTimeOdd][ii];
+						if (photon.m_color.m_colorA != 0)
 						{
 							if (cell.m_type == EtherType::Crumb || cell.m_type == EtherType::Block)
 							{
-								it->m_orientation *= -1;
-								uint8_t tmpA = it->m_color.m_colorA;
-								it->m_color = cell.m_color;
-								it->m_color.m_colorA = tmpA;
+								photon.m_orientation *= -1;
+								uint8_t tmpA = photon.m_color.m_colorA;
+								photon.m_color = cell.m_color;
+								photon.m_color.m_colorA = tmpA;
 							}
-    						if (it->m_color.m_colorA > 15)
+    						if (photon.m_color.m_colorA > 15)
 							{
-								it->m_color.m_colorA -= 15;
-								ParallelPhysics::GetInstance()->EmitPhoton({ posX, posY, posZ }, *it);
+								photon.m_color.m_colorA -= 15;
+								bool result = ParallelPhysics::GetInstance()->EmitPhoton({ posX, posY, posZ }, photon);
+								if (result)
+								{
+									photon.m_color = EtherColor::ZeroColor;
+								}
 							}
-							it = spPhotonVector->erase(it);
-						}
-						if (!spPhotonVector->size())
-						{
-							spPhotonVector = nullptr;
+							else
+							{
+								photon.m_color = EtherColor::ZeroColor;
+							}
 						}
 					}
 				}
@@ -371,21 +368,19 @@ bool ParallelPhysics::EmitPhoton(const VectorInt32Math &pos, const Photon &photo
 	}
 
 	VectorInt32Math nextPos = pos + unitVector;
-	if (!IsPosInBounds(nextPos))
+	if (IsPosInBounds(nextPos))
 	{
-		return false;
-	}
+		int isTimeOdd = (s_time + 1) % 2; // will be handle on next quantum of time
 
-	int isTimeOdd = (s_time + 1) % 2; // will be handle on next quantum of time
-
-	EtherCell &cell = s_universe[nextPos.m_posX][nextPos.m_posY][nextPos.m_posZ];
-	int32_t cellPhotonIndex = GetCellPhotonIndex(unitVector);
-	auto &spPhotonVector = cell.m_photons[isTimeOdd][cellPhotonIndex];
-	if (!spPhotonVector)
-	{
-		spPhotonVector = std::make_shared<PhotonVector>();
+		EtherCell &cell = s_universe[nextPos.m_posX][nextPos.m_posY][nextPos.m_posZ];
+		int32_t cellPhotonIndex = GetCellPhotonIndex(unitVector);
+		Photon &photonCell = cell.m_photons[isTimeOdd][cellPhotonIndex];
+		if (photonCell.m_color.m_colorA > 0)
+		{
+			return false;
+		}
+		photonCell = photon;
 	}
-	spPhotonVector->push_back(photon);
 	
 	return true;
 }
@@ -449,14 +444,74 @@ void Observer::PPhTick()
 			m_eyeState = m_newEyeState;
 		}
 		const EyeArray &eyeArray = *m_eyeState;
-		for (int ii = 0; ii < eyeArray.size(); ++ii)
 		{
-			for (int jj = 0; jj < eyeArray[ii].size(); ++jj)
+			int32_t ii = rand() % OBSERVER_EYE_SIZE;
+			int32_t jj = rand() % OBSERVER_EYE_SIZE;
+			//for (int ii = 0; ii < eyeArray.size(); ++ii)
 			{
-				Photon photon(eyeArray[ii][jj]);
-				photon.m_param = ii + jj * OBSERVER_EYE_SIZE;
-				photon.m_color.m_colorA = 255;
-				ParallelPhysics::GetInstance()->EmitPhoton(m_position, photon);
+				//for (int jj = 0; jj < eyeArray[ii].size(); ++jj)
+				{
+					Photon photon(eyeArray[ii][jj]);
+					photon.m_param = ii + jj * OBSERVER_EYE_SIZE;
+					photon.m_color.m_colorA = 255;
+					ParallelPhysics::GetInstance()->EmitPhoton(m_position, photon);
+				}
+			}
+		}
+		{
+			int32_t ii = rand() % OBSERVER_EYE_SIZE;
+			int32_t jj = rand() % OBSERVER_EYE_SIZE;
+			//for (int ii = 0; ii < eyeArray.size(); ++ii)
+			{
+				//for (int jj = 0; jj < eyeArray[ii].size(); ++jj)
+				{
+					Photon photon(eyeArray[ii][jj]);
+					photon.m_param = ii + jj * OBSERVER_EYE_SIZE;
+					photon.m_color.m_colorA = 255;
+					ParallelPhysics::GetInstance()->EmitPhoton(m_position, photon);
+				}
+			}
+		}
+		{
+			int32_t ii = rand() % OBSERVER_EYE_SIZE;
+			int32_t jj = rand() % OBSERVER_EYE_SIZE;
+			//for (int ii = 0; ii < eyeArray.size(); ++ii)
+			{
+				//for (int jj = 0; jj < eyeArray[ii].size(); ++jj)
+				{
+					Photon photon(eyeArray[ii][jj]);
+					photon.m_param = ii + jj * OBSERVER_EYE_SIZE;
+					photon.m_color.m_colorA = 255;
+					ParallelPhysics::GetInstance()->EmitPhoton(m_position, photon);
+				}
+			}
+		}
+		{
+			int32_t ii = rand() % OBSERVER_EYE_SIZE;
+			int32_t jj = rand() % OBSERVER_EYE_SIZE;
+			//for (int ii = 0; ii < eyeArray.size(); ++ii)
+			{
+				//for (int jj = 0; jj < eyeArray[ii].size(); ++jj)
+				{
+					Photon photon(eyeArray[ii][jj]);
+					photon.m_param = ii + jj * OBSERVER_EYE_SIZE;
+					photon.m_color.m_colorA = 255;
+					ParallelPhysics::GetInstance()->EmitPhoton(m_position, photon);
+				}
+			}
+		}
+		{
+			int32_t ii = rand() % OBSERVER_EYE_SIZE;
+			int32_t jj = rand() % OBSERVER_EYE_SIZE;
+			//for (int ii = 0; ii < eyeArray.size(); ++ii)
+			{
+				//for (int jj = 0; jj < eyeArray[ii].size(); ++jj)
+				{
+					Photon photon(eyeArray[ii][jj]);
+					photon.m_param = ii + jj * OBSERVER_EYE_SIZE;
+					photon.m_color.m_colorA = 255;
+					ParallelPhysics::GetInstance()->EmitPhoton(m_position, photon);
+				}
 			}
 		}
 	}
@@ -466,23 +521,14 @@ void Observer::PPhTick()
 	EtherCell &cell = s_universe[m_position.m_posX][m_position.m_posY][m_position.m_posZ];
 	for (int ii = 0; ii < cell.m_photons[isTimeOdd].size(); ++ii)
 	{
-		auto &spPhotonVector = cell.m_photons[isTimeOdd][ii];
-		if (!spPhotonVector)
+		Photon &photon = cell.m_photons[isTimeOdd][ii];
+		if (photon.m_color.m_colorA > 0)
 		{
-			continue;
-		}
-		auto it = spPhotonVector->begin();
-		while (it != spPhotonVector->end())
-		{
-			int32_t yPos = it->m_param / OBSERVER_EYE_SIZE;
-			int32_t xPos = it->m_param - yPos * OBSERVER_EYE_SIZE;
-			m_eyeColorArray[xPos][yPos] = it->m_color;
+			int32_t yPos = photon.m_param / OBSERVER_EYE_SIZE;
+			int32_t xPos = photon.m_param - yPos * OBSERVER_EYE_SIZE;
+			m_eyeColorArray[xPos][yPos] = photon.m_color;
 			m_eyeUpdateTimeArray[xPos][yPos] = s_time;
-			it = spPhotonVector->erase(it);
-		}
-		if (!spPhotonVector->size())
-		{
-			spPhotonVector = nullptr;
+			photon.m_color = EtherColor::ZeroColor;
 		}
 	}
 

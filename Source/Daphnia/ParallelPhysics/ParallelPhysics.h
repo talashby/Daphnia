@@ -54,6 +54,7 @@ private:
 	bool m_isSimulationRunning = false;
 };
 
+typedef int16_t PhotonParam; // warning! Depends on OBSERVER_EYE_SIZE
 constexpr int32_t OBSERVER_EYE_SIZE = 16; // pixels
 constexpr int32_t UPDATE_EYE_TEXTURE_OUT = 200; // milliseconds
 typedef std::array< std::array<OrientationVectorMath, OBSERVER_EYE_SIZE>, OBSERVER_EYE_SIZE> EyeArray;
@@ -92,7 +93,7 @@ private:
 	const int32_t EYE_IMAGE_DELAY = 1500; // quantum of time
 	//const uint32_t EYE_FOV = PPH_INT_MAX/2; // quantum of length (MAX_INT/2 - 90 degrees; MAX_INT - 180 degrees; 2*MAX_INT - 360 degrees)
 
-	const int32_t ECHOLOCATION_FREQUENCY = 50; // quantum of time
+	const int32_t ECHOLOCATION_FREQUENCY = 1; // quantum of time
 	int32_t m_echolocationCounter = 0;
 
 	EyeColorArray m_eyeColorArray = EyeColorArray();
