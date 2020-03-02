@@ -164,9 +164,6 @@ int32_t VectorInt32Math::GetRandomNumber()
 BoxIntMath::BoxIntMath(const VectorInt32Math &minVector, const VectorInt32Math &maxVector) : m_minVector(minVector), m_maxVector(maxVector)
 {}
 
-EtherColor::EtherColor() : m_colorB(0), m_colorG(0), m_colorR(0), m_colorA(0)
-{}
-
 EtherColor::EtherColor(int8_t colorR, int8_t colorG, int8_t colorB) : m_colorB(colorR), m_colorG(colorG), m_colorR(colorB), m_colorA(0)
 {}
 
