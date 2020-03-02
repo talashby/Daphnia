@@ -5,6 +5,7 @@
 #include "algorithm"
 #include "random"
 #include <chrono>
+#include "atomic"
 
 namespace PPh
 {
@@ -25,7 +26,7 @@ VectorInt8Math::VectorInt8Math(int8_t posX, int8_t posY, int8_t posZ) : VectorIn
 {}
 
 std::vector<int8_t> s_randomUniverseNumbersInt8;
-uint8_t s_randomIndexInt8 = 0;
+std::atomic<uint8_t> s_randomIndexInt8 = 0;
 
 void VectorInt8Math::InitRandom()
 {
@@ -53,8 +54,7 @@ void VectorInt8Math::InitRandom()
 
 int8_t VectorInt8Math::GetRandomNumber()
 {
-	int8_t number = s_randomUniverseNumbersInt8[s_randomIndexInt8];
-	++s_randomIndexInt8;
+	int8_t number = s_randomUniverseNumbersInt8[s_randomIndexInt8++];
 	return number;
 }
 // ------------------------------ VectorInt8Math -----------------------------------
@@ -68,7 +68,7 @@ VectorInt16Math::VectorInt16Math(int16_t posX, int16_t posY, int16_t posZ) : Vec
 {}
 
 std::vector<int16_t> s_randomUniverseNumbersInt16;
-uint16_t s_randomIndexInt16 = 0;
+std::atomic <uint16_t> s_randomIndexInt16 = 0;
 
 void VectorInt16Math::InitRandom()
 {
@@ -96,8 +96,7 @@ void VectorInt16Math::InitRandom()
 
 int16_t VectorInt16Math::GetRandomNumber()
 {
-	int16_t number = s_randomUniverseNumbersInt16[s_randomIndexInt16];
-	++s_randomIndexInt16;
+	int16_t number = s_randomUniverseNumbersInt16[s_randomIndexInt16++];
 	return number;
 }
 // ------------------------------ VectorInt8Math -----------------------------------
@@ -111,7 +110,7 @@ VectorInt32Math::VectorInt32Math(int32_t posX, int32_t posY, int32_t posZ) : Vec
 {}
 
 std::vector<int> s_randomUniverseNumbersInt32;
-int32_t s_randomIndexInt32 = VectorInt32Math::PPH_INT_MAX;
+std::atomic<int32_t> s_randomIndexInt32 = VectorInt32Math::PPH_INT_MAX;
 bool s_isRandomGeneratedInt32 = false;
 void VectorInt32Math::InitRandom()
 {
@@ -142,8 +141,7 @@ void GenerateNumbersStepByStep()
 
 int32_t VectorInt32Math::GetRandomNumber()
 {
-	int32_t number = s_randomUniverseNumbersInt32[s_randomIndexInt32];
-	++s_randomIndexInt32;
+	int32_t number = s_randomUniverseNumbersInt32[s_randomIndexInt32++]; // WARN! Multithreading problems
 	if (s_randomIndexInt32 > PPH_INT_MAX)
 	{
 		if (s_isRandomGeneratedInt32)

@@ -445,74 +445,36 @@ void Observer::PPhTick()
 		}
 		const EyeArray &eyeArray = *m_eyeState;
 		{
-			int32_t ii = rand() % OBSERVER_EYE_SIZE;
-			int32_t jj = rand() % OBSERVER_EYE_SIZE;
-			//for (int ii = 0; ii < eyeArray.size(); ++ii)
-			{
-				//for (int jj = 0; jj < eyeArray[ii].size(); ++jj)
-				{
-					Photon photon(eyeArray[ii][jj]);
-					photon.m_param = ii + jj * OBSERVER_EYE_SIZE;
-					photon.m_color.m_colorA = 255;
-					ParallelPhysics::GetInstance()->EmitPhoton(m_position, photon);
-				}
-			}
+			int32_t ii = OrientationVectorMath::GetRandomNumber() % (OBSERVER_EYE_SIZE / 2);
+			int32_t jj = OrientationVectorMath::GetRandomNumber() % (OBSERVER_EYE_SIZE / 2);
+			Photon photon(eyeArray[ii][jj]);
+			photon.m_param = ii + jj * OBSERVER_EYE_SIZE;
+			photon.m_color.m_colorA = 255;
+			ParallelPhysics::GetInstance()->EmitPhoton(m_position, photon);
 		}
 		{
-			int32_t ii = rand() % OBSERVER_EYE_SIZE;
-			int32_t jj = rand() % OBSERVER_EYE_SIZE;
-			//for (int ii = 0; ii < eyeArray.size(); ++ii)
-			{
-				//for (int jj = 0; jj < eyeArray[ii].size(); ++jj)
-				{
-					Photon photon(eyeArray[ii][jj]);
-					photon.m_param = ii + jj * OBSERVER_EYE_SIZE;
-					photon.m_color.m_colorA = 255;
-					ParallelPhysics::GetInstance()->EmitPhoton(m_position, photon);
-				}
-			}
+			int32_t ii = OrientationVectorMath::GetRandomNumber() % (OBSERVER_EYE_SIZE / 2) + (OBSERVER_EYE_SIZE / 2);
+			int32_t jj = OrientationVectorMath::GetRandomNumber() % (OBSERVER_EYE_SIZE / 2);
+			Photon photon(eyeArray[ii][jj]);
+			photon.m_param = ii + jj * OBSERVER_EYE_SIZE;
+			photon.m_color.m_colorA = 255;
+			ParallelPhysics::GetInstance()->EmitPhoton(m_position, photon);
 		}
 		{
-			int32_t ii = rand() % OBSERVER_EYE_SIZE;
-			int32_t jj = rand() % OBSERVER_EYE_SIZE;
-			//for (int ii = 0; ii < eyeArray.size(); ++ii)
-			{
-				//for (int jj = 0; jj < eyeArray[ii].size(); ++jj)
-				{
-					Photon photon(eyeArray[ii][jj]);
-					photon.m_param = ii + jj * OBSERVER_EYE_SIZE;
-					photon.m_color.m_colorA = 255;
-					ParallelPhysics::GetInstance()->EmitPhoton(m_position, photon);
-				}
-			}
+			int32_t ii = OrientationVectorMath::GetRandomNumber() % (OBSERVER_EYE_SIZE / 2);
+			int32_t jj = OrientationVectorMath::GetRandomNumber() % (OBSERVER_EYE_SIZE / 2) + (OBSERVER_EYE_SIZE / 2);
+			Photon photon(eyeArray[ii][jj]);
+			photon.m_param = ii + jj * OBSERVER_EYE_SIZE;
+			photon.m_color.m_colorA = 255;
+			ParallelPhysics::GetInstance()->EmitPhoton(m_position, photon);
 		}
 		{
-			int32_t ii = rand() % OBSERVER_EYE_SIZE;
-			int32_t jj = rand() % OBSERVER_EYE_SIZE;
-			//for (int ii = 0; ii < eyeArray.size(); ++ii)
-			{
-				//for (int jj = 0; jj < eyeArray[ii].size(); ++jj)
-				{
-					Photon photon(eyeArray[ii][jj]);
-					photon.m_param = ii + jj * OBSERVER_EYE_SIZE;
-					photon.m_color.m_colorA = 255;
-					ParallelPhysics::GetInstance()->EmitPhoton(m_position, photon);
-				}
-			}
-		}
-		{
-			int32_t ii = rand() % OBSERVER_EYE_SIZE;
-			int32_t jj = rand() % OBSERVER_EYE_SIZE;
-			//for (int ii = 0; ii < eyeArray.size(); ++ii)
-			{
-				//for (int jj = 0; jj < eyeArray[ii].size(); ++jj)
-				{
-					Photon photon(eyeArray[ii][jj]);
-					photon.m_param = ii + jj * OBSERVER_EYE_SIZE;
-					photon.m_color.m_colorA = 255;
-					ParallelPhysics::GetInstance()->EmitPhoton(m_position, photon);
-				}
-			}
+			int32_t ii = OrientationVectorMath::GetRandomNumber() % (OBSERVER_EYE_SIZE / 2) + (OBSERVER_EYE_SIZE / 2);
+			int32_t jj = OrientationVectorMath::GetRandomNumber() % (OBSERVER_EYE_SIZE / 2) + (OBSERVER_EYE_SIZE / 2);
+			Photon photon(eyeArray[ii][jj]);
+			photon.m_param = ii + jj * OBSERVER_EYE_SIZE;
+			photon.m_color.m_colorA = 255;
+			ParallelPhysics::GetInstance()->EmitPhoton(m_position, photon);
 		}
 	}
 
