@@ -28,8 +28,7 @@ uint64_t s_TickTimeNsAverageObserverThread;
 
 struct Photon
 {
-	Photon()
-	{}
+	Photon() = default;
 	explicit Photon(const OrientationVectorMath &orientation) : m_orientation(orientation)
 	{}
 	EtherColor m_color;
@@ -39,7 +38,10 @@ struct Photon
 
 struct EtherCell
 {
-	int32_t m_type = EtherType::Space;
+	EtherCell() = default;
+	explicit EtherCell(EtherType::EEtherType type) : m_type(type)
+	{}
+	int32_t m_type;
 	EtherColor m_color;
 	std::array <std::array<Photon, 26>, 2> m_photons;
 };
@@ -55,7 +57,21 @@ bool ParallelPhysics::Init(const VectorInt32Math &universeSize, uint8_t threadsC
 			itY.resize(universeSize.m_posY);
 			for (auto &itZ : itY)
 			{
-				EtherCell cell; // color is zero by default
+				itZ.resize(0);
+				EtherCell cell(EtherType::Space);
+				cell.m_color = EtherColor::ZeroColor;
+				{
+					for (int ii = 0; ii < cell.m_photons[0].size(); ++ii)
+					{
+						cell.m_photons[0][ii].m_color.m_colorA = 0;
+					}
+				}
+				{
+					for (int ii = 0; ii < cell.m_photons[1].size(); ++ii)
+					{
+						cell.m_photons[1][ii].m_color.m_colorA = 0;
+					}
+				}
 				itZ.resize(universeSize.m_posZ, cell);
 			}
 		}
@@ -439,9 +455,25 @@ void Observer::PPhTick()
 
 		SP_EyeState newEyeState;
 		std::atomic_store(&newEyeState, m_newEyeState);
-		if (m_newEyeState && m_eyeState != m_newEyeState)
+		if (newEyeState && m_eyeState != newEyeState)
 		{
-			m_eyeState = m_newEyeState;
+			m_eyeState = newEyeState;
+			const EyeArray &eyeArray = *m_eyeState;
+			OrientationVectorMath orientMin(OrientationVectorMath::PPH_INT_MAX, OrientationVectorMath::PPH_INT_MAX, OrientationVectorMath::PPH_INT_MAX);
+			OrientationVectorMath orientMax(OrientationVectorMath::PPH_INT_MIN, OrientationVectorMath::PPH_INT_MIN, OrientationVectorMath::PPH_INT_MIN);
+			for (int ii = 0; ii < eyeArray.size(); ++ii)
+			{
+				for (int jj = 0; jj < eyeArray[ii].size(); ++jj)
+				{
+					orientMin.m_posX = std::min(orientMin.m_posX, eyeArray[ii][jj].m_posX);
+					orientMin.m_posY = std::min(orientMin.m_posY, eyeArray[ii][jj].m_posY);
+					orientMin.m_posZ = std::min(orientMin.m_posZ, eyeArray[ii][jj].m_posZ);
+					orientMax.m_posX = std::max(orientMax.m_posX, eyeArray[ii][jj].m_posX);
+					orientMax.m_posY = std::max(orientMax.m_posY, eyeArray[ii][jj].m_posY);
+					orientMax.m_posZ = std::max(orientMax.m_posZ, eyeArray[ii][jj].m_posZ);
+				}
+			}
+			int ttt = 0;
 		}
 		const EyeArray &eyeArray = *m_eyeState;
 		{

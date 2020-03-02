@@ -96,7 +96,7 @@ namespace PPh
 	class EtherColor
 	{
 	public:
-		EtherColor();
+		EtherColor() = default;
 		EtherColor(int8_t colorR, int8_t colorG, int8_t colorB);
 
 		static const EtherColor ZeroColor;

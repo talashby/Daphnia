@@ -146,7 +146,7 @@ void UMyHudWidget::ShowPPhStats()
 		lastTime = PPh::GetTimeMs();
 		if (pTextBlockStats && PPh::ParallelPhysics::GetInstance()->IsSimulationRunning())
 		{
-			FString sFps = FString("FPS: ") + FString::FromInt(PPh::ParallelPhysics::GetFPS());
+			FString sFps = FString("FPS (quantum of time per second): ") + FString::FromInt(PPh::ParallelPhysics::GetFPS());
 			if (PPh::ParallelPhysics::IsHighPrecisionStatsEnabled())
 			{
 				sFps += "\nTick time(ms). Observer thread: " + FString::SanitizeFloat(PPh::ParallelPhysics::GetTickTimeNsObserverThread()/1000000.0f);
