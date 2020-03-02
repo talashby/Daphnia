@@ -35,6 +35,8 @@ public:
 	bool InitEtherCell(const VectorInt32Math &pos, EtherType::EEtherType type, const EtherColor &color = EtherColor()); // returns true if success
 	bool EmitPhoton(const VectorInt32Math &pos, const struct Photon &photon);
 
+	static void SetNeedUpdateSimulationBoxes();
+
 	static uint64_t GetFPS();
 	static bool IsHighPrecisionStatsEnabled();
 	static uint64_t GetTickTimeNsObserverThread(); // average tick time in nanoseconds
@@ -77,9 +79,13 @@ public:
 	VectorInt32Math GetPosition() const;
 	void SetNewPosition(const VectorInt32Math &pos);
 	VectorInt32Math GetNewPosition() const;
+
+	const VectorInt32Math& GetOrientMinChanger() const;
+	const VectorInt32Math& GetOrientMaxChanger() const;
 private:
 	friend class ParallelPhysics;
 	void SetPosition(const VectorInt32Math &pos);
+	void CalculateOrientChangers(const EyeArray &eyeArray);
 	// Math
 	//static bool NormalizeHorizontal(VectorIntMath &orient); // returns false if vector is not orientation vector
 // Calculate orientation shift by horizontal and vertical. Be sure shiftH < MAX_INT && shiftV < MAX_INT
@@ -101,5 +107,8 @@ private:
 
 	int64_t m_lastTextureUpdateTime = 0;
 	SP_EyeColorArray m_spEyeColorArrayOut;
+
+	VectorInt32Math m_orientMinChanger;
+	VectorInt32Math m_orientMaxChanger;
 };
 }

@@ -105,6 +105,7 @@ int16_t VectorInt16Math::GetRandomNumber()
 // ---------------------------------------------------------------------------------
 // ------------------------------ VectorInt32Math ----------------------------------
 const VectorInt32Math VectorInt32Math::ZeroVector(0, 0, 0);
+const VectorInt32Math VectorInt32Math::OneVector(1, 1, 1);
 
 VectorInt32Math::VectorInt32Math(int32_t posX, int32_t posY, int32_t posZ) : VectorIntMath(posX, posY, posZ)
 {}

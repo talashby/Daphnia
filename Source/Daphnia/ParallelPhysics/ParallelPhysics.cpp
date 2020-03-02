@@ -7,6 +7,7 @@
 #include "iostream"
 #include "atomic"
 #include "chrono"
+#include <assert.h>
 
 namespace PPh
 {
@@ -17,6 +18,7 @@ std::vector< std::vector< std::vector<struct EtherCell> > > s_universe;
 std::atomic<uint64_t> s_time = 0; // absolute universe time
 std::atomic<int32_t> s_waitThreadsCount = 0; // thread synchronization variable
 std::vector<BoxIntMath> s_threadSimulateBounds; // [minVector; maxVector)
+std::atomic<bool> s_bNeedUpdateSimulationBoxes;
 
 // stats
 uint64_t s_quantumOfTimePerSecond = 0;
@@ -152,9 +154,9 @@ void UniverseThread(int32_t threadNum, bool *isSimulationRunning)
 								photon.m_color = cell.m_color;
 								photon.m_color.m_colorA = tmpA;
 							}
-    						if (photon.m_color.m_colorA > 15)
+    						if (photon.m_color.m_colorA > 20)
 							{
-								photon.m_color.m_colorA -= 15;
+								photon.m_color.m_colorA -= 20;
 								bool result = ParallelPhysics::GetInstance()->EmitPhoton({ posX, posY, posZ }, photon);
 								if (result)
 								{
@@ -195,19 +197,50 @@ const VectorInt32Math & ParallelPhysics::GetUniverseSize() const
 
 void ParallelPhysics::AdjustSimulationBoxes()
 {
+	constexpr int32_t SIMULATION_SIZE = 8;
+
 	VectorInt32Math observerPos = Observer::GetInstance()->GetPosition();
-	VectorInt32Math boundSize(12, 12, 12);
-	VectorInt32Math boundsMax = observerPos + boundSize;
-	boundSize *= -1;
-	VectorInt32Math boundsMin = observerPos + boundSize;
-	AdjustSizeByBounds(boundsMax);
-	AdjustSizeByBounds(boundsMin);
-	s_threadSimulateBounds[0] = BoxIntMath(boundsMin, { boundsMax.m_posX, observerPos.m_posY, observerPos.m_posZ });
-	s_threadSimulateBounds[1] = BoxIntMath({ boundsMin.m_posX, observerPos.m_posY, boundsMin.m_posZ },
-		{ boundsMax.m_posX, boundsMax.m_posY, observerPos.m_posZ });
-	s_threadSimulateBounds[2] = BoxIntMath({ boundsMin.m_posX, observerPos.m_posY, observerPos.m_posZ }, boundsMax);
-	s_threadSimulateBounds[3] = BoxIntMath({ boundsMin.m_posX, boundsMin.m_posY, observerPos.m_posZ },
-		{ boundsMax.m_posX, observerPos.m_posY, boundsMax.m_posZ });
+
+	VectorInt32Math boundsMin;
+	{
+		VectorInt32Math boundSize(SIMULATION_SIZE, SIMULATION_SIZE, SIMULATION_SIZE);
+		const VectorInt32Math &orientMinChanger = Observer::GetInstance()->GetOrientMinChanger();
+		boundSize.m_posX = std::min(boundSize.m_posX, orientMinChanger.m_posX);
+		boundSize.m_posY = std::min(boundSize.m_posY, orientMinChanger.m_posY);
+		boundSize.m_posZ = std::min(boundSize.m_posZ, orientMinChanger.m_posZ);
+		boundsMin = observerPos - boundSize;
+		AdjustSizeByBounds(boundsMin);
+	}
+
+	VectorInt32Math boundsMax;
+	{
+		VectorInt32Math boundSize(SIMULATION_SIZE, SIMULATION_SIZE, SIMULATION_SIZE);
+		const VectorInt32Math &orientMaxChanger = Observer::GetInstance()->GetOrientMaxChanger();
+		boundSize.m_posX = std::min(boundSize.m_posX, orientMaxChanger.m_posX);
+		boundSize.m_posY = std::min(boundSize.m_posY, orientMaxChanger.m_posY);
+		boundSize.m_posZ = std::min(boundSize.m_posZ, orientMaxChanger.m_posZ);
+		boundsMax = observerPos + boundSize + VectorInt32Math::OneVector; // [minVector; maxVector)
+		AdjustSizeByBounds(boundsMax);
+	}
+	
+	int32_t lengthX = boundsMax.m_posX - boundsMin.m_posX;
+	int32_t partX = lengthX / 4;
+	int32_t remain = lengthX - partX * 4;
+
+	int32_t posXBegin = boundsMin.m_posX;
+	for (int ii = 0; ii < m_threadsCount; ++ii)
+	{
+		int32_t posXEnd = posXBegin + partX;
+		assert(posXEnd <= boundsMax);
+		if (0 < remain)
+		{
+			++posXEnd;
+			--remain;
+		}
+		s_threadSimulateBounds[ii] = BoxIntMath({ posXBegin, boundsMin.m_posY, boundsMin.m_posZ }, { posXEnd, boundsMax.m_posY, boundsMax.m_posZ });
+		posXBegin = posXEnd;
+	}
+	s_bNeedUpdateSimulationBoxes = false;
 }
 
 std::thread s_simulationThread;
@@ -262,11 +295,13 @@ void ParallelPhysics::StartSimulation()
 				GetInstance()->InitEtherCell(Observer::GetInstance()->GetNewPosition(), EtherType::Observer);
 				GetInstance()->InitEtherCell(Observer::GetInstance()->GetPosition(), EtherType::Space);
 				Observer::GetInstance()->SetPosition(Observer::GetInstance()->GetNewPosition());
-				if (m_bSimulateNearObserver)
-				{
-					AdjustSimulationBoxes();
-				}
+				SetNeedUpdateSimulationBoxes();
 			}
+			if (m_bSimulateNearObserver && s_bNeedUpdateSimulationBoxes)
+			{
+				AdjustSimulationBoxes();
+			}
+			
 			if (GetTimeMs() - lastTime >= 1000)
 			{
 				s_quantumOfTimePerSecond = s_time - lastTimeUniverse;
@@ -401,6 +436,11 @@ bool ParallelPhysics::EmitPhoton(const VectorInt32Math &pos, const Photon &photo
 	return true;
 }
 
+void ParallelPhysics::SetNeedUpdateSimulationBoxes()
+{
+	s_bNeedUpdateSimulationBoxes = true;
+}
+
 uint64_t ParallelPhysics::GetFPS()
 {
 	return s_quantumOfTimePerSecond;
@@ -437,6 +477,7 @@ void Observer::Init(const VectorInt32Math &position, const SP_EyeState &eyeState
 	s_observer->m_position = position;
 	s_observer->m_newPosition = position;
 	s_observer->m_eyeState = eyeState;
+	s_observer->CalculateOrientChangers(*eyeState);
 	ParallelPhysics::GetInstance()->InitEtherCell(position, EtherType::Observer);
 	s_observer->m_lastTextureUpdateTime = GetTimeMs();
 }
@@ -457,23 +498,9 @@ void Observer::PPhTick()
 		std::atomic_store(&newEyeState, m_newEyeState);
 		if (newEyeState && m_eyeState != newEyeState)
 		{
+			CalculateOrientChangers(*m_eyeState);
 			m_eyeState = newEyeState;
-			const EyeArray &eyeArray = *m_eyeState;
-			OrientationVectorMath orientMin(OrientationVectorMath::PPH_INT_MAX, OrientationVectorMath::PPH_INT_MAX, OrientationVectorMath::PPH_INT_MAX);
-			OrientationVectorMath orientMax(OrientationVectorMath::PPH_INT_MIN, OrientationVectorMath::PPH_INT_MIN, OrientationVectorMath::PPH_INT_MIN);
-			for (int ii = 0; ii < eyeArray.size(); ++ii)
-			{
-				for (int jj = 0; jj < eyeArray[ii].size(); ++jj)
-				{
-					orientMin.m_posX = std::min(orientMin.m_posX, eyeArray[ii][jj].m_posX);
-					orientMin.m_posY = std::min(orientMin.m_posY, eyeArray[ii][jj].m_posY);
-					orientMin.m_posZ = std::min(orientMin.m_posZ, eyeArray[ii][jj].m_posZ);
-					orientMax.m_posX = std::max(orientMax.m_posX, eyeArray[ii][jj].m_posX);
-					orientMax.m_posY = std::max(orientMax.m_posY, eyeArray[ii][jj].m_posY);
-					orientMax.m_posZ = std::max(orientMax.m_posZ, eyeArray[ii][jj].m_posZ);
-				}
-			}
-			int ttt = 0;
+			ParallelPhysics::SetNeedUpdateSimulationBoxes();
 		}
 		const EyeArray &eyeArray = *m_eyeState;
 		{
@@ -541,7 +568,7 @@ void Observer::PPhTick()
 				for (int jj = 0; jj < eyeColorArray[ii].size(); ++jj)
 				{
 					eyeColorArray[ii][jj] = m_eyeColorArray[ii][jj];
-					int64 timeDiff = s_time - m_eyeUpdateTimeArray[ii][jj];
+					int64_t timeDiff = s_time - m_eyeUpdateTimeArray[ii][jj];
 					uint8_t alpha = m_eyeColorArray[ii][jj].m_colorA;
 					if (timeDiff < EYE_IMAGE_DELAY)
 					{
@@ -588,9 +615,47 @@ PPh::VectorInt32Math Observer::GetNewPosition() const
 	return m_newPosition;
 }
 
+const VectorInt32Math& Observer::GetOrientMinChanger() const
+{
+	return m_orientMinChanger;
+}
+
+const VectorInt32Math& Observer::GetOrientMaxChanger() const
+{
+	return m_orientMaxChanger;
+}
+
 void Observer::SetPosition(const VectorInt32Math &pos)
 {
 	m_position = pos;
+}
+
+void Observer::CalculateOrientChangers(const EyeArray &eyeArray)
+{
+	OrientationVectorMath orientMin(OrientationVectorMath::PPH_INT_MAX, OrientationVectorMath::PPH_INT_MAX, OrientationVectorMath::PPH_INT_MAX);
+	OrientationVectorMath orientMax(OrientationVectorMath::PPH_INT_MIN, OrientationVectorMath::PPH_INT_MIN, OrientationVectorMath::PPH_INT_MIN);
+	for (int ii = 0; ii < eyeArray.size(); ++ii)
+	{
+		for (int jj = 0; jj < eyeArray[ii].size(); ++jj)
+		{
+			orientMin.m_posX = std::min(orientMin.m_posX, eyeArray[ii][jj].m_posX);
+			orientMin.m_posY = std::min(orientMin.m_posY, eyeArray[ii][jj].m_posY);
+			orientMin.m_posZ = std::min(orientMin.m_posZ, eyeArray[ii][jj].m_posZ);
+			orientMax.m_posX = std::max(orientMax.m_posX, eyeArray[ii][jj].m_posX);
+			orientMax.m_posY = std::max(orientMax.m_posY, eyeArray[ii][jj].m_posY);
+			orientMax.m_posZ = std::max(orientMax.m_posZ, eyeArray[ii][jj].m_posZ);
+		}
+	}
+
+	m_orientMinChanger = VectorInt32Math(VectorInt32Math::PPH_INT_MAX, VectorInt32Math::PPH_INT_MAX, VectorInt32Math::PPH_INT_MAX);
+	m_orientMinChanger.m_posX *= 0 > orientMin.m_posX || 0 > orientMax.m_posX;
+	m_orientMinChanger.m_posY *= 0 > orientMin.m_posY || 0 > orientMax.m_posY;
+	m_orientMinChanger.m_posZ *= 0 > orientMin.m_posZ || 0 > orientMax.m_posZ;
+
+	m_orientMaxChanger = VectorInt32Math(VectorInt32Math::PPH_INT_MAX, VectorInt32Math::PPH_INT_MAX, VectorInt32Math::PPH_INT_MAX);
+	m_orientMaxChanger.m_posX *= 0 < orientMin.m_posX || 0 < orientMax.m_posX;
+	m_orientMaxChanger.m_posY *= 0 < orientMin.m_posY || 0 < orientMax.m_posY;
+	m_orientMaxChanger.m_posZ *= 0 < orientMin.m_posZ || 0 < orientMax.m_posZ;
 }
 
 /*

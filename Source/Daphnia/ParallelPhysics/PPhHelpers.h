@@ -26,6 +26,11 @@ namespace PPh
 			return D(m_posX + V.m_posX, m_posY + V.m_posY, m_posZ + V.m_posZ);
 		}
 
+		__forceinline D operator-(const VectorIntMath& V) const
+		{
+			return D(m_posX - V.m_posX, m_posY - V.m_posY, m_posZ - V.m_posZ);
+		}
+
 		__forceinline VectorIntMath operator*=(const T& scale)
 		{
 			m_posX *= scale; m_posY *= scale; m_posZ *= scale;
@@ -75,6 +80,7 @@ namespace PPh
 	public:
 		static const int32_t PPH_INT_MAX = 1073741824;
 		static const int32_t PPH_INT_MIN = -PPH_INT_MAX;
+		static const VectorInt32Math OneVector;
 
 		VectorInt32Math() = default;
 		VectorInt32Math(int32_t posX, int32_t posY, int32_t posZ);
