@@ -38,7 +38,7 @@ protected:
 	void DisableRenderCheckBoxPressed();
 
 	UPROPERTY(Category = Menu, VisibleDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	bool m_bDisableRenderCheckBox = true;
+	bool m_bDisableRenderCheckBox = false;
 
 private:
 	void ShowPPhStats();

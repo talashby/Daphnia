@@ -174,7 +174,7 @@ void UMyHudWidget::SwitchCameraView()
 
 void UMyHudWidget::SwitchToParallelPhysics()
 {
-	UWidget *BoxStats = WidgetTree->FindWidget<UWidget>(TEXT("VerticalBox_Stats"));
+	UWidget *BoxStats = WidgetTree->FindWidget<UWidget>(TEXT("Border_Stats"));
 	if (PPh::ParallelPhysics::GetInstance()->IsSimulationRunning())
 	{
 		PPh::ParallelPhysics::GetInstance()->StopSimulation();
@@ -200,7 +200,7 @@ void UMyHudWidget::SwitchToParallelPhysics()
 
 			if (BoxStats)
 			{
-				BoxStats->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+				BoxStats->SetVisibility(ESlateVisibility::Visible);
 			}
 		}
 	}
