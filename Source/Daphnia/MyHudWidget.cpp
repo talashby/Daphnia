@@ -134,6 +134,18 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 			EyeViewImage->SetBrushFromTexture(EyeViewTexture2D);
 		}*/
 	}
+	else
+	{
+		if (PPh::ParallelPhysics::GetInstance()->IsSimulationRunning() && PPh::Observer::GetInstance())
+		{
+			if (m_PawnRotation != ADaphniaPawn::GetInstance()->GetActorRotation())
+			{
+				m_PawnRotation = ADaphniaPawn::GetInstance()->GetActorRotation();
+				PPh::SP_EyeState eyeState = GetPawnEyeState(GetWorld());
+				PPh::Observer::GetInstance()->ChangeOrientation(eyeState);
+			}
+		}
+	}
 
 	Super::NativeTick(MyGeometry, InDeltaTime);
 }

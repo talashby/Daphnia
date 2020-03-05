@@ -7,7 +7,7 @@
 #include "iostream"
 #include "atomic"
 #include "chrono"
-#include <assert.h>
+//#include <assert.h>
 
 namespace PPh
 {
@@ -204,10 +204,10 @@ void ParallelPhysics::AdjustSimulationBoxes()
 	VectorInt32Math boundsMin;
 	{
 		VectorInt32Math boundSize(SIMULATION_SIZE, SIMULATION_SIZE, SIMULATION_SIZE);
-		const VectorInt32Math &orientMinChanger = Observer::GetInstance()->GetOrientMinChanger();
+		/*const VectorInt32Math &orientMinChanger = Observer::GetInstance()->GetOrientMinChanger();
 		boundSize.m_posX = std::min(boundSize.m_posX, orientMinChanger.m_posX);
 		boundSize.m_posY = std::min(boundSize.m_posY, orientMinChanger.m_posY);
-		boundSize.m_posZ = std::min(boundSize.m_posZ, orientMinChanger.m_posZ);
+		boundSize.m_posZ = std::min(boundSize.m_posZ, orientMinChanger.m_posZ);*/
 		boundsMin = observerPos - boundSize;
 		AdjustSizeByBounds(boundsMin);
 	}
@@ -215,10 +215,10 @@ void ParallelPhysics::AdjustSimulationBoxes()
 	VectorInt32Math boundsMax;
 	{
 		VectorInt32Math boundSize(SIMULATION_SIZE, SIMULATION_SIZE, SIMULATION_SIZE);
-		const VectorInt32Math &orientMaxChanger = Observer::GetInstance()->GetOrientMaxChanger();
+		/*const VectorInt32Math &orientMaxChanger = Observer::GetInstance()->GetOrientMaxChanger();
 		boundSize.m_posX = std::min(boundSize.m_posX, orientMaxChanger.m_posX);
 		boundSize.m_posY = std::min(boundSize.m_posY, orientMaxChanger.m_posY);
-		boundSize.m_posZ = std::min(boundSize.m_posZ, orientMaxChanger.m_posZ);
+		boundSize.m_posZ = std::min(boundSize.m_posZ, orientMaxChanger.m_posZ);*/
 		boundsMax = observerPos + boundSize + VectorInt32Math::OneVector; // [minVector; maxVector)
 		AdjustSizeByBounds(boundsMax);
 	}
@@ -231,7 +231,7 @@ void ParallelPhysics::AdjustSimulationBoxes()
 	for (int ii = 0; ii < m_threadsCount; ++ii)
 	{
 		int32_t posXEnd = posXBegin + partX;
-		assert(posXEnd <= boundsMax);
+		//assert(posXEnd <= boundsMax);
 		if (0 < remain)
 		{
 			++posXEnd;
