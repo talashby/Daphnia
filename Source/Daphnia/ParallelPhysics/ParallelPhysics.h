@@ -58,7 +58,7 @@ private:
 
 typedef int16_t PhotonParam; // warning! Depends on OBSERVER_EYE_SIZE
 constexpr int32_t OBSERVER_EYE_SIZE = 16; // pixels
-constexpr int32_t UPDATE_EYE_TEXTURE_OUT = 200; // milliseconds
+constexpr int32_t UPDATE_EYE_TEXTURE_OUT = 20; // milliseconds
 typedef std::array< std::array<OrientationVectorMath, OBSERVER_EYE_SIZE>, OBSERVER_EYE_SIZE> EyeArray;
 typedef std::shared_ptr< EyeArray > SP_EyeState;
 typedef std::array< std::array<EtherColor, OBSERVER_EYE_SIZE>, OBSERVER_EYE_SIZE> EyeColorArray;
