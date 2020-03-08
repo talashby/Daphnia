@@ -154,9 +154,9 @@ void UniverseThread(int32_t threadNum, bool *isSimulationRunning)
 								photon.m_color = cell.m_color;
 								photon.m_color.m_colorA = tmpA;
 							}
-    						if (photon.m_color.m_colorA > 20)
+    						if (photon.m_color.m_colorA > 10)
 							{
-								photon.m_color.m_colorA -= 20;
+								photon.m_color.m_colorA -= 10;
 								bool result = ParallelPhysics::GetInstance()->EmitPhoton({ posX, posY, posZ }, photon);
 								if (result)
 								{
@@ -394,6 +394,16 @@ bool ParallelPhysics::InitEtherCell(const VectorInt32Math &pos, EtherType::EEthe
 				EtherCell &cell = s_universe[pos.m_posX][pos.m_posY][pos.m_posZ];
 				cell.m_type = type;
 				cell.m_color = color;
+				for (int ii = 0; ii < cell.m_photons[0].size(); ++ii)
+				{
+					Photon &photon = cell.m_photons[0][ii];
+					photon.m_color = EtherColor::ZeroColor;
+				}
+				for (int ii = 0; ii < cell.m_photons[1].size(); ++ii)
+				{
+					Photon &photon = cell.m_photons[1][ii];
+					photon.m_color = EtherColor::ZeroColor;
+				}
 				return true;
 			}
 		}
@@ -405,15 +415,15 @@ bool ParallelPhysics::EmitPhoton(const VectorInt32Math &pos, const Photon &photo
 {
 	const OrientationVectorMath &orient = photon.m_orientation;
 	VectorInt32Math unitVector = VectorInt32Math::ZeroVector;
-	if (std::abs(orient.m_posX) > OrientationVectorMath::GetRandomNumber())
+	if (std::abs(orient.m_posX) >= OrientationVectorMath::GetRandomNumber())
 	{
 		unitVector.m_posX = OrientationVectorMath::Sign(orient.m_posX);
 	}
-	if (std::abs(orient.m_posY) > OrientationVectorMath::GetRandomNumber())
+	if (std::abs(orient.m_posY) >= OrientationVectorMath::GetRandomNumber())
 	{
 		unitVector.m_posY = OrientationVectorMath::Sign(orient.m_posY);
 	}
-	if (std::abs(orient.m_posZ) > OrientationVectorMath::GetRandomNumber())
+	if (std::abs(orient.m_posZ) >= OrientationVectorMath::GetRandomNumber())
 	{
 		unitVector.m_posZ = OrientationVectorMath::Sign(orient.m_posZ);
 	}

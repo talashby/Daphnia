@@ -244,7 +244,6 @@ void ALevelSettings::GenerateItems(const FRoomVolumeSettings &Settings)
 	}
 
 	// place objects
-	int32 iKeyPlace = ResultArray[rand() % ResultArray.size()];
 	for (int32 iRandPlaceNumber : ResultArray)
 	{
 		int32 XandY = iRandPlaceNumber % (iPlacesForObjectsX * iPlacesForObjectsY);
