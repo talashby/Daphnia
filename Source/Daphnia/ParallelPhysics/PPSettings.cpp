@@ -47,11 +47,11 @@ void UPPSettings::ConvertGeometry(UWorld *World)
 	{
 		FBox ActorBox = ActorItr->GetComponentsBoundingBox();
 		FVector ActorBoxSize = ActorBox.GetSize();
-		for (int32 xx = UniverseEtherCellSize / 2; xx < ActorBoxSize.X; xx += UniverseEtherCellSize)
+		for (int32 xx = UniverseEtherCellSize / 2; xx <= ActorBoxSize.X; xx += UniverseEtherCellSize)
 		{
-			for (int32 yy = UniverseEtherCellSize / 2; yy < ActorBoxSize.Y; yy += UniverseEtherCellSize)
+			for (int32 yy = UniverseEtherCellSize / 2; yy <= ActorBoxSize.Y; yy += UniverseEtherCellSize)
 			{
-				for (int32 zz = UniverseEtherCellSize / 2; zz < ActorBoxSize.Z; zz += UniverseEtherCellSize)
+				for (int32 zz = UniverseEtherCellSize / 2; zz <= ActorBoxSize.Z; zz += UniverseEtherCellSize)
 				{
 					if (FMath::PointBoxIntersection(FVector(ActorBox.Min.X + xx, ActorBox.Min.Y + yy, ActorBox.Min.Z + zz), UniverseBox))
 					{

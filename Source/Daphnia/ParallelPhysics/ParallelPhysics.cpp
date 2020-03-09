@@ -158,7 +158,7 @@ void UniverseThread(int32_t threadNum, bool *isSimulationRunning)
 							{
 								photon.m_color.m_colorA -= 10;
 								bool result = ParallelPhysics::GetInstance()->EmitPhoton({ posX, posY, posZ }, photon);
-								if (result)
+								//if (result)
 								{
 									photon.m_color = EtherColor::ZeroColor;
 								}

@@ -213,11 +213,11 @@ void ALevelSettings::GenerateItems(const FRoomVolumeSettings &Settings)
 
 	constexpr int32 NumObjectsBorder = 2;
 	int32 iPlacesForObjectsX = FMath::RoundToInt(VolumeBoxSize.X) / ObjectPlaceSize - NumObjectsBorder*2;
-	int32 iShiftX = (FMath::RoundToInt(VolumeBoxSize.X) % ObjectPlaceSize) / 2 + NumObjectsBorder*ObjectPlaceSize;
+	int32 iShiftX = 50 + (FMath::RoundToInt(VolumeBoxSize.X) % ObjectPlaceSize) / 2 + NumObjectsBorder*ObjectPlaceSize;
 	int32 iPlacesForObjectsY = FMath::RoundToInt(VolumeBoxSize.Y) / ObjectPlaceSize - NumObjectsBorder * 2;
-	int32 iShiftY = (FMath::RoundToInt(VolumeBoxSize.Y) % ObjectPlaceSize) / 2 + NumObjectsBorder*ObjectPlaceSize;
+	int32 iShiftY = 50 + (FMath::RoundToInt(VolumeBoxSize.Y) % ObjectPlaceSize) / 2 + NumObjectsBorder*ObjectPlaceSize;
 	int32 iPlacesForObjectsZ = FMath::RoundToInt(VolumeBoxSize.Z) / ObjectPlaceSize - NumObjectsBorder * 2;
-	int32 iShiftZ = (FMath::RoundToInt(VolumeBoxSize.Z) % ObjectPlaceSize) / 2 + NumObjectsBorder*ObjectPlaceSize;
+	int32 iShiftZ = 50 + (FMath::RoundToInt(VolumeBoxSize.Z) % ObjectPlaceSize) / 2 + NumObjectsBorder*ObjectPlaceSize;
 
 	if (static_cast<int64>(iPlacesForObjectsX) * iPlacesForObjectsY * iPlacesForObjectsZ > std::numeric_limits<int32>::max())
 	{
@@ -256,6 +256,7 @@ void ALevelSettings::GenerateItems(const FRoomVolumeSettings &Settings)
 		pGameObject->SetMobility(EComponentMobility::Static);
 		TArray<UStaticMeshComponent*> Comps;
 		pGameObject->GetComponents(Comps);
+		pGameObject->SetActorScale3D({ 0.5f, 0.5f, 0.5f });
 		if (Comps.Num() > 0)
 		{
 			UStaticMeshComponent* FoundComp = Comps[0];
