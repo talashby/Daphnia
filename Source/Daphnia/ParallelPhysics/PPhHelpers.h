@@ -45,6 +45,7 @@ namespace PPh
 		union
 		{
 			struct { T m_posX, m_posY, m_posZ; };
+			T m_posArray[3];
 			uint32_t AlignmentDummy;
 		};
 	};

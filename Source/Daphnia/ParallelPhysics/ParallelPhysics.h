@@ -86,10 +86,6 @@ private:
 	friend class ParallelPhysics;
 	void SetPosition(const VectorInt32Math &pos);
 	void CalculateOrientChangers(const EyeArray &eyeArray);
-	// Math
-	//static bool NormalizeHorizontal(VectorIntMath &orient); // returns false if vector is not orientation vector
-// Calculate orientation shift by horizontal and vertical. Be sure shiftH < MAX_INT && shiftV < MAX_INT
-	//static VectorIntMath OrientationShift(const VectorIntMath &orient, int32_t shiftH, int32_t shiftV);
 
 	VectorInt32Math m_position = VectorInt32Math::ZeroVector;
 	VectorInt32Math m_newPosition = VectorInt32Math::ZeroVector;

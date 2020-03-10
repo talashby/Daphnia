@@ -153,6 +153,10 @@ void UniverseThread(int32_t threadNum, bool *isSimulationRunning)
 								uint8_t tmpA = photon.m_color.m_colorA;
 								photon.m_color = cell.m_color;
 								photon.m_color.m_colorA = tmpA;
+								if (cell.m_type == EtherType::Crumb)
+								{
+									volatile int ttt = 0;
+								}
 							}
     						if (photon.m_color.m_colorA > 10)
 							{
@@ -583,12 +587,13 @@ void Observer::PPhTick()
 					if (timeDiff < EYE_IMAGE_DELAY)
 					{
 						alpha = alpha * (EYE_IMAGE_DELAY - timeDiff) / EYE_IMAGE_DELAY;
+						eyeColorArray[ii][jj].m_colorA = alpha;
 					}
 					else
 					{
-						alpha = 0;
+						eyeColorArray[ii][jj] = EtherColor::ZeroColor;
+						eyeColorArray[ii][jj].m_colorA = 255;
 					}
-					eyeColorArray[ii][jj].m_colorA = alpha;
 				}
 			}
 			std::atomic_store(&m_spEyeColorArrayOut, spEyeColorArrayOut);
@@ -658,84 +663,22 @@ void Observer::CalculateOrientChangers(const EyeArray &eyeArray)
 	}
 
 	m_orientMinChanger = VectorInt32Math(VectorInt32Math::PPH_INT_MAX, VectorInt32Math::PPH_INT_MAX, VectorInt32Math::PPH_INT_MAX);
-	m_orientMinChanger.m_posX *= 0 > orientMin.m_posX || 0 > orientMax.m_posX;
-	m_orientMinChanger.m_posY *= 0 > orientMin.m_posY || 0 > orientMax.m_posY;
-	m_orientMinChanger.m_posZ *= 0 > orientMin.m_posZ || 0 > orientMax.m_posZ;
+	for (int ii = 0; ii < 3; ++ii)
+	{
+		if (0 <= orientMin.m_posArray[ii] && 0 <= orientMax.m_posArray[ii])
+		{
+			m_orientMinChanger.m_posArray[ii] = 1;
+		}
+	}
 
 	m_orientMaxChanger = VectorInt32Math(VectorInt32Math::PPH_INT_MAX, VectorInt32Math::PPH_INT_MAX, VectorInt32Math::PPH_INT_MAX);
-	m_orientMaxChanger.m_posX *= 0 < orientMin.m_posX || 0 < orientMax.m_posX;
-	m_orientMaxChanger.m_posY *= 0 < orientMin.m_posY || 0 < orientMax.m_posY;
-	m_orientMaxChanger.m_posZ *= 0 < orientMin.m_posZ || 0 < orientMax.m_posZ;
+	for (int ii = 0; ii < 3; ++ii)
+	{
+		if (0 >= orientMin.m_posArray[ii] && 0 >= orientMax.m_posArray[ii])
+		{
+			m_orientMaxChanger.m_posArray[ii] = -1;
+		}
+	}
 }
-
-/*
-bool Observer::NormalizeHorizontal(VectorIntMath &orient)
-{
-	// check if exists bigger than max values
-	uint32_t absXY = std::max(std::abs(orient.m_posX), std::abs(orient.m_posY));
-	absXY = std::max((uint32_t)PPH_INT_MAX, absXY);
-	int32_t dif = absXY - PPH_INT_MAX;
-
-	if (0 < dif)
-	{
-		if (orient.m_posX == PPH_INT_MAX)
-		{
-			orient.m_posX -= dif;
-		}
-		else if (orient.m_posX == PPH_INT_MIN)
-		{
-			orient.m_posX += dif;
-		}
-		else if (orient.m_posY == PPH_INT_MAX)
-		{
-			orient.m_posY -= dif;
-		}
-		else if (orient.m_posY == PPH_INT_MIN)
-		{
-			orient.m_posY += dif;
-		}
-		else
-		{
-			return false; // error
-		}
-
-		orient.m_posX = std::min(orient.m_posX, PPH_INT_MAX);
-		orient.m_posX = std::max(orient.m_posX, PPH_INT_MIN);
-		orient.m_posY = std::min(orient.m_posY, PPH_INT_MAX);
-		orient.m_posY = std::max(orient.m_posY, PPH_INT_MIN);
-	}
-
-	return true;
-}
-
-VectorIntMath Observer::OrientationShift(const VectorIntMath &orient, int32_t shiftH, int32_t shiftV)
-{
-	VectorIntMath result = orient;
-
-	if (PPH_INT_MAX == orient.m_posX)
-	{
-		result.m_posY += shiftH;
-	}
-	else if (PPH_INT_MIN == orient.m_posX)
-	{
-		result.m_posY -= shiftH;
-	}
-	else if (PPH_INT_MAX == orient.m_posY)
-	{
-		result.m_posX -= shiftH;
-	}
-	else if (PPH_INT_MIN == orient.m_posY)
-	{
-		result.m_posX += shiftH;
-	}
-	else
-	{
-		return VectorIntMath::ZeroVector; // error
-	}
-
-	NormalizeHorizontal(result);
-
-	return result;
-}*/
 
 }
