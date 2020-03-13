@@ -54,7 +54,7 @@ void VectorInt8Math::InitRandom()
 
 int8_t VectorInt8Math::GetRandomNumber()
 {
-	//return Rand32(PPH_INT_MAX + 1);
+	return Rand32(PPH_INT_MAX + 1);
 	int8_t number = s_randomUniverseNumbersInt8[s_randomIndexInt8++];
 	return number;
 }

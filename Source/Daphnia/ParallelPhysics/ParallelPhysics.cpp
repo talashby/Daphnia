@@ -591,9 +591,11 @@ void Observer::PPhTick()
 					}
 					else
 					{
-						eyeColorArray[ii][jj] = EtherColor::ZeroColor;
-						eyeColorArray[ii][jj].m_colorA = 255;
+						alpha = 0;
+						//eyeColorArray[ii][jj] = EtherColor::ZeroColor;
+						//eyeColorArray[ii][jj].m_colorA = 255;
 					}
+					eyeColorArray[ii][jj].m_colorA = alpha;
 				}
 			}
 			std::atomic_store(&m_spEyeColorArrayOut, spEyeColorArrayOut);
@@ -667,7 +669,7 @@ void Observer::CalculateOrientChangers(const EyeArray &eyeArray)
 	{
 		if (0 <= orientMin.m_posArray[ii] && 0 <= orientMax.m_posArray[ii])
 		{
-			m_orientMinChanger.m_posArray[ii] = 1;
+			m_orientMinChanger.m_posArray[ii] = 0;
 		}
 	}
 
@@ -676,7 +678,7 @@ void Observer::CalculateOrientChangers(const EyeArray &eyeArray)
 	{
 		if (0 >= orientMin.m_posArray[ii] && 0 >= orientMax.m_posArray[ii])
 		{
-			m_orientMaxChanger.m_posArray[ii] = -1;
+			m_orientMaxChanger.m_posArray[ii] = 0;
 		}
 	}
 }
