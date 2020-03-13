@@ -68,9 +68,11 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 {
 	ShowPPhStats();
 
-	if (pEyeViewImage && pEyeViewImage->IsVisible())
+
+	if (PPh::ParallelPhysics::GetInstance()->IsSimulationRunning() && PPh::Observer::GetInstance())
 	{
-		if (PPh::ParallelPhysics::GetInstance()->IsSimulationRunning() && PPh::Observer::GetInstance())
+		PPh::Observer::GetInstance()->UE4Tick();
+		if (pEyeViewImage && pEyeViewImage->IsVisible())
 		{
 			if (m_PawnRotation != ADaphniaPawn::GetInstance()->GetActorRotation())
 			{

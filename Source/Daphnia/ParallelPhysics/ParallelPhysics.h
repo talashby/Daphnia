@@ -73,6 +73,7 @@ public:
 	static Observer* GetInstance();
 
 	void PPhTick();
+	void UE4Tick();
 
 	void ChangeOrientation(const SP_EyeState &eyeState);
 	SP_EyeColorArray GrabTexture();

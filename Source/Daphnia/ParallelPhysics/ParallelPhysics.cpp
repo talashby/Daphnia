@@ -9,6 +9,14 @@
 #include "chrono"
 #include <assert.h>
 
+#undef UNICODE
+#define WIN32_LEAN_AND_MEAN
+#undef TEXT
+#include <windows.h>
+#include <winsock2.h>
+#undef min
+#undef max
+
 namespace PPh
 {
 
@@ -250,8 +258,26 @@ void ParallelPhysics::AdjustSimulationBoxes()
 std::thread s_simulationThread;
 void ParallelPhysics::StartSimulation()
 {
+	// init sockets
+	WSADATA wsaData;
+	WSAStartup(MAKEWORD(2, 2), &wsaData);
+
+	// thread
 	s_simulationThread = std::thread([this]() {
 		m_isSimulationRunning = true;
+
+		// UDP server
+		SOCKET socketS;
+		struct sockaddr_in local;
+		local.sin_family = AF_INET;
+		local.sin_port = htons(1234);
+		local.sin_addr.s_addr = INADDR_ANY;
+		socketS = socket(AF_INET, SOCK_DGRAM, 0);
+		bind(socketS, (sockaddr*)&local, sizeof(local));
+		u_long mode = 1;  // 1 to enable non-blocking socket
+		ioctlsocket(socketS, FIONBIO, &mode);
+		
+		// threads
 		std::vector<std::thread> threads;
 		threads.resize(m_threadsCount);
 
@@ -327,6 +353,16 @@ void ParallelPhysics::StartSimulation()
 				lastTime = GetTimeMs();
 				lastTimeUniverse = s_time;
 			}
+			char buffer[1024];
+			ZeroMemory(buffer, sizeof(buffer));
+			struct sockaddr_in from;
+			int fromlen = sizeof(from);
+			if (recvfrom(socketS, buffer, sizeof(buffer), 0, (sockaddr*)&from, &fromlen) != SOCKET_ERROR)
+			{
+				buffer[0] = 'q';
+				//printf("Received message from %s: %s\n", inet_ntoa(from.sin_addr), buffer);
+				sendto(socketS, buffer, sizeof(buffer), 0, (sockaddr*)&from, fromlen);
+			}
 			++s_time;
 		}
 		observerThread.join();
@@ -334,6 +370,7 @@ void ParallelPhysics::StartSimulation()
 		{
 			threads[ii].join();
 		}
+		closesocket(socketS);
 	});
 }
 
@@ -512,8 +549,8 @@ void Observer::PPhTick()
 		newEyeState = std::atomic_load(&m_newEyeState);
 		if (newEyeState && m_eyeState != newEyeState)
 		{
-			CalculateOrientChangers(*m_eyeState);
 			m_eyeState = newEyeState;
+			CalculateOrientChangers(*m_eyeState);
 			ParallelPhysics::SetNeedUpdateSimulationBoxes();
 		}
 		const EyeArray &eyeArray = *m_eyeState;
@@ -599,6 +636,36 @@ void Observer::PPhTick()
 				}
 			}
 			std::atomic_store(&m_spEyeColorArrayOut, spEyeColorArrayOut);
+		}
+	}
+}
+
+void Observer::UE4Tick()
+{
+
+	struct sockaddr_in serverInfo;
+	int len = sizeof(serverInfo);
+	serverInfo.sin_family = AF_INET;
+	serverInfo.sin_port = htons(1234);
+	serverInfo.sin_addr.s_addr = inet_addr("127.0.0.1");
+	static SOCKET socketC = 0;
+	if (!socketC)
+	{
+		socketC = socket(AF_INET, SOCK_DGRAM, 0);
+		u_long mode = 1;  // 1 to enable non-blocking socket
+		ioctlsocket(socketC, FIONBIO, &mode);
+	}
+	else
+	{
+		char buffer[1024];
+		ZeroMemory(buffer, sizeof(buffer));
+		buffer[0] = 'a';
+		if (sendto(socketC, buffer, sizeof(buffer), 0, (sockaddr*)&serverInfo, len) != SOCKET_ERROR)
+		{
+			if (recvfrom(socketC, buffer, sizeof(buffer), 0, (sockaddr*)&serverInfo, &len) != SOCKET_ERROR)
+			{
+				printf("Receive response from server: %s\n", buffer);
+			}
 		}
 	}
 }
