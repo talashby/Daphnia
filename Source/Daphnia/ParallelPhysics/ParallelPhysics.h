@@ -56,7 +56,8 @@ private:
 	bool m_isSimulationRunning = false;
 };
 
-typedef int16_t PhotonParam; // warning! Depends on OBSERVER_EYE_SIZE
+constexpr int8_t EYE_FOV = 90; // Daphnia eye fov
+typedef int32_t PhotonParam; // warning! Depends on OBSERVER_EYE_SIZE
 constexpr int32_t OBSERVER_EYE_SIZE = 16; // pixels
 constexpr int32_t UPDATE_EYE_TEXTURE_OUT = 20; // milliseconds
 typedef std::array< std::array<OrientationVectorMath, OBSERVER_EYE_SIZE>, OBSERVER_EYE_SIZE> EyeArray;
@@ -83,10 +84,14 @@ public:
 
 	const VectorInt32Math& GetOrientMinChanger() const;
 	const VectorInt32Math& GetOrientMaxChanger() const;
+
+	void Echolocation();
+	void CalculateEyeState();
 private:
 	friend class ParallelPhysics;
 	void SetPosition(const VectorInt32Math &pos);
 	void CalculateOrientChangers(const EyeArray &eyeArray);
+	OrientationVectorMath MaximizePPhOrientation(const VectorFloatMath &orientationVector);
 
 	VectorInt32Math m_position = VectorInt32Math::ZeroVector;
 	VectorInt32Math m_newPosition = VectorInt32Math::ZeroVector;
@@ -107,5 +112,8 @@ private:
 
 	VectorInt32Math m_orientMinChanger;
 	VectorInt32Math m_orientMaxChanger;
+
+	int16_t m_latitude = 0;
+	int16_t m_longitude = 0;
 };
 }

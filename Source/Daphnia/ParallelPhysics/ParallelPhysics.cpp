@@ -7,6 +7,7 @@
 #include "iostream"
 #include "atomic"
 #include "chrono"
+#include "ServerProtocol.h"
 #include <assert.h>
 
 #undef UNICODE
@@ -281,8 +282,9 @@ void ParallelPhysics::StartSimulation()
 		std::vector<std::thread> threads;
 		threads.resize(m_threadsCount);
 
-		s_waitThreadsCount = m_threadsCount + 1; // universe threads and observer thread
-		std::thread observerThread = std::thread([this]()
+		s_waitThreadsCount = m_threadsCount;
+		//s_waitThreadsCount = m_threadsCount + 1; // universe threads and observer thread
+/*		std::thread observerThread = std::thread([this]()
 		{
 			while (m_isSimulationRunning)
 			{
@@ -301,7 +303,7 @@ void ParallelPhysics::StartSimulation()
 				}
 			}
 			--s_waitThreadsCount;
-		});
+		});*/
 
 		if (m_bSimulateNearObserver)
 		{
@@ -319,7 +321,8 @@ void ParallelPhysics::StartSimulation()
 			while (s_waitThreadsCount)
 			{
 			}
-			s_waitThreadsCount = m_threadsCount + 1; // universe threads and observer thread
+			s_waitThreadsCount = m_threadsCount;
+			//s_waitThreadsCount = m_threadsCount + 1; // universe threads and observer thread
 			if (Observer::GetInstance()->GetPosition() != Observer::GetInstance()->GetNewPosition())
 			{
 				GetInstance()->InitEtherCell(Observer::GetInstance()->GetNewPosition(), EtherType::Observer);
@@ -353,19 +356,42 @@ void ParallelPhysics::StartSimulation()
 				lastTime = GetTimeMs();
 				lastTimeUniverse = s_time;
 			}
-			char buffer[1024];
-			ZeroMemory(buffer, sizeof(buffer));
+			char buffer[64];
 			struct sockaddr_in from;
 			int fromlen = sizeof(from);
-			if (recvfrom(socketS, buffer, sizeof(buffer), 0, (sockaddr*)&from, &fromlen) != SOCKET_ERROR)
+			int len = recvfrom(socketS, buffer, sizeof(buffer), 0, (sockaddr*)&from, &fromlen);
+			if (len > 0)
 			{
-				buffer[0] = 'q';
-				//printf("Received message from %s: %s\n", inet_ntoa(from.sin_addr), buffer);
-				sendto(socketS, buffer, sizeof(buffer), 0, (sockaddr*)&from, fromlen);
+				if (QueryMessage<MsgGetState>(buffer))
+				{
+					MsgSendState msgSendState;
+					msgSendState.m_time = s_time;
+					sendto(socketS, msgSendState.GetBuffer(), sizeof(MsgSendState), 0, (sockaddr*)&from, fromlen);
+					// receive photons back
+					int isTimeOdd = (s_time+1) % 2;
+					auto position = Observer::GetInstance()->GetPosition();
+					EtherCell &cell = s_universe[position.m_posX][position.m_posY][position.m_posZ];
+					for (int ii = 0; ii < cell.m_photons[isTimeOdd].size(); ++ii)
+					{
+						Photon &photon = cell.m_photons[isTimeOdd][ii];
+						if (photon.m_color.m_colorA > 0)
+						{
+							int8_t posY = photon.m_param / OBSERVER_EYE_SIZE;
+							int8_t posX = photon.m_param - posY * OBSERVER_EYE_SIZE;
+							MsgSendPhoton msgSendPhoton;
+							msgSendPhoton.m_color = photon.m_color;
+							msgSendPhoton.m_posX = posX;
+							msgSendPhoton.m_posY = posY;
+							sendto(socketS, msgSendPhoton.GetBuffer(), sizeof(msgSendPhoton), 0, (sockaddr*)&from, fromlen);
+							photon.m_color = EtherColor::ZeroColor;
+						}
+					}
+				}
 			}
+			Observer::GetInstance()->Echolocation();
 			++s_time;
 		}
-		observerThread.join();
+//		observerThread.join();
 		for (int ii = 0; ii < m_threadsCount; ++ii)
 		{
 			threads[ii].join();
@@ -527,15 +553,55 @@ void Observer::Init(const VectorInt32Math &position, const SP_EyeState &eyeState
 	s_observer = new Observer();
 	s_observer->m_position = position;
 	s_observer->m_newPosition = position;
-	s_observer->m_eyeState = eyeState;
-	s_observer->CalculateOrientChangers(*eyeState);
+	//s_observer->m_eyeState = eyeState;
+	//s_observer->CalculateOrientChangers(*eyeState);
 	ParallelPhysics::GetInstance()->InitEtherCell(position, EtherType::Observer);
 	s_observer->m_lastTextureUpdateTime = GetTimeMs();
+	s_observer->m_latitude = 0;
+	s_observer->m_longitude = 0;
+	s_observer->CalculateEyeState();
 }
 
 PPh::Observer* Observer::GetInstance()
 {
 	return s_observer;
+}
+
+void Observer::Echolocation()
+{
+	const EyeArray &eyeArray = *m_eyeState;
+	{
+		int32_t ii = OrientationVectorMath::GetRandomNumber() % (OBSERVER_EYE_SIZE / 2);
+		int32_t jj = OrientationVectorMath::GetRandomNumber() % (OBSERVER_EYE_SIZE / 2);
+		Photon photon(eyeArray[ii][jj]);
+		photon.m_param = ii + jj * OBSERVER_EYE_SIZE;
+		photon.m_color.m_colorA = 255;
+		ParallelPhysics::GetInstance()->EmitPhoton(m_position, photon);
+	}
+	{
+		int32_t ii = OrientationVectorMath::GetRandomNumber() % (OBSERVER_EYE_SIZE / 2) + (OBSERVER_EYE_SIZE / 2);
+		int32_t jj = OrientationVectorMath::GetRandomNumber() % (OBSERVER_EYE_SIZE / 2);
+		Photon photon(eyeArray[ii][jj]);
+		photon.m_param = ii + jj * OBSERVER_EYE_SIZE;
+		photon.m_color.m_colorA = 255;
+		ParallelPhysics::GetInstance()->EmitPhoton(m_position, photon);
+	}
+	{
+		int32_t ii = OrientationVectorMath::GetRandomNumber() % (OBSERVER_EYE_SIZE / 2);
+		int32_t jj = OrientationVectorMath::GetRandomNumber() % (OBSERVER_EYE_SIZE / 2) + (OBSERVER_EYE_SIZE / 2);
+		Photon photon(eyeArray[ii][jj]);
+		photon.m_param = ii + jj * OBSERVER_EYE_SIZE;
+		photon.m_color.m_colorA = 255;
+		ParallelPhysics::GetInstance()->EmitPhoton(m_position, photon);
+	}
+	{
+		int32_t ii = OrientationVectorMath::GetRandomNumber() % (OBSERVER_EYE_SIZE / 2) + (OBSERVER_EYE_SIZE / 2);
+		int32_t jj = OrientationVectorMath::GetRandomNumber() % (OBSERVER_EYE_SIZE / 2) + (OBSERVER_EYE_SIZE / 2);
+		Photon photon(eyeArray[ii][jj]);
+		photon.m_param = ii + jj * OBSERVER_EYE_SIZE;
+		photon.m_color.m_colorA = 255;
+		ParallelPhysics::GetInstance()->EmitPhoton(m_position, photon);
+	}
 }
 
 void Observer::PPhTick()
@@ -657,14 +723,22 @@ void Observer::UE4Tick()
 	}
 	else
 	{
-		char buffer[1024];
-		ZeroMemory(buffer, sizeof(buffer));
-		buffer[0] = 'a';
-		if (sendto(socketC, buffer, sizeof(buffer), 0, (sockaddr*)&serverInfo, len) != SOCKET_ERROR)
+		MsgGetState msg;
+		if (sendto(socketC, (const char*)&msg, sizeof(msg), 0, (sockaddr*)&serverInfo, len) != SOCKET_ERROR)
 		{
-			if (recvfrom(socketC, buffer, sizeof(buffer), 0, (sockaddr*)&serverInfo, &len) != SOCKET_ERROR)
+			char buffer[MAX_PROTOCOL_BUFFER_SIZE];
+			while(recvfrom(socketC, buffer, sizeof(buffer), 0, (sockaddr*)&serverInfo, &len) > 0)
 			{
-				printf("Receive response from server: %s\n", buffer);
+				MsgSendState *msgSendState = QueryMessage<MsgSendState>(buffer);
+				if (msgSendState)
+				{
+					int ttyr = 0;
+				}
+				MsgSendPhoton *msgSendPhoton = QueryMessage<MsgSendPhoton>(buffer);
+				if (msgSendPhoton)
+				{
+					int ttyr = 0;
+				}
 			}
 		}
 	}
@@ -707,6 +781,103 @@ const VectorInt32Math& Observer::GetOrientMinChanger() const
 const VectorInt32Math& Observer::GetOrientMaxChanger() const
 {
 	return m_orientMaxChanger;
+}
+
+void Observer::CalculateEyeState()
+{
+	if (!m_eyeState)
+	{
+		m_eyeState = std::make_shared<PPh::EyeArray>();
+	}
+	PPh::EyeArray &eyeArray = *m_eyeState;
+
+	float len = EYE_FOV / OBSERVER_EYE_SIZE;
+
+	for (int32_t ii = 0; ii < OBSERVER_EYE_SIZE; ++ii)
+	{
+		for (int32_t jj = 0; jj < OBSERVER_EYE_SIZE; ++jj)
+		{
+
+			int16_t latitude = m_latitude + EYE_FOV * ii / OBSERVER_EYE_SIZE - EYE_FOV / 2;
+			int16_t longitude = m_longitude + EYE_FOV * jj / OBSERVER_EYE_SIZE - EYE_FOV / 2;
+			longitude = longitude < -180 ? 360 + longitude : longitude;
+			longitude = longitude > 180 ? -360 + longitude : longitude;
+			if (latitude < - 90)
+			{
+				latitude = -180 + latitude;
+				longitude -= 180;
+				longitude = longitude < -180 ? 360 + longitude : longitude;
+			}
+			else if (latitude > 90)
+			{
+				latitude = 180 - latitude;
+				longitude -= 180;
+				longitude = longitude < -180 ? 360 + longitude : longitude;
+			}
+
+			VectorFloatMath orientFloat;
+			float pi = 3.1415927410125732421875f;
+			orientFloat.m_posX = cosf(latitude * pi / 180) * cosf(longitude * pi / 180);
+			orientFloat.m_posY = cosf(latitude * pi / 180) * sinf(longitude * pi / 180);
+			orientFloat.m_posZ = sinf(latitude * pi / 180);
+
+			OrientationVectorMath orient  = MaximizePPhOrientation(orientFloat);
+			eyeArray[ii][jj] = orient;
+		}
+	}
+	CalculateOrientChangers(*m_eyeState);
+}
+
+int32_t RoundToMinMaxPPhInt(float value)
+{
+	int32_t result = 0;
+	if (value < 0)
+	{
+		result = (int32_t)(value - 0.5f);
+	}
+	else
+	{
+		result = (int32_t)(value + 0.5f);
+	}
+
+	return result;
+}
+
+/*int32_t FixFloatErrors(int32_t component, int32_t maxComponentValue)
+{
+	int32_t componentCorrect = component;
+	if (std::abs(component) == maxComponentValue)
+	{
+		if (0 > component)
+		{
+			componentCorrect = PPh::OrientationVectorMath::PPH_INT_MIN;
+		}
+		else
+		{
+			componentCorrect = PPh::OrientationVectorMath::PPH_INT_MAX;
+		}
+	}
+	return componentCorrect;
+}*/
+
+OrientationVectorMath Observer::MaximizePPhOrientation(const VectorFloatMath &orientationVector)
+{
+	float maxComponent = std::max(std::max(std::abs(orientationVector.m_posX), std::abs(orientationVector.m_posY)), std::abs(orientationVector.m_posZ));
+	double factor = 0;
+	if (maxComponent > 0)
+	{
+		factor = OrientationVectorMath::PPH_INT_MAX / (double)maxComponent;
+	}
+
+	OrientationVectorMath pphOrientation(RoundToMinMaxPPhInt(orientationVector.m_posX*factor), RoundToMinMaxPPhInt(orientationVector.m_posY*factor),
+		RoundToMinMaxPPhInt(orientationVector.m_posZ*factor));
+
+	//int32_t maxPPhComponent = std::max(std::max(std::abs(pphOrientation.m_posX), std::abs(pphOrientation.m_posY)), std::abs(pphOrientation.m_posZ));
+	//pphOrientation.m_posX = FixFloatErrors(pphOrientation.m_posX, maxPPhComponent);
+	//pphOrientation.m_posY = FixFloatErrors(pphOrientation.m_posY, maxPPhComponent);
+	//pphOrientation.m_posZ = FixFloatErrors(pphOrientation.m_posZ, maxPPhComponent);
+
+	return pphOrientation;
 }
 
 void Observer::SetPosition(const VectorInt32Math &pos)

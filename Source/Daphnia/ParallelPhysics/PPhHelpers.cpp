@@ -22,7 +22,7 @@ int32_t Rand32(int32_t iRandMax) // from [0; iRandMax-1]
 // ------------------------------ VectorInt8Math -----------------------------------
 const VectorInt8Math VectorInt8Math::ZeroVector(0, 0, 0);
 
-VectorInt8Math::VectorInt8Math(int8_t posX, int8_t posY, int8_t posZ) : VectorIntMath(posX, posY, posZ)
+VectorInt8Math::VectorInt8Math(int8_t posX, int8_t posY, int8_t posZ) : VectorMath(posX, posY, posZ)
 {}
 
 std::vector<int8_t> s_randomUniverseNumbersInt8;
@@ -65,7 +65,7 @@ int8_t VectorInt8Math::GetRandomNumber()
 // ------------------------------ VectorInt16Math -----------------------------------
 const VectorInt16Math VectorInt16Math::ZeroVector(0, 0, 0);
 
-VectorInt16Math::VectorInt16Math(int16_t posX, int16_t posY, int16_t posZ) : VectorIntMath(posX, posY, posZ)
+VectorInt16Math::VectorInt16Math(int16_t posX, int16_t posY, int16_t posZ) : VectorMath(posX, posY, posZ)
 {}
 
 std::vector<int16_t> s_randomUniverseNumbersInt16;
@@ -108,7 +108,7 @@ int16_t VectorInt16Math::GetRandomNumber()
 const VectorInt32Math VectorInt32Math::ZeroVector(0, 0, 0);
 const VectorInt32Math VectorInt32Math::OneVector(1, 1, 1);
 
-VectorInt32Math::VectorInt32Math(int32_t posX, int32_t posY, int32_t posZ) : VectorIntMath(posX, posY, posZ)
+VectorInt32Math::VectorInt32Math(int32_t posX, int32_t posY, int32_t posZ) : VectorMath(posX, posY, posZ)
 {}
 
 std::vector<int> s_randomUniverseNumbersInt32;
@@ -159,6 +159,15 @@ int32_t VectorInt32Math::GetRandomNumber()
 	return number;
 }
 // ------------------------------ VectorInt32Math ----------------------------------
+// ---------------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------------
+// ------------------------------ VectorFloatMath ----------------------------------
+
+VectorFloatMath::VectorFloatMath(float posX, float posY, float posZ) : VectorMath(posX, posY, posZ)
+{}
+
+// ------------------------------ VectorFloatMath ----------------------------------
 // ---------------------------------------------------------------------------------
 
 BoxIntMath::BoxIntMath(const VectorInt32Math &minVector, const VectorInt32Math &maxVector) : m_minVector(minVector), m_maxVector(maxVector)

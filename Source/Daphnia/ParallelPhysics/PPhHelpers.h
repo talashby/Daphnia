@@ -7,13 +7,13 @@ namespace PPh
 	typedef class VectorInt8Math OrientationVectorMath;
 
 	template<class T, class D>
-	class VectorIntMath
+	class VectorMath
 	{
 	public:
 		static const D ZeroVector;
 
-		VectorIntMath() = default;
-		VectorIntMath(T posX, T posY, T posZ) : m_posX(posX), m_posY(posY), m_posZ(posZ)
+		VectorMath() = default;
+		VectorMath(T posX, T posY, T posZ) : m_posX(posX), m_posY(posY), m_posZ(posZ)
 		{}
 
 		static __forceinline int Sign(T x)
@@ -21,23 +21,23 @@ namespace PPh
 			return (x > 0) - (x < 0);
 		}
 
-		__forceinline D operator+(const VectorIntMath& V) const
+		__forceinline D operator+(const VectorMath& V) const
 		{
 			return D(m_posX + V.m_posX, m_posY + V.m_posY, m_posZ + V.m_posZ);
 		}
 
-		__forceinline D operator-(const VectorIntMath& V) const
+		__forceinline D operator-(const VectorMath& V) const
 		{
 			return D(m_posX - V.m_posX, m_posY - V.m_posY, m_posZ - V.m_posZ);
 		}
 
-		__forceinline VectorIntMath operator*=(const T& scale)
+		__forceinline VectorMath operator*=(const T& scale)
 		{
 			m_posX *= scale; m_posY *= scale; m_posZ *= scale;
 			return *this;
 		}
 
-		__forceinline bool operator!=(const VectorIntMath& V) const
+		__forceinline bool operator!=(const VectorMath& V) const
 		{
 			return m_posX != V.m_posX || m_posY != V.m_posY || m_posZ != V.m_posZ;
 		}
@@ -50,7 +50,7 @@ namespace PPh
 		};
 	};
 
-	class VectorInt8Math : public VectorIntMath<int8_t, VectorInt8Math>
+	class VectorInt8Math : public VectorMath<int8_t, VectorInt8Math>
 	{
 	public:
 		static const int8_t PPH_INT_MAX = 127;
@@ -63,7 +63,7 @@ namespace PPh
 		static int8_t GetRandomNumber(); // from 0 to PPH_INT_MAX
 	};
 
-	class VectorInt16Math : public VectorIntMath<int16_t, VectorInt16Math>
+	class VectorInt16Math : public VectorMath<int16_t, VectorInt16Math>
 	{
 	public:
 		static const int16_t PPH_INT_MAX = 32767;
@@ -76,7 +76,7 @@ namespace PPh
 		static int16_t GetRandomNumber(); // from 0 to PPH_INT_MAX
 	};
 
-	class VectorInt32Math : public VectorIntMath<int32_t, VectorInt32Math>
+	class VectorInt32Math : public VectorMath<int32_t, VectorInt32Math>
 	{
 	public:
 		static const int32_t PPH_INT_MAX = 1073741824;
@@ -88,6 +88,13 @@ namespace PPh
 
 		static void InitRandom();
 		static int32_t GetRandomNumber(); // from 0 to PPH_INT_MAX
+	};
+
+	class VectorFloatMath : public VectorMath<float, VectorFloatMath>
+	{
+	public:
+		VectorFloatMath() = default;
+		VectorFloatMath(float posX, float posY, float posZ);
 	};
 
 	class BoxIntMath
