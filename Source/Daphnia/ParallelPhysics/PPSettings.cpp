@@ -43,6 +43,9 @@ void UPPSettings::ConvertGeometry(UWorld *World)
 	bool bParallelPhysicsInit = PPh::ParallelPhysics::Init(pphUniverseSize, ThreadsCountTmp);
 	check(bParallelPhysicsInit);
 
+	uint8_t saveUniverseToDisk[pphUniverseSize.m_posX*pphUniverseSize.m_posY*pphUniverseSize.m_posZ];
+	memset(saveUniverseToDisk, 0, sizeof(saveUniverseToDisk));
+
 	for (TActorIterator<AStaticMeshActor> ActorItr(World); ActorItr; ++ActorItr)
 	{
 		FBox ActorBox = ActorItr->GetComponentsBoundingBox();
