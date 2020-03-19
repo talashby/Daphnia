@@ -4,7 +4,7 @@
 #include "algorithm"
 #include "array"
 #include "thread"
-#include "iostream"
+#include "fstream"
 #include "atomic"
 #include "chrono"
 #include "ServerProtocol.h"
@@ -15,6 +15,7 @@
 #undef TEXT
 #include <windows.h>
 #include <winsock2.h>
+#include "iosfwd"
 #undef min
 #undef max
 
@@ -130,6 +131,64 @@ bool ParallelPhysics::Init(const VectorInt32Math &universeSize, uint8_t threadsC
 	return false;
 }
 
+bool ParallelPhysics::SaveUniverse(const std::string &fileName)
+{
+	std::ofstream myfile;
+	myfile.open(fileName);
+	if (myfile.is_open())
+	{
+		for (int32_t posX = 0; posX < s_universe.size(); ++posX)
+		{
+			for (int32_t posY = 0; posY < s_universe[posX].size(); ++posY)
+			{
+				for (int32_t posZ = 0; posZ < s_universe[posX][posY].size(); ++posZ)
+				{
+					myfile << (uint8_t)s_universe[posX][posY][posZ].m_type;
+				}
+			}
+		}
+		myfile.close();
+		return true;
+	}
+	return false;
+}
+
+bool ParallelPhysics::LoadUniverse(const std::string &fileName)
+{
+	std::ifstream myfile(fileName);
+	if (myfile.is_open())
+	{
+		for (int32_t posX = 0; posX < s_universe.size(); ++posX)
+		{
+			for (int32_t posY = 0; posY < s_universe[posX].size(); ++posY)
+			{
+				for (int32_t posZ = 0; posZ < s_universe[posX][posY].size(); ++posZ)
+				{
+					char c = myfile.get();
+					if (!myfile.good())
+					{
+						return false;
+					}
+					EtherCell &cell = s_universe[posX][posY][posZ];
+					cell.m_type = (EtherType::EEtherType)c;
+					if (cell.m_type == EtherType::Crumb)
+					{
+						std::array<EtherColor, 4> Colors = {EtherColor(255,0,0), EtherColor(0,255,0), EtherColor(0,0,255), EtherColor(255,255,0)};
+						cell.m_color = Colors[Rand32(4)];
+					}
+					else if (cell.m_type == EtherType::Block)
+					{
+						constexpr uint8_t blockGrayColor = 50;
+						cell.m_color = EtherColor(blockGrayColor, blockGrayColor, blockGrayColor);
+					}
+				}
+			}
+		}
+		myfile.close();
+		return true;
+	}
+	return false;
+}
 
 void UniverseThread(int32_t threadNum, bool *isSimulationRunning)
 {

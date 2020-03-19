@@ -111,7 +111,7 @@ namespace PPh
 	{
 	public:
 		EtherColor() = default;
-		EtherColor(int8_t colorR, int8_t colorG, int8_t colorB);
+		EtherColor(uint8_t colorR, uint8_t colorG, uint8_t colorB);
 
 		static const EtherColor ZeroColor;
 
@@ -123,4 +123,6 @@ namespace PPh
 	};
 
 	int64_t GetTimeMs();
+
+	int32_t Rand32(int32_t iRandMax);
 }

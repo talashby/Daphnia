@@ -24,6 +24,8 @@ class ParallelPhysics
 public:
 
 	static bool Init(const VectorInt32Math &universeSize, uint8_t threadsCount); // returns true if success. threadsCount 0 means simulate near observer
+	static bool SaveUniverse(const std::string &fileName);
+	static bool LoadUniverse(const std::string &fileName);
 	static ParallelPhysics* GetInstance();
 
 	const VectorInt32Math & GetUniverseSize() const;
