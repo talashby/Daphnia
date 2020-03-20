@@ -66,20 +66,20 @@ void UMyHudWidget::NativeDestruct()
 
 void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 {
-	ShowPPhStats();
+	//ShowPPhStats();
 
 
-	if (PPh::ParallelPhysics::GetInstance()->IsSimulationRunning() && PPh::Observer::GetInstance())
+	//if (PPh::ParallelPhysics::GetInstance()->IsSimulationRunning() && PPh::Observer::GetInstance())
 	{
-		PPh::Observer::GetInstance()->UE4Tick();
 		if (pEyeViewImage && pEyeViewImage->IsVisible())
 		{
-			if (m_PawnRotation != ADaphniaPawn::GetInstance()->GetActorRotation())
+			/*if (m_PawnRotation != ADaphniaPawn::GetInstance()->GetActorRotation())
 			{
 				m_PawnRotation = ADaphniaPawn::GetInstance()->GetActorRotation();
 				PPh::SP_EyeState eyeState = GetPawnEyeState(GetWorld());
 				PPh::Observer::GetInstance()->ChangeOrientation(eyeState);
 			}
+			*/
 			FVector pawnLocation = ADaphniaPawn::GetInstance()->GetActorLocation();
 			PPh::VectorInt32Math position = UPPSettings::ConvertLocationToPPhPosition(pawnLocation);
 			if (position != m_ObserverPos)
@@ -194,11 +194,11 @@ void UMyHudWidget::SwitchToParallelPhysics()
 			PPh::SP_EyeState eyeState;
 			eyeState = GetPawnEyeState(World);
 			FVector pawnLocation = ADaphniaPawn::GetInstance()->GetActorLocation();
-			PPh::VectorInt32Math position = UPPSettings::ConvertLocationToPPhPosition(pawnLocation);
-			PPh::Observer::Init(position, eyeState);
+//			PPh::VectorInt32Math position = UPPSettings::ConvertLocationToPPhPosition(pawnLocation);
+			PPh::Observer::Init();
 			PPh::ParallelPhysics::GetInstance()->StartSimulation();
-			m_PawnRotation = ADaphniaPawn::GetInstance()->GetActorRotation();
-			m_ObserverPos = PPh::Observer::GetInstance()->GetPosition();
+//			m_PawnRotation = ADaphniaPawn::GetInstance()->GetActorRotation();
+//			m_ObserverPos = PPh::Observer::GetInstance()->GetPosition();
 
 			if (BoxStats)
 			{

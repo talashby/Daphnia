@@ -25,7 +25,6 @@ public:
 
 	static bool Init(const VectorInt32Math &universeSize, uint8_t threadsCount); // returns true if success. threadsCount 0 means simulate near observer
 	static bool SaveUniverse(const std::string &fileName);
-	static bool LoadUniverse(const std::string &fileName);
 	static ParallelPhysics* GetInstance();
 
 	const VectorInt32Math & GetUniverseSize() const;
@@ -35,9 +34,6 @@ public:
 	bool IsSimulationRunning() const;
 
 	bool InitEtherCell(const VectorInt32Math &pos, EtherType::EEtherType type, const EtherColor &color = EtherColor()); // returns true if success
-	bool EmitPhoton(const VectorInt32Math &pos, const struct Photon &photon);
-
-	static void SetNeedUpdateSimulationBoxes();
 
 	static uint64_t GetFPS();
 	static bool IsHighPrecisionStatsEnabled();
@@ -48,9 +44,6 @@ private:
 	ParallelPhysics();
 
 	static int32_t GetCellPhotonIndex(const VectorInt32Math &unitVector);
-	bool IsPosInBounds(const VectorInt32Math &pos);
-	void AdjustSimulationBoxes();
-	void AdjustSizeByBounds(VectorInt32Math &size);
 
 	VectorInt32Math m_universeSize = VectorInt32Math::ZeroVector;
 	uint8_t m_threadsCount = 1;
@@ -71,12 +64,11 @@ typedef std::shared_ptr< EyeColorArray > SP_EyeColorArray;
 class Observer
 {
 public:
-	static void Init(const VectorInt32Math &position, const SP_EyeState &eyeState);
+	static void Init();
 
 	static Observer* GetInstance();
 
 	void PPhTick();
-	void UE4Tick();
 
 	void ChangeOrientation(const SP_EyeState &eyeState);
 	SP_EyeColorArray GrabTexture();
@@ -87,8 +79,6 @@ public:
 	const VectorInt32Math& GetOrientMinChanger() const;
 	const VectorInt32Math& GetOrientMaxChanger() const;
 
-	void Echolocation();
-	void CalculateEyeState();
 private:
 	friend class ParallelPhysics;
 	void SetPosition(const VectorInt32Math &pos);
