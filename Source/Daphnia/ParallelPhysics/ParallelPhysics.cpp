@@ -259,6 +259,9 @@ void Observer::PPhTick()
 		MsgGetState msg;
 		if (sendto(socketC, (const char*)&msg, sizeof(msg), 0, (sockaddr*)&serverInfo, len) != SOCKET_ERROR)
 		{
+			MsgMoveForward msgMove;
+			msgMove.m_value = 1;
+			sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
 			char buffer[MAX_PROTOCOL_BUFFER_SIZE];
 			while(recvfrom(socketC, buffer, sizeof(buffer), 0, (sockaddr*)&serverInfo, &len) > 0)
 			{
