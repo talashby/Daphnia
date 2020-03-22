@@ -17,6 +17,12 @@ class DAPHNIA_API AMyPlayerController : public APlayerController
 public:
 		AMyPlayerController();
 		static AMyPlayerController* GetInstance();
+		bool IsLeft() const;
+		bool IsRight() const;
+		bool IsUp() const;
+		bool IsDown() const;
+		bool IsForward() const;
+		bool IsBackward() const;
 
 protected:
 	virtual void SetupInputComponent() override;
@@ -27,4 +33,11 @@ protected:
 private:
 
 	void ClickPressed(const FVector& Location);
+	
+	bool m_isLeft = false;
+	bool m_isRight = false;
+	bool m_isUp = false;
+	bool m_isDown = false;
+	bool m_isForward = false;
+	bool m_isBackward = false;
 };

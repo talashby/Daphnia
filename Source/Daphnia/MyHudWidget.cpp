@@ -69,7 +69,7 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 	//ShowPPhStats();
 
 
-	//if (PPh::ParallelPhysics::GetInstance()->IsSimulationRunning() && PPh::Observer::GetInstance())
+	if (PPh::ParallelPhysics::GetInstance()->IsSimulationRunning() && PPh::Observer::GetInstance())
 	{
 		if (pEyeViewImage && pEyeViewImage->IsVisible())
 		{
@@ -80,12 +80,6 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 				PPh::Observer::GetInstance()->ChangeOrientation(eyeState);
 			}
 			*/
-			FVector pawnLocation = ADaphniaPawn::GetInstance()->GetActorLocation();
-			PPh::VectorInt32Math position = UPPSettings::ConvertLocationToPPhPosition(pawnLocation);
-			if (position != m_ObserverPos)
-			{
-				PPh::Observer::GetInstance()->SetNewPosition(position);
-			}
 			PPh::SP_EyeColorArray spEyeColorArray = PPh::Observer::GetInstance()->GrabTexture();
 			if (spEyeColorArray)
 			{

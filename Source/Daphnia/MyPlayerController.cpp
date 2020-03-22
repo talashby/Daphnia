@@ -20,6 +20,36 @@ AMyPlayerController* AMyPlayerController::GetInstance()
 	return s_InstancePtr;
 }
 
+bool AMyPlayerController::IsLeft() const
+{
+	return m_isLeft;
+}
+
+bool AMyPlayerController::IsRight() const
+{
+	return m_isRight;
+}
+
+bool AMyPlayerController::IsUp() const
+{
+	return m_isUp;
+}
+
+bool AMyPlayerController::IsDown() const
+{
+	return m_isDown;
+}
+
+bool AMyPlayerController::IsForward() const
+{
+	return m_isForward;
+}
+
+bool AMyPlayerController::IsBackward() const
+{
+	return m_isBackward;
+}
+
 void AMyPlayerController::SetupInputComponent()
 {
 	// set up gameplay key bindings
@@ -41,6 +71,60 @@ bool AMyPlayerController::InputKey(FKey Key, EInputEvent EventType, float Amount
 		if (EInputEvent::IE_Pressed == EventType || EInputEvent::IE_DoubleClick == EventType)
 		{
 			ClickPressed(FVector(fLocationX, fLocationY, 0));
+		}
+	}
+	if (EventType == IE_Pressed)
+	{
+		if ("A" == Key.GetFName())
+		{
+			m_isLeft = true;
+		}
+		else if ("D" == Key.GetFName())
+		{
+			m_isRight = true;
+		}
+		else if ("W" == Key.GetFName())
+		{
+			m_isUp = true;
+		}
+		else if ("S" == Key.GetFName())
+		{
+			m_isDown = true;
+		}
+		else if ("SpaceBar" == Key.GetFName())
+		{
+			m_isForward = true;
+		}
+		else if ("LeftAlt" == Key.GetFName())
+		{
+			m_isBackward = true;
+		}
+	}
+	else if (EventType == IE_Released)
+	{
+		if ("A" == Key.GetFName())
+		{
+			m_isLeft = false;
+		}
+		else if ("D" == Key.GetFName())
+		{
+			m_isRight = false;
+		}
+		else if ("W" == Key.GetFName())
+		{
+			m_isUp = false;
+		}
+		else if ("S" == Key.GetFName())
+		{
+			m_isDown = false;
+		}
+		else if ("SpaceBar" == Key.GetFName())
+		{
+			m_isForward = false;
+		}
+		else if ("LeftAlt" == Key.GetFName())
+		{
+			m_isBackward = false;
 		}
 	}
 

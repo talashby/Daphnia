@@ -8,7 +8,7 @@
 #include "atomic"
 #include "chrono"
 #include "ServerProtocol.h"
-#include <assert.h>
+#include "../MyPlayerController.h"
 
 #undef UNICODE
 #define WIN32_LEAN_AND_MEAN
@@ -259,9 +259,47 @@ void Observer::PPhTick()
 		MsgGetState msg;
 		if (sendto(socketC, (const char*)&msg, sizeof(msg), 0, (sockaddr*)&serverInfo, len) != SOCKET_ERROR)
 		{
-			MsgMoveForward msgMove;
-			msgMove.m_value = 1;
-			sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
+			AMyPlayerController *controller = AMyPlayerController::GetInstance();
+			if (controller)
+			{
+				if (controller->IsLeft())
+				{
+					MsgRotateLeft msgMove;
+					msgMove.m_value = 28;
+					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
+				}
+				if (controller->IsRight())
+				{
+					MsgRotateRight msgMove;
+					msgMove.m_value = 28;
+					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
+				}
+				if (controller->IsUp())
+				{
+					MsgRotateUp msgMove;
+					msgMove.m_value = 28;
+					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
+				}
+				if (controller->IsDown())
+				{
+					MsgRotateDown msgMove;
+					msgMove.m_value = 28;
+					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
+				}
+				if (controller->IsForward())
+				{
+					MsgMoveForward msgMove;
+					msgMove.m_value = 8;
+					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
+				}
+				if (controller->IsBackward())
+				{
+					MsgMoveBackward msgMove;
+					msgMove.m_value = 8;
+					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
+				}
+			}
+
 			char buffer[MAX_PROTOCOL_BUFFER_SIZE];
 			while(recvfrom(socketC, buffer, sizeof(buffer), 0, (sockaddr*)&serverInfo, &len) > 0)
 			{
@@ -336,16 +374,6 @@ SP_EyeColorArray Observer::GrabTexture()
 PPh::VectorInt32Math Observer::GetPosition() const
 {
 	return m_position;
-}
-
-void Observer::SetNewPosition(const VectorInt32Math &pos)
-{
-	m_newPosition = pos;
-}
-
-PPh::VectorInt32Math Observer::GetNewPosition() const
-{
-	return m_newPosition;
 }
 
 const VectorInt32Math& Observer::GetOrientMinChanger() const

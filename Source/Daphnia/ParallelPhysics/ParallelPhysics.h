@@ -73,8 +73,6 @@ public:
 	void ChangeOrientation(const SP_EyeState &eyeState);
 	SP_EyeColorArray GrabTexture();
 	VectorInt32Math GetPosition() const;
-	void SetNewPosition(const VectorInt32Math &pos);
-	VectorInt32Math GetNewPosition() const;
 
 	const VectorInt32Math& GetOrientMinChanger() const;
 	const VectorInt32Math& GetOrientMaxChanger() const;
@@ -86,7 +84,6 @@ private:
 	OrientationVectorMath MaximizePPhOrientation(const VectorFloatMath &orientationVector);
 
 	VectorInt32Math m_position = VectorInt32Math::ZeroVector;
-	VectorInt32Math m_newPosition = VectorInt32Math::ZeroVector;
 	SP_EyeState m_eyeState;
 	SP_EyeState m_newEyeState; // Used from different threads
 
