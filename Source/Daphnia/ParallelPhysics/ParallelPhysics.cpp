@@ -265,25 +265,25 @@ void Observer::PPhTick()
 				if (controller->IsLeft())
 				{
 					MsgRotateLeft msgMove;
-					msgMove.m_value = 16;
+					msgMove.m_value = 64;
 					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
 				}
 				if (controller->IsRight())
 				{
 					MsgRotateRight msgMove;
-					msgMove.m_value = 16;
+					msgMove.m_value = 64;
 					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
 				}
 				if (controller->IsUp())
 				{
 					MsgRotateUp msgMove;
-					msgMove.m_value = 16;
+					msgMove.m_value = 64;
 					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
 				}
 				if (controller->IsDown())
 				{
 					MsgRotateDown msgMove;
-					msgMove.m_value = 16;
+					msgMove.m_value = 64;
 					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
 				}
 				if (controller->IsForward())
@@ -315,41 +315,39 @@ void Observer::PPhTick()
 					// receive photons back
 					m_eyeColorArray[msgSendPhoton->m_posX][msgSendPhoton->m_posY] = msgSendPhoton->m_color;
 					m_eyeUpdateTimeArray[msgSendPhoton->m_posX][msgSendPhoton->m_posY] = time;
-
-
-					// update eye texture
-					if (GetTimeMs() - m_lastTextureUpdateTime > UPDATE_EYE_TEXTURE_OUT)
+				}
+				// update eye texture
+				if (GetTimeMs() - m_lastTextureUpdateTime > UPDATE_EYE_TEXTURE_OUT)
+				{
+					m_lastTextureUpdateTime = GetTimeMs();
+					SP_EyeColorArray spEyeColorArrayOut;
+					spEyeColorArrayOut = std::atomic_load(&m_spEyeColorArrayOut);
+					if (!spEyeColorArrayOut)
 					{
-						m_lastTextureUpdateTime = GetTimeMs();
-						SP_EyeColorArray spEyeColorArrayOut;
-						spEyeColorArrayOut = std::atomic_load(&m_spEyeColorArrayOut);
-						if (!spEyeColorArrayOut)
+						spEyeColorArrayOut = std::make_shared<EyeColorArray>();
+						EyeColorArray &eyeColorArray = *spEyeColorArrayOut;
+						for (int ii = 0; ii < eyeColorArray.size(); ++ii)
 						{
-							spEyeColorArrayOut = std::make_shared<EyeColorArray>();
-							EyeColorArray &eyeColorArray = *spEyeColorArrayOut;
-							for (int ii = 0; ii < eyeColorArray.size(); ++ii)
+							for (int jj = 0; jj < eyeColorArray[ii].size(); ++jj)
 							{
-								for (int jj = 0; jj < eyeColorArray[ii].size(); ++jj)
+								eyeColorArray[ii][jj] = m_eyeColorArray[ii][jj];
+								int64_t timeDiff = time - m_eyeUpdateTimeArray[ii][jj];
+								uint8_t alpha = m_eyeColorArray[ii][jj].m_colorA;
+								if (timeDiff < EYE_IMAGE_DELAY)
 								{
-									eyeColorArray[ii][jj] = m_eyeColorArray[ii][jj];
-									int64_t timeDiff = time - m_eyeUpdateTimeArray[ii][jj];
-									uint8_t alpha = m_eyeColorArray[ii][jj].m_colorA;
-									if (timeDiff < EYE_IMAGE_DELAY)
-									{
-										alpha = alpha * (EYE_IMAGE_DELAY - timeDiff) / EYE_IMAGE_DELAY;
-										eyeColorArray[ii][jj].m_colorA = alpha;
-									}
-									else
-									{
-										alpha = 0;
-										//eyeColorArray[ii][jj] = EtherColor::ZeroColor;
-										//eyeColorArray[ii][jj].m_colorA = 255;
-									}
+									alpha = alpha * (EYE_IMAGE_DELAY - timeDiff) / EYE_IMAGE_DELAY;
 									eyeColorArray[ii][jj].m_colorA = alpha;
 								}
+								else
+								{
+									alpha = 0;
+									//eyeColorArray[ii][jj] = EtherColor::ZeroColor;
+									//eyeColorArray[ii][jj].m_colorA = 255;
+								}
+								eyeColorArray[ii][jj].m_colorA = alpha;
 							}
-							std::atomic_store(&m_spEyeColorArrayOut, spEyeColorArrayOut);
 						}
+						std::atomic_store(&m_spEyeColorArrayOut, spEyeColorArrayOut);
 					}
 				}
 			}
