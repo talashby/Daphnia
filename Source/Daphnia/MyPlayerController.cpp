@@ -73,58 +73,32 @@ bool AMyPlayerController::InputKey(FKey Key, EInputEvent EventType, float Amount
 			ClickPressed(FVector(fLocationX, fLocationY, 0));
 		}
 	}
-	if (EventType == IE_Pressed)
+	if (EventType == IE_Pressed || EventType == IE_Released)
 	{
-		if ("A" == Key.GetFName())
+		bool state = EventType == IE_Pressed;
+		if ("A" == Key.GetFName() || "Left" == Key.GetFName())
 		{
-			m_isLeft = true;
+			m_isLeft = state;
 		}
-		else if ("D" == Key.GetFName())
+		else if ("D" == Key.GetFName() || "Right" == Key.GetFName())
 		{
-			m_isRight = true;
+			m_isRight = state;
 		}
-		else if ("W" == Key.GetFName())
+		else if ("W" == Key.GetFName() || "Up" == Key.GetFName())
 		{
-			m_isUp = true;
+			m_isUp = state;
 		}
-		else if ("S" == Key.GetFName())
+		else if ("S" == Key.GetFName() || "Down" == Key.GetFName())
 		{
-			m_isDown = true;
+			m_isDown = state;
 		}
 		else if ("SpaceBar" == Key.GetFName())
 		{
-			m_isForward = true;
+			m_isForward = state;
 		}
 		else if ("LeftAlt" == Key.GetFName())
 		{
-			m_isBackward = true;
-		}
-	}
-	else if (EventType == IE_Released)
-	{
-		if ("A" == Key.GetFName())
-		{
-			m_isLeft = false;
-		}
-		else if ("D" == Key.GetFName())
-		{
-			m_isRight = false;
-		}
-		else if ("W" == Key.GetFName())
-		{
-			m_isUp = false;
-		}
-		else if ("S" == Key.GetFName())
-		{
-			m_isDown = false;
-		}
-		else if ("SpaceBar" == Key.GetFName())
-		{
-			m_isForward = false;
-		}
-		else if ("LeftAlt" == Key.GetFName())
-		{
-			m_isBackward = false;
+			m_isBackward = state;
 		}
 	}
 

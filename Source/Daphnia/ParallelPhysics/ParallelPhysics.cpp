@@ -265,37 +265,37 @@ void Observer::PPhTick()
 				if (controller->IsLeft())
 				{
 					MsgRotateLeft msgMove;
-					msgMove.m_value = 28;
+					msgMove.m_value = 16;
 					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
 				}
 				if (controller->IsRight())
 				{
 					MsgRotateRight msgMove;
-					msgMove.m_value = 28;
+					msgMove.m_value = 16;
 					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
 				}
 				if (controller->IsUp())
 				{
 					MsgRotateUp msgMove;
-					msgMove.m_value = 28;
+					msgMove.m_value = 16;
 					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
 				}
 				if (controller->IsDown())
 				{
 					MsgRotateDown msgMove;
-					msgMove.m_value = 28;
+					msgMove.m_value = 16;
 					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
 				}
 				if (controller->IsForward())
 				{
 					MsgMoveForward msgMove;
-					msgMove.m_value = 8;
+					msgMove.m_value = 255;
 					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
 				}
 				if (controller->IsBackward())
 				{
 					MsgMoveBackward msgMove;
-					msgMove.m_value = 8;
+					msgMove.m_value = 255;
 					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
 				}
 			}
@@ -355,6 +355,7 @@ void Observer::PPhTick()
 			}
 		}
 	}
+	Sleep(1); // work imitation
 }
 
 void Observer::ChangeOrientation(const SP_EyeState &eyeState)
