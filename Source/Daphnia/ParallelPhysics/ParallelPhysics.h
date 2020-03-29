@@ -77,6 +77,8 @@ public:
 	const VectorInt32Math& GetOrientMinChanger() const;
 	const VectorInt32Math& GetOrientMaxChanger() const;
 
+	int16_t m_latitude = 0;
+	int16_t m_longitude = 0;
 private:
 	friend class ParallelPhysics;
 	void SetPosition(const VectorInt32Math &pos);
@@ -102,7 +104,5 @@ private:
 	VectorInt32Math m_orientMinChanger;
 	VectorInt32Math m_orientMaxChanger;
 
-	int16_t m_latitude = 0;
-	int16_t m_longitude = 0;
 };
 }

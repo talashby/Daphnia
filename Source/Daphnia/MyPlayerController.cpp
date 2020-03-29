@@ -96,7 +96,7 @@ bool AMyPlayerController::InputKey(FKey Key, EInputEvent EventType, float Amount
 		{
 			m_isForward = state;
 		}
-		else if ("LeftAlt" == Key.GetFName())
+		else if ("Backslash" == Key.GetFName())
 		{
 			m_isBackward = state;
 		}

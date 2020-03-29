@@ -107,6 +107,8 @@ public:
 	MsgSendState() : MsgBase(GetType()) {}
 	static uint8_t GetType() { return MsgType::SendState; }
 	uint64_t m_time;
+	int16_t m_latitude;
+	int16_t m_longitude;
 };
 
 class MsgSendPhoton : public MsgBase

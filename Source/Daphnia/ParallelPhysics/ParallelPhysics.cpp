@@ -265,25 +265,25 @@ void Observer::PPhTick()
 				if (controller->IsLeft())
 				{
 					MsgRotateLeft msgMove;
-					msgMove.m_value = 64;
+					msgMove.m_value = 128;
 					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
 				}
 				if (controller->IsRight())
 				{
 					MsgRotateRight msgMove;
-					msgMove.m_value = 64;
+					msgMove.m_value = 128;
 					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
 				}
 				if (controller->IsUp())
 				{
-					MsgRotateUp msgMove;
-					msgMove.m_value = 64;
+					MsgRotateDown msgMove;
+					msgMove.m_value = 128;
 					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
 				}
 				if (controller->IsDown())
 				{
-					MsgRotateDown msgMove;
-					msgMove.m_value = 64;
+					MsgRotateUp msgMove;
+					msgMove.m_value = 128;
 					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
 				}
 				if (controller->IsForward())
@@ -308,13 +308,15 @@ void Observer::PPhTick()
 				if (msgSendState)
 				{
 					time = msgSendState->m_time;
+					Observer::GetInstance()->m_latitude = msgSendState->m_latitude;
+					Observer::GetInstance()->m_longitude = msgSendState->m_longitude;
 				}
 				MsgSendPhoton *msgSendPhoton = QueryMessage<MsgSendPhoton>(buffer);
 				if (msgSendPhoton)
 				{
-					// receive photons back
-					m_eyeColorArray[msgSendPhoton->m_posX][msgSendPhoton->m_posY] = msgSendPhoton->m_color;
-					m_eyeUpdateTimeArray[msgSendPhoton->m_posX][msgSendPhoton->m_posY] = time;
+					// receive photons back // revert Y-coordinate because of texture format
+					m_eyeColorArray[OBSERVER_EYE_SIZE - msgSendPhoton->m_posY - 1][msgSendPhoton->m_posX] = msgSendPhoton->m_color;
+					m_eyeUpdateTimeArray[OBSERVER_EYE_SIZE - msgSendPhoton->m_posY - 1][msgSendPhoton->m_posX] = time;
 				}
 				// update eye texture
 				if (GetTimeMs() - m_lastTextureUpdateTime > UPDATE_EYE_TEXTURE_OUT)
@@ -326,17 +328,17 @@ void Observer::PPhTick()
 					{
 						spEyeColorArrayOut = std::make_shared<EyeColorArray>();
 						EyeColorArray &eyeColorArray = *spEyeColorArrayOut;
-						for (int ii = 0; ii < eyeColorArray.size(); ++ii)
+						for (int yy = 0; yy < eyeColorArray.size(); ++yy)
 						{
-							for (int jj = 0; jj < eyeColorArray[ii].size(); ++jj)
+							for (int xx = 0; xx < eyeColorArray[yy].size(); ++xx)
 							{
-								eyeColorArray[ii][jj] = m_eyeColorArray[ii][jj];
-								int64_t timeDiff = time - m_eyeUpdateTimeArray[ii][jj];
-								uint8_t alpha = m_eyeColorArray[ii][jj].m_colorA;
+								eyeColorArray[yy][xx] = m_eyeColorArray[yy][xx];
+								int64_t timeDiff = time - m_eyeUpdateTimeArray[yy][xx];
+								uint8_t alpha = m_eyeColorArray[yy][xx].m_colorA;
 								if (timeDiff < EYE_IMAGE_DELAY)
 								{
 									alpha = alpha * (EYE_IMAGE_DELAY - timeDiff) / EYE_IMAGE_DELAY;
-									eyeColorArray[ii][jj].m_colorA = alpha;
+									eyeColorArray[yy][xx].m_colorA = alpha;
 								}
 								else
 								{
@@ -344,7 +346,7 @@ void Observer::PPhTick()
 									//eyeColorArray[ii][jj] = EtherColor::ZeroColor;
 									//eyeColorArray[ii][jj].m_colorA = 255;
 								}
-								eyeColorArray[ii][jj].m_colorA = alpha;
+								eyeColorArray[yy][xx].m_colorA = alpha;
 							}
 						}
 						std::atomic_store(&m_spEyeColorArrayOut, spEyeColorArrayOut);

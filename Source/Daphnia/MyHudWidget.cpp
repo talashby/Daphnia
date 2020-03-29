@@ -66,7 +66,7 @@ void UMyHudWidget::NativeDestruct()
 
 void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 {
-	//ShowPPhStats();
+	ShowPPhStats();
 
 
 	if (PPh::ParallelPhysics::GetInstance()->IsSimulationRunning() && PPh::Observer::GetInstance())
@@ -94,6 +94,7 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 					FTexture2DMipMap& Mip = pEyeViewTexture2D->PlatformData->Mips[0];
 					void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
 					FMemory::Memcpy(Data, &(*spEyeColorArray)[0][0], (EyeTextureSize * EyeTextureSize * 4));
+					//FMemory::Memset(Data, 255, 256);
 					Mip.BulkData.Unlock();
 					pEyeViewTexture2D->UpdateResource();
 				}
@@ -152,6 +153,8 @@ void UMyHudWidget::ShowPPhStats()
 					sFps += "\nTick time(ms). Universe thread " + FString::FromInt(ii) + ": " + FString::SanitizeFloat(fpsUniverseThreads[ii]/1000000.0f);
 				}
 			}
+			sFps += FString("\nLattitude: ") + FString::FromInt(PPh::Observer::GetInstance()->m_latitude);
+			sFps += FString("\nLongitude: ") + FString::FromInt(PPh::Observer::GetInstance()->m_longitude);
 			pTextBlockStats->SetText(FText::FromString(sFps));
 		}
 	}
