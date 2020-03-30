@@ -109,6 +109,7 @@ public:
 	uint64_t m_time;
 	int16_t m_latitude;
 	int16_t m_longitude;
+	bool m_isEatenCrumb;
 };
 
 class MsgSendPhoton : public MsgBase

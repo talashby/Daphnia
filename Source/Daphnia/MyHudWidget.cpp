@@ -11,6 +11,7 @@
 #include "ParallelPhysics/ParallelPhysics.h"
 #include "array"
 #include "Kismet/GameplayStatics.h"
+#include "LevelSettings.h"
 
 static UMyHudWidget* s_InstancePtr;
 
@@ -71,6 +72,10 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 
 	if (PPh::ParallelPhysics::GetInstance()->IsSimulationRunning() && PPh::Observer::GetInstance())
 	{
+		if (PPh::Observer::GetInstance()->DecEatenCrumb())
+		{
+			ALevelSettings::GetInstance()->PlayCrumbSound();
+		}
 		if (pEyeViewImage && pEyeViewImage->IsVisible())
 		{
 			/*if (m_PawnRotation != ADaphniaPawn::GetInstance()->GetActorRotation())

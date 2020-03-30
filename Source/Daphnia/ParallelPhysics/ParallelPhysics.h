@@ -77,6 +77,9 @@ public:
 	const VectorInt32Math& GetOrientMinChanger() const;
 	const VectorInt32Math& GetOrientMaxChanger() const;
 
+	void IncEatenCrumb();
+	bool DecEatenCrumb();
+
 	int16_t m_latitude = 0;
 	int16_t m_longitude = 0;
 private:
@@ -89,7 +92,7 @@ private:
 	SP_EyeState m_eyeState;
 	SP_EyeState m_newEyeState; // Used from different threads
 
-	const int32_t EYE_IMAGE_DELAY = 3000; // quantum of time
+	const int32_t EYE_IMAGE_DELAY = 5000; // quantum of time
 	//const uint32_t EYE_FOV = PPH_INT_MAX/2; // quantum of length (MAX_INT/2 - 90 degrees; MAX_INT - 180 degrees; 2*MAX_INT - 360 degrees)
 
 	const int32_t ECHOLOCATION_FREQUENCY = 1; // quantum of time
@@ -103,6 +106,5 @@ private:
 
 	VectorInt32Math m_orientMinChanger;
 	VectorInt32Math m_orientMaxChanger;
-
 };
 }

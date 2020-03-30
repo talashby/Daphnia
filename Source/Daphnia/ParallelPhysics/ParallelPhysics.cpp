@@ -33,6 +33,7 @@ std::vector<uint64_t> s_timingsUniverseThreads;
 std::vector<uint64_t> s_TickTimeNsAverageUniverseThreads;
 uint64_t s_timingsObserverThread;
 uint64_t s_TickTimeNsAverageObserverThread;
+std::atomic <int16_t> s_eatenCrumb = 0;
 
 struct Photon
 {
@@ -310,6 +311,10 @@ void Observer::PPhTick()
 					time = msgSendState->m_time;
 					Observer::GetInstance()->m_latitude = msgSendState->m_latitude;
 					Observer::GetInstance()->m_longitude = msgSendState->m_longitude;
+					if (msgSendState->m_isEatenCrumb)
+					{
+						IncEatenCrumb();
+					}
 				}
 				MsgSendPhoton *msgSendPhoton = QueryMessage<MsgSendPhoton>(buffer);
 				if (msgSendPhoton)
@@ -385,6 +390,21 @@ const VectorInt32Math& Observer::GetOrientMinChanger() const
 const VectorInt32Math& Observer::GetOrientMaxChanger() const
 {
 	return m_orientMaxChanger;
+}
+
+void Observer::IncEatenCrumb()
+{
+	++s_eatenCrumb;
+}
+
+bool Observer::DecEatenCrumb()
+{
+	if (s_eatenCrumb > 0)
+	{
+		--s_eatenCrumb;
+		return true;
+	}
+	return false;
 }
 
 int32_t RoundToMinMaxPPhInt(float value)

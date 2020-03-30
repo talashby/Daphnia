@@ -131,6 +131,11 @@ void ALevelSettings::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+void ALevelSettings::PlayCrumbSound() const
+{
+	UGameplayStatics::PlaySound2D(GetWorld(), EatCrumbSound);
+}
+
 void ALevelSettings::OnGameObjectOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor == ADaphniaPawn::GetInstance())
@@ -161,7 +166,7 @@ void ALevelSettings::OnGameObjectOverlapBegin(UPrimitiveComponent* OverlappedCom
 				}
 			}
 			pActor->Destroy();
-			UGameplayStatics::PlaySound2D(GetWorld(), EatCrumbSound);
+			PlayCrumbSound();
 		}
 	}
 }
