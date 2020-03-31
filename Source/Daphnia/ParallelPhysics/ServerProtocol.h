@@ -21,10 +21,12 @@ namespace MsgType
 		RotateDown,
 		MoveForward,
 		MoveBackward,
+		AdminGetNextCrumb,
 		// server to client
 		SendVersion,
 		SendState,
-		SendPhoton
+		SendPhoton,
+		AdminSendNextCrumb
 	};
 }
 
@@ -98,6 +100,13 @@ public:
 
 	uint8_t m_value;
 };
+
+class MsgAdminGetNextCrumb : public MsgBase
+{
+public:
+	MsgAdminGetNextCrumb() : MsgBase(GetType()) {}
+	static uint8_t GetType() { return MsgType::AdminGetNextCrumb; }
+};
 //**************************************************************************************
 //************************************** Server ****************************************
 //**************************************************************************************
@@ -120,6 +129,17 @@ public:
 	EtherColor m_color;
 	uint8_t m_posX;
 	uint8_t m_posY;
+};
+
+class MsgAdminSendNextCrumb : public MsgBase
+{
+public:
+	MsgAdminSendNextCrumb() : MsgBase(GetType()) {}
+	static uint8_t GetType() { return MsgType::AdminSendNextCrumb; }
+	EtherColor m_color;
+	uint32_t m_posX;
+	uint32_t m_posY;
+	uint32_t m_posZ;
 };
 
 template<class T>
