@@ -4,10 +4,10 @@
 
 #pragma pack(push, 1)
 
+#define CLIENT_UDP_PORT 27016
+
 namespace PPh
 {
-	constexpr int32_t MAX_PROTOCOL_BUFFER_SIZE = 256;
-
 namespace MsgType
 {
 	enum MsgType
@@ -21,12 +21,10 @@ namespace MsgType
 		RotateDown,
 		MoveForward,
 		MoveBackward,
-		AdminGetNextCrumb,
 		// server to client
-		SendVersion,
-		SendState,
-		SendPhoton,
-		AdminSendNextCrumb
+		GetVersionResponse,
+		GetStateResponse,
+		SendPhoton
 	};
 }
 
@@ -100,13 +98,6 @@ public:
 
 	uint8_t m_value;
 };
-
-class MsgAdminGetNextCrumb : public MsgBase
-{
-public:
-	MsgAdminGetNextCrumb() : MsgBase(GetType()) {}
-	static uint8_t GetType() { return MsgType::AdminGetNextCrumb; }
-};
 //**************************************************************************************
 //************************************** Server ****************************************
 //**************************************************************************************
@@ -114,7 +105,7 @@ class MsgSendState : public MsgBase
 {
 public:
 	MsgSendState() : MsgBase(GetType()) {}
-	static uint8_t GetType() { return MsgType::SendState; }
+	static uint8_t GetType() { return MsgType::GetStateResponse; }
 	uint64_t m_time;
 	int16_t m_latitude;
 	int16_t m_longitude;
@@ -129,17 +120,6 @@ public:
 	EtherColor m_color;
 	uint8_t m_posX;
 	uint8_t m_posY;
-};
-
-class MsgAdminSendNextCrumb : public MsgBase
-{
-public:
-	MsgAdminSendNextCrumb() : MsgBase(GetType()) {}
-	static uint8_t GetType() { return MsgType::AdminSendNextCrumb; }
-	EtherColor m_color;
-	uint32_t m_posX;
-	uint32_t m_posY;
-	uint32_t m_posZ;
 };
 
 template<class T>

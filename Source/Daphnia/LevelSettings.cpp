@@ -12,6 +12,7 @@
 #include "Helper.h"
 #include "Components/AudioComponent.h"
 #include "ParallelPhysics/PPSettings.h"
+#include "ParallelPhysics/ParallelPhysics.h"
 
 // **************************** FRoomVolumeSettings *********************************
 FRoomVolumeSettings::FRoomVolumeSettings()
@@ -95,6 +96,32 @@ void ALevelSettings::OnMapLoaded()
 	}
 }
 
+void ALevelSettings::LoadCrumbsFromServer()
+{
+	bool bResult = PPh::AdminTcp::Connect();
+	if (bResult)
+	{
+		int ttt = 0;
+	}
+	/*struct sockaddr_in serverInfo;
+	int len = sizeof(serverInfo);
+	serverInfo.sin_family = AF_INET;
+	serverInfo.sin_port = htons(CLIENT_UDP_PORT);
+	serverInfo.sin_addr.s_addr = inet_addr("127.0.0.1");
+	SOCKET socketC = 0;
+	socketC = socket(AF_INET, SOCK_DGRAM, 0);
+	do 
+	{
+		PPh::MsgAdminGetNextCrumb msg;
+		if (sendto(socketC, (const char*)&msg, sizeof(msg), 0, (sockaddr*)&serverInfo, len) != SOCKET_ERROR)
+		{
+			char buffer[PPh::MAX_PROTOCOL_BUFFER_SIZE];
+			recvfrom(socketC, buffer, sizeof(buffer), 0, (sockaddr*)&serverInfo, &len);
+			PPh::MsgAdminSendNextCrumb *msgRcv = PPh::QueryMessage<PPh::MsgAdminSendNextCrumb>(buffer);
+		}
+	} while (msgRcv &&);*/
+}
+
 ALevelSettings::~ALevelSettings()
 {
 	//FEditorDelegates::OnMapOpened.RemoveAll(this);
@@ -113,15 +140,23 @@ void ALevelSettings::BeginPlay()
 
 	OnMapLoaded();
 
-	for (const auto & Settings : RoomVolumeSettings)
-	{
-		GenerateItems(Settings);
-	}
+	bool bSaveUniverseToDisk = false;
 
-	UWorld* World = GetWorld();
-	if (World && PPSettings)
+	if (bSaveUniverseToDisk)
 	{
-		PPSettings->ConvertGeometry(World);
+		for (const auto & Settings : RoomVolumeSettings)
+		{
+			GenerateItems(Settings);
+		}
+		UWorld* World = GetWorld();
+		if (World && PPSettings)
+		{
+			PPSettings->ConvertGeometry(World); // used to store universe to disc
+		}
+	}
+	else
+	{
+		LoadCrumbsFromServer();
 	}
 }
 

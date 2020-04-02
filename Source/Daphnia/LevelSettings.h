@@ -55,7 +55,7 @@ private:
 //	class AAmbientSound* SpawnAmbientSound();
 	void GenerateItems(const FRoomVolumeSettings &Settings);
 	void OnMapLoaded();
-
+	void LoadCrumbsFromServer();
 // ****************************************************
 // **** Settings
 

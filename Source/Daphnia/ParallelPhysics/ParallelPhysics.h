@@ -107,4 +107,9 @@ private:
 	VectorInt32Math m_orientMinChanger;
 	VectorInt32Math m_orientMaxChanger;
 };
+
+namespace AdminTcp
+{
+	bool Connect();
+}
 }
