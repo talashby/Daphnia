@@ -40,6 +40,7 @@ public:
 	static uint64_t GetTickTimeNsObserverThread(); // average tick time in nanoseconds
 	static std::vector<uint64_t> GetTickTimeNsUniverseThreads(); // average tick time in nanoseconds
 
+	bool GetNextCrumb(VectorInt32Math &outCrumbPos, EtherColor &outCrumbColor);
 private:
 	ParallelPhysics();
 
@@ -111,5 +112,7 @@ private:
 namespace AdminTcp
 {
 	bool Connect();
+	void LoadCrumbs();
+	void Disconnect();
 }
 }

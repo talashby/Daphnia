@@ -21,8 +21,10 @@ public:
 
 	void Init(UWorld *World);
 	static UPPSettings* GetInstance();
+	void InitParallelPhysics();
 	void ConvertGeometry(UWorld *World);
 	static PPh::VectorInt32Math ConvertLocationToPPhPosition(const FVector &Location);
+	static FVector ConvertPPhPositionToLocation(const PPh::VectorInt32Math &pos);
 	static PPh::OrientationVectorMath ConvertRotationToPPhOrientation(const FVector &orientationVector);
 	static PPh::OrientationVectorMath ConvertRotationToPPhOrientation(const FRotator &Rotator);
 	

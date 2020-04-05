@@ -227,6 +227,49 @@ std::vector<uint64_t> ParallelPhysics::GetTickTimeNsUniverseThreads()
 	return s_TickTimeNsAverageUniverseThreads;
 }
 
+bool ParallelPhysics::GetNextCrumb(VectorInt32Math &outCrumbPos, EtherColor &outCrumbColor)
+{
+	static int32_t s_posX = 0;
+	static int32_t s_posY = 0;
+	static int32_t s_posZ = 0;
+	bool bResult = false;
+	for (; s_posX < s_universe.size(); ++s_posX, s_posY = 0)
+	{
+		for (; s_posY < s_universe[s_posX].size(); ++s_posY, s_posZ = 0)
+		{
+			for (; s_posZ < s_universe[s_posX][s_posY].size(); ++s_posZ)
+			{
+				if (bResult)
+				{
+					break;
+				}
+				auto &cell = s_universe[s_posX][s_posY][s_posZ];
+				if (cell.m_type == EtherType::Crumb)
+				{
+					outCrumbPos = VectorInt32Math(s_posX, s_posY, s_posZ);
+					outCrumbColor = cell.m_color;
+					bResult = true;
+				}
+			}
+			if (bResult)
+			{
+				break;
+			}
+		}
+		if (bResult)
+		{
+			break;
+		}
+	}
+	if (!bResult)
+	{
+		s_posX = 0;
+		s_posY = 0;
+		s_posZ = 0;
+	}
+	return bResult;
+}
+
 Observer* s_observer = nullptr;
 
 void Observer::Init()
@@ -505,10 +548,13 @@ void Observer::CalculateOrientChangers(const EyeArray &eyeArray)
 
 namespace AdminTcp
 {
-bool Connect()
+namespace
 {
 	WSADATA wsaData;
 	SOCKET SendingSocket;
+}
+bool Connect()
+{
 	// Server/receiver address
 	SOCKADDR_IN ServerAddr;
 	// Server/receiver port to connect to
@@ -560,63 +606,48 @@ bool Connect()
 		printf("Client: Ready for sending and/or receiving data...\n");
 	}
 
-	// At this point you can start sending or receiving data on
-	// the socket SendingSocket.
-	// Some info on the receiver side...
-	getsockname(SendingSocket, (SOCKADDR *)&ServerAddr, (int *)sizeof(ServerAddr));
-	printf("Client: Receiver IP(s) used: %s\n", inet_ntoa(ServerAddr.sin_addr));
-	printf("Client: Receiver port used: %d\n", htons(ServerAddr.sin_port));
-
 	return true;
-/*
-	// Be careful with the array bound, provide some checking mechanism...
-
-	char sendbuf[1024] = "This is a test string from sender";
-	int BytesSent, nlen;
-	// Sends some data to server/receiver...
-	BytesSent = send(SendingSocket, sendbuf, strlen(sendbuf), 0);
-
-	if (BytesSent == SOCKET_ERROR)
-		printf("Client: send() error %ld.\n", WSAGetLastError());
-	else
-	{
-		printf("Client: send() is OK - bytes sent: %ld\n", BytesSent);
-		// Some info on this sender side...
-		// Allocate the required resources
-		memset(&ThisSenderInfo, 0, sizeof(ThisSenderInfo));
-		nlen = sizeof(ThisSenderInfo);
-
-		getsockname(SendingSocket, (SOCKADDR *)&ThisSenderInfo, &nlen);
-		printf("Client: Sender IP(s) used: %s\n", inet_ntoa(ThisSenderInfo.sin_addr));
-		printf("Client: Sender port used: %d\n", htons(ThisSenderInfo.sin_port));
-		printf("Client: Those bytes represent: \"%s\"\n", sendbuf);
-	}
-
-	if (shutdown(SendingSocket, SD_SEND) != 0)
-		printf("Client: Well, there is something wrong with the shutdown().
-			The error code : %ld\n", WSAGetLastError());
-	else
-			printf("Client: shutdown() looks OK...\n");
-
-	// When you are finished sending and receiving data on socket SendingSocket,
-	// you should close the socket using the closesocket API. We will
-	// describe socket closure later in the chapter.
-
-	if (closesocket(SendingSocket) != 0)
-		printf("Client: Cannot close \"SendingSocket\" socket. Error code: %ld\n", WSAGetLastError());
-	else
-		printf("Client: Closing \"SendingSocket\" socket...\n");
-
-
-
-	// When your application is finished handling the connection, call WSACleanup.
-
-	if (WSACleanup() != 0)
-		printf("Client: WSACleanup() failed!...\n");
-	else
-		printf("Client: WSACleanup() is OK...\n");
-*/
 }
+
+void LoadCrumbs()
+{
+	do
+	{
+		PPh::MsgAdminGetNextCrumb msg;
+		if (send(SendingSocket, (const char*)&msg, sizeof(msg), 0) != SOCKET_ERROR)
+		{
+			char buffer[DEFAULT_BUFLEN];
+			if (recv(SendingSocket, buffer, sizeof(buffer), 0) != SOCKET_ERROR)
+			{
+				if (MsgAdminGetNextCrumbResponse *msgRcv = PPh::QueryMessage<MsgAdminGetNextCrumbResponse>(buffer))
+				{
+					if (msgRcv->m_color == EtherColor::ZeroColor)
+					{
+						break;
+					}
+					ParallelPhysics::GetInstance()->InitEtherCell(VectorInt32Math(msgRcv->m_posX, msgRcv->m_posY, msgRcv->m_posZ), EtherType::Crumb, msgRcv->m_color);
+				}
+			}
+			else
+			{
+				break;
+			}
+		}
+		else
+		{
+			break;
+		}
+	} while (true);
+}
+
+void Disconnect()
+{
+	// Close the socket
+	closesocket(SendingSocket);
+	// Do the clean up
+	WSACleanup();
+}
+
 }
 
 }

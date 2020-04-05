@@ -101,25 +101,9 @@ void ALevelSettings::LoadCrumbsFromServer()
 	bool bResult = PPh::AdminTcp::Connect();
 	if (bResult)
 	{
-		int ttt = 0;
+		PPh::AdminTcp::LoadCrumbs();
+		PPh::AdminTcp::Disconnect();
 	}
-	/*struct sockaddr_in serverInfo;
-	int len = sizeof(serverInfo);
-	serverInfo.sin_family = AF_INET;
-	serverInfo.sin_port = htons(CLIENT_UDP_PORT);
-	serverInfo.sin_addr.s_addr = inet_addr("127.0.0.1");
-	SOCKET socketC = 0;
-	socketC = socket(AF_INET, SOCK_DGRAM, 0);
-	do 
-	{
-		PPh::MsgAdminGetNextCrumb msg;
-		if (sendto(socketC, (const char*)&msg, sizeof(msg), 0, (sockaddr*)&serverInfo, len) != SOCKET_ERROR)
-		{
-			char buffer[PPh::MAX_PROTOCOL_BUFFER_SIZE];
-			recvfrom(socketC, buffer, sizeof(buffer), 0, (sockaddr*)&serverInfo, &len);
-			PPh::MsgAdminSendNextCrumb *msgRcv = PPh::QueryMessage<PPh::MsgAdminSendNextCrumb>(buffer);
-		}
-	} while (msgRcv &&);*/
 }
 
 ALevelSettings::~ALevelSettings()
@@ -140,6 +124,8 @@ void ALevelSettings::BeginPlay()
 
 	OnMapLoaded();
 
+	PPSettings->InitParallelPhysics();
+
 	bool bSaveUniverseToDisk = false;
 
 	if (bSaveUniverseToDisk)
@@ -157,6 +143,40 @@ void ALevelSettings::BeginPlay()
 	else
 	{
 		LoadCrumbsFromServer();
+		while (true)
+		{
+			PPh::VectorInt32Math outCrumbPos;
+			PPh::EtherColor outCrumbColor;
+			bool bResult = PPh::ParallelPhysics::GetInstance()->GetNextCrumb(outCrumbPos, outCrumbColor);
+			if (!bResult)
+			{
+				break;
+			}
+			FVector location = UPPSettings::ConvertPPhPositionToLocation(outCrumbPos);
+			static std::array<FColor, 4> Colors = { FColor::Green, FColor::Yellow, FColor::Red, FColor::Blue };
+			int32 materialNum = 0;
+			if (outCrumbColor.m_colorR == 255 && outCrumbColor.m_colorG == 255)
+			{
+				materialNum = 1;
+			}
+			else if (outCrumbColor.m_colorG == 255)
+			{
+				materialNum = 0;
+			}
+			else if (outCrumbColor.m_colorR == 255)
+			{
+				materialNum = 2;
+			}
+			else if (outCrumbColor.m_colorB == 255)
+			{
+				materialNum = 3;
+			}
+			else
+			{
+				check(false);
+			}
+			SpawnCrumb(location, materialNum);
+		}
 	}
 }
 
@@ -291,43 +311,54 @@ void ALevelSettings::GenerateItems(const FRoomVolumeSettings &Settings)
 		int32 iPlaceY = VolumeBox.Min.Y + iShiftY + (XandY / iPlacesForObjectsX) * ObjectPlaceSize;
 		int32 iPlaceZ = VolumeBox.Min.Z + iShiftZ + (iRandPlaceNumber / (iPlacesForObjectsX * iPlacesForObjectsY)) * ObjectPlaceSize;
 
-		// Spawn!
-		AStaticMeshActor *pGameObject = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FVector(iPlaceX, iPlaceY, iPlaceZ), FRotator(0, 0, 0));
-		pGameObject->SetMobility(EComponentMobility::Static);
-		TArray<UStaticMeshComponent*> Comps;
-		pGameObject->GetComponents(Comps);
-		pGameObject->SetActorScale3D({ 0.5f, 0.5f, 0.5f });
-		if (Comps.Num() > 0)
-		{
-			UStaticMeshComponent* FoundComp = Comps[0];
-			FoundComp->SetStaticMesh(SphereMesh);
-			int32 iRnd = rand() % MaterialsNum;
+		int32 iRnd = rand() % MaterialsNum;
+		SpawnCrumb(FVector(iPlaceX, iPlaceY, iPlaceZ), iRnd);
 
-			FoundComp->SetMaterial(0, GameObjectMaterials[iRnd]);
-			FoundComp->SetCastShadow(false);
-			FoundComp->SetGenerateOverlapEvents(true);
-			FCollisionResponseContainer collision_response;
-			collision_response.SetAllChannels(ECollisionResponse::ECR_Overlap);
-			FoundComp->SetCollisionResponseToChannels(collision_response);
-			FoundComp->OnComponentBeginOverlap.AddUniqueDynamic(ALevelSettings::GetInstance(), &ALevelSettings::OnGameObjectOverlapBegin);
-			{ // add sound component
-				if (CrumbMusic)
-				{
-					UAudioComponent* NewAudioComponent = UGameplayStatics::SpawnSoundAtLocation(GetWorld(), CrumbMusic, pGameObject->GetActorLocation());
-					pGameObject->AddInstanceComponent(NewAudioComponent);
-					NewAudioComponent->Play();
-				}
-			}
-		}
-
-		TSet<AActor*> aOverlapActors;
-		pGameObject->UpdateOverlaps();
-		pGameObject->GetOverlappingActors(aOverlapActors);
-		if (aOverlapActors.Num())
-		{
-			pGameObject->Destroy();
-		}
 	}
 }
 
+void ALevelSettings::SpawnCrumb(FVector pos, int32 crumbMaterialNum)
+{
+	int32 MaterialsNum = GameObjectMaterials.Num();
+	check(crumbMaterialNum < MaterialsNum);
+	if (crumbMaterialNum >= MaterialsNum)
+	{
+		return;
+	}
+	// Spawn!
+	AStaticMeshActor *pGameObject = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), pos, FRotator(0, 0, 0));
+	pGameObject->SetMobility(EComponentMobility::Static);
+	TArray<UStaticMeshComponent*> Comps;
+	pGameObject->GetComponents(Comps);
+	pGameObject->SetActorScale3D({ 0.5f, 0.5f, 0.5f });
+	if (Comps.Num() > 0)
+	{
+		UStaticMeshComponent* FoundComp = Comps[0];
+		FoundComp->SetStaticMesh(SphereMesh);
+
+		FoundComp->SetMaterial(0, GameObjectMaterials[crumbMaterialNum]);
+		FoundComp->SetCastShadow(false);
+		FoundComp->SetGenerateOverlapEvents(true);
+		FCollisionResponseContainer collision_response;
+		collision_response.SetAllChannels(ECollisionResponse::ECR_Overlap);
+		FoundComp->SetCollisionResponseToChannels(collision_response);
+		FoundComp->OnComponentBeginOverlap.AddUniqueDynamic(ALevelSettings::GetInstance(), &ALevelSettings::OnGameObjectOverlapBegin);
+		{ // add sound component
+			if (CrumbMusic)
+			{
+				UAudioComponent* NewAudioComponent = UGameplayStatics::SpawnSoundAtLocation(GetWorld(), CrumbMusic, pGameObject->GetActorLocation());
+				pGameObject->AddInstanceComponent(NewAudioComponent);
+				NewAudioComponent->Play();
+			}
+		}
+	}
+
+	TSet<AActor*> aOverlapActors;
+	pGameObject->UpdateOverlaps();
+	pGameObject->GetOverlappingActors(aOverlapActors);
+	if (aOverlapActors.Num())
+	{
+		pGameObject->Destroy();
+	}
+}
 

@@ -16,11 +16,6 @@ namespace PPh
 		VectorMath(T posX, T posY, T posZ) : m_posX(posX), m_posY(posY), m_posZ(posZ)
 		{}
 
-		static __forceinline int Sign(T x)
-		{
-			return (x > 0) - (x < 0);
-		}
-
 		__forceinline D operator+(const VectorMath& V) const
 		{
 			return D(m_posX + V.m_posX, m_posY + V.m_posY, m_posZ + V.m_posZ);
@@ -120,9 +115,20 @@ namespace PPh
 			struct { uint8_t m_colorB, m_colorG, m_colorR, m_colorA; };
 			uint32_t AlignmentDummy;
 		};
+
+		__forceinline bool operator==(const EtherColor& V) const
+		{
+			return m_colorB == V.m_colorB && m_colorG == V.m_colorG && m_colorR == V.m_colorR && m_colorA == V.m_colorA;
+		}
 	};
 
 	int64_t GetTimeMs();
 
 	int32_t Rand32(int32_t iRandMax);
+
+	template<class T>
+	__forceinline int Sign(T x)
+	{
+		return (x > 0) - (x < 0);
+	}
 }

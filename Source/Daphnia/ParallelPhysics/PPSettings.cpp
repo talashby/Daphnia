@@ -30,9 +30,8 @@ UPPSettings* UPPSettings::GetInstance()
 	return s_PPSettings;
 }
 
-void UPPSettings::ConvertGeometry(UWorld *World)
+void UPPSettings::InitParallelPhysics()
 {
-	check(World);
 	FVector UniverseSize = UniverseBox.GetSize();
 	PPh::VectorInt32Math pphUniverseSize(UniverseSize.X / UniverseEtherCellSize, UniverseSize.Y / UniverseEtherCellSize, UniverseSize.Z / UniverseEtherCellSize);
 	int8 ThreadsCountTmp = ThreadsCount;
@@ -42,6 +41,11 @@ void UPPSettings::ConvertGeometry(UWorld *World)
 	}
 	bool bParallelPhysicsInit = PPh::ParallelPhysics::Init(pphUniverseSize, ThreadsCountTmp);
 	check(bParallelPhysicsInit);
+}
+
+void UPPSettings::ConvertGeometry(UWorld *World)
+{
+	check(World);
 
 	for (TActorIterator<AStaticMeshActor> ActorItr(World); ActorItr; ++ActorItr)
 	{
@@ -160,6 +164,17 @@ PPh::VectorInt32Math UPPSettings::ConvertLocationToPPhPosition(const FVector &Lo
 	universePos.m_posZ = std::min(pphUniverseSize.m_posZ - 1, universePos.m_posZ);
 
 	return universePos;
+}
+
+FVector UPPSettings::ConvertPPhPositionToLocation(const PPh::VectorInt32Math &pos)
+{
+	FVector UniverseBoxMin = UPPSettings::GetInstance()->UniverseBox.Min;
+	int32 UniverseEtherCellSize = UPPSettings::GetInstance()->UniverseEtherCellSize;
+	FVector location;
+	location.X = UniverseBoxMin.X + UniverseEtherCellSize / 2 + UniverseEtherCellSize * pos.m_posX;
+	location.Y = UniverseBoxMin.Y + UniverseEtherCellSize / 2 + UniverseEtherCellSize * pos.m_posY;
+	location.Z = UniverseBoxMin.Z + UniverseEtherCellSize / 2 + UniverseEtherCellSize * pos.m_posZ;
+	return location;
 }
 
 PPh::OrientationVectorMath UPPSettings::ConvertRotationToPPhOrientation(const FRotator &Rotator)

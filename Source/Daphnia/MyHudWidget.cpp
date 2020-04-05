@@ -59,7 +59,7 @@ void UMyHudWidget::NativeOnInitialized()
 
 void UMyHudWidget::NativeDestruct()
 {
-	if (PPh::ParallelPhysics::GetInstance()->IsSimulationRunning())
+	if (PPh::ParallelPhysics::GetInstance() && PPh::ParallelPhysics::GetInstance()->IsSimulationRunning())
 	{
 		PPh::ParallelPhysics::GetInstance()->StopSimulation();
 	}
@@ -67,6 +67,10 @@ void UMyHudWidget::NativeDestruct()
 
 void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 {
+	if (!PPh::ParallelPhysics::GetInstance())
+	{
+		return;
+	}
 	ShowPPhStats();
 
 

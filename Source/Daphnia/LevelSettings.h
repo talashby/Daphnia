@@ -54,6 +54,7 @@ protected:
 private:
 //	class AAmbientSound* SpawnAmbientSound();
 	void GenerateItems(const FRoomVolumeSettings &Settings);
+	void SpawnCrumb(FVector pos, int32 crumbMaterialNum);
 	void OnMapLoaded();
 	void LoadCrumbsFromServer();
 // ****************************************************
