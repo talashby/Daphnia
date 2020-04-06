@@ -17,6 +17,7 @@
 #include <windows.h>
 #include <winsock2.h>
 #include "iosfwd"
+#include "mutex"
 #undef min
 #undef max
 
@@ -36,7 +37,6 @@ std::vector<uint64_t> s_timingsUniverseThreads;
 std::vector<uint64_t> s_TickTimeNsAverageUniverseThreads;
 uint64_t s_timingsObserverThread;
 uint64_t s_TickTimeNsAverageObserverThread;
-std::atomic <int16_t> s_eatenCrumb = 0;
 
 struct Photon
 {
@@ -271,6 +271,7 @@ bool ParallelPhysics::GetNextCrumb(VectorInt32Math &outCrumbPos, EtherColor &out
 }
 
 Observer* s_observer = nullptr;
+std::mutex s_observerStateParamsMutex;
 
 void Observer::Init()
 {
@@ -306,6 +307,13 @@ void Observer::PPhTick()
 		MsgGetState msg;
 		if (sendto(socketC, (const char*)&msg, sizeof(msg), 0, (sockaddr*)&serverInfo, len) != SOCKET_ERROR)
 		{
+			if (GetTimeMs() - m_lastUpdateStateExtTime > UPDATE_EYE_TEXTURE_OUT)
+			{
+				m_lastUpdateStateExtTime = GetTimeMs();
+				MsgGetStateExt msgGetStateExt;
+				sendto(socketC, (const char*)&msgGetStateExt, sizeof(msgGetStateExt), 0, (sockaddr*)&serverInfo, len);
+			}
+
 			AMyPlayerController *controller = AMyPlayerController::GetInstance();
 			if (controller)
 			{
@@ -350,20 +358,25 @@ void Observer::PPhTick()
 			char buffer[DEFAULT_BUFLEN];
 			while(recvfrom(socketC, buffer, sizeof(buffer), 0, (sockaddr*)&serverInfo, &len) > 0)
 			{
-				MsgSendState *msgSendState = QueryMessage<MsgSendState>(buffer);
 				static uint64_t time = 0;
-				if (msgSendState)
+				if (MsgGetStateResponse *msgGetStateResponse = QueryMessage<MsgGetStateResponse>(buffer))
 				{
-					time = msgSendState->m_time;
-					Observer::GetInstance()->m_latitude = msgSendState->m_latitude;
-					Observer::GetInstance()->m_longitude = msgSendState->m_longitude;
-					if (msgSendState->m_isEatenCrumb)
+					time = msgGetStateResponse->m_time;
+				}
+				else if (MsgGetStateExtResponse *msgGetStateExtResponse = QueryMessage<MsgGetStateExtResponse>(buffer))
+				{
+					std::lock_guard<std::mutex> guard(s_observerStateParamsMutex);
+					Observer::GetInstance()->m_latitude = msgGetStateExtResponse->m_latitude;
+					Observer::GetInstance()->m_longitude = msgGetStateExtResponse->m_longitude;
+					Observer::GetInstance()->m_position = msgGetStateExtResponse->m_pos;
+					Observer::GetInstance()->m_movingProgress = msgGetStateExtResponse->m_movingProgress;
+					if (Observer::GetInstance()->m_eatenCrumbNum < msgGetStateExtResponse->m_eatenCrumbNum)
 					{
-						IncEatenCrumb();
+						Observer::GetInstance()->m_eatenCrumbNum = msgGetStateExtResponse->m_eatenCrumbNum;
+						Observer::GetInstance()->m_eatenCrumbPos = msgGetStateExtResponse->m_eatenCrumbPos;
 					}
 				}
-				MsgSendPhoton *msgSendPhoton = QueryMessage<MsgSendPhoton>(buffer);
-				if (msgSendPhoton)
+				else if (MsgSendPhoton *msgSendPhoton = QueryMessage<MsgSendPhoton>(buffer))
 				{
 					// receive photons back // revert Y-coordinate because of texture format
 					m_eyeColorArray[OBSERVER_EYE_SIZE - msgSendPhoton->m_posY - 1][msgSendPhoton->m_posX] = msgSendPhoton->m_color;
@@ -438,19 +451,15 @@ const VectorInt32Math& Observer::GetOrientMaxChanger() const
 	return m_orientMaxChanger;
 }
 
-void Observer::IncEatenCrumb()
+void Observer::GetStateParams(VectorInt32Math &outPosition, uint16_t &outMovingProgress, int16_t &outLatitude, int16_t &outLongitude, VectorInt32Math &outEatenCrumbPos)
 {
-	++s_eatenCrumb;
-}
-
-bool Observer::DecEatenCrumb()
-{
-	if (s_eatenCrumb > 0)
-	{
-		--s_eatenCrumb;
-		return true;
-	}
-	return false;
+	std::lock_guard<std::mutex> guard(s_observerStateParamsMutex);
+	outPosition = m_position;
+	outMovingProgress = m_movingProgress;
+	outLatitude = m_latitude;
+	outLongitude = m_longitude;
+	outEatenCrumbPos = m_eatenCrumbPos;
+	m_eatenCrumbPos = VectorInt32Math::ZeroVector;
 }
 
 int32_t RoundToMinMaxPPhInt(float value)

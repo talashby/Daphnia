@@ -12,6 +12,8 @@
 #include "array"
 #include "Kismet/GameplayStatics.h"
 #include "LevelSettings.h"
+#include "ParallelPhysics/PPhHelpers.h"
+#include "limits"
 
 static UMyHudWidget* s_InstancePtr;
 
@@ -71,15 +73,24 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 	{
 		return;
 	}
-	ShowPPhStats();
-
 
 	if (PPh::ParallelPhysics::GetInstance()->IsSimulationRunning() && PPh::Observer::GetInstance())
 	{
-		if (PPh::Observer::GetInstance()->DecEatenCrumb())
+		PPh::VectorInt32Math outPosition;
+		uint16_t outMovingProgress;
+		int16_t outLatitude, outLongitude;
+		PPh::VectorInt32Math outEatenCrumbPos;
+		PPh::Observer::GetInstance()->GetStateParams(outPosition, outMovingProgress, outLatitude, outLongitude, outEatenCrumbPos);
+		FVector location = UPPSettings::ConvertPPhPositionToLocation(outPosition);
+		ADaphniaPawn::GetInstance()->SetActorLocation(location);
+		FRotator orient(outLatitude, outLongitude, 0);
+		//orient.Vector() * outMovingProgress / std::numeric_limits<uint16_t>.max() ;
+		ADaphniaPawn::GetInstance()->SetActorRotation(orient);
+		if (outEatenCrumbPos != PPh::VectorInt32Math::ZeroVector)
 		{
 			ALevelSettings::GetInstance()->PlayCrumbSound();
 		}
+		ShowPPhStats(outLatitude, outLongitude);
 		if (pEyeViewImage && pEyeViewImage->IsVisible())
 		{
 			/*if (m_PawnRotation != ADaphniaPawn::GetInstance()->GetActorRotation())
@@ -144,7 +155,7 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 	Super::NativeTick(MyGeometry, InDeltaTime);
 }
 
-void UMyHudWidget::ShowPPhStats()
+void UMyHudWidget::ShowPPhStats(int16_t latitude, int16_t longitude)
 {
 	static int64 lastTime = PPh::GetTimeMs();
 	if (PPh::GetTimeMs() - lastTime > 500)
@@ -162,8 +173,8 @@ void UMyHudWidget::ShowPPhStats()
 					sFps += "\nTick time(ms). Universe thread " + FString::FromInt(ii) + ": " + FString::SanitizeFloat(fpsUniverseThreads[ii]/1000000.0f);
 				}
 			}
-			sFps += FString("\nLattitude: ") + FString::FromInt(PPh::Observer::GetInstance()->m_latitude);
-			sFps += FString("\nLongitude: ") + FString::FromInt(PPh::Observer::GetInstance()->m_longitude);
+			sFps += FString("\nLattitude: ") + FString::FromInt(latitude);
+			sFps += FString("\nLongitude: ") + FString::FromInt(longitude);
 			pTextBlockStats->SetText(FText::FromString(sFps));
 		}
 	}

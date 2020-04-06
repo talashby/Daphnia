@@ -15,6 +15,7 @@ namespace MsgType
 		// client to server
 		GetVersion = 0,
 		GetState,
+		GetStateExt,
 		RotateLeft,
 		RotateRight,
 		RotateUp,
@@ -24,6 +25,7 @@ namespace MsgType
 		// server to client
 		GetVersionResponse,
 		GetStateResponse,
+		GetStateExtResponse,
 		SendPhoton
 	};
 }
@@ -43,6 +45,13 @@ class MsgGetState : public MsgBase
 public:
 	MsgGetState() : MsgBase(GetType()) {}
 	static uint8_t GetType() { return MsgType::GetState; }
+};
+
+class MsgGetStateExt : public MsgBase
+{
+public:
+	MsgGetStateExt() : MsgBase(GetType()) {}
+	static uint8_t GetType() { return MsgType::GetStateExt; }
 };
 
 class MsgRotateLeft : public MsgBase
@@ -101,15 +110,25 @@ public:
 //**************************************************************************************
 //************************************** Server ****************************************
 //**************************************************************************************
-class MsgSendState : public MsgBase
+class MsgGetStateResponse : public MsgBase
 {
 public:
-	MsgSendState() : MsgBase(GetType()) {}
+	MsgGetStateResponse() : MsgBase(GetType()) {}
 	static uint8_t GetType() { return MsgType::GetStateResponse; }
 	uint64_t m_time;
+};
+
+class MsgGetStateExtResponse : public MsgBase
+{
+public:
+	MsgGetStateExtResponse() : MsgBase(GetType()) {}
+	static uint8_t GetType() { return MsgType::GetStateExtResponse; }
+	VectorInt32Math m_pos;
+	uint16_t m_movingProgress;
 	int16_t m_latitude;
 	int16_t m_longitude;
-	bool m_isEatenCrumb;
+	uint32_t m_eatenCrumbNum;
+	VectorInt32Math m_eatenCrumbPos;
 };
 
 class MsgSendPhoton : public MsgBase

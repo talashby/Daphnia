@@ -4,6 +4,7 @@
 #include "memory"
 #include "array"
 #include "vector"
+#include "atomic"
 
 namespace PPh
 {
@@ -78,18 +79,15 @@ public:
 	const VectorInt32Math& GetOrientMinChanger() const;
 	const VectorInt32Math& GetOrientMaxChanger() const;
 
-	void IncEatenCrumb();
-	bool DecEatenCrumb();
+	void GetStateParams(VectorInt32Math &outPosition, uint16_t &outMovingProgress, int16_t &outLatitude, int16_t &outLongitude, 
+		VectorInt32Math &outEatenCrumbPos);
 
-	int16_t m_latitude = 0;
-	int16_t m_longitude = 0;
 private:
 	friend class ParallelPhysics;
 	void SetPosition(const VectorInt32Math &pos);
 	void CalculateOrientChangers(const EyeArray &eyeArray);
 	OrientationVectorMath MaximizePPhOrientation(const VectorFloatMath &orientationVector);
 
-	VectorInt32Math m_position = VectorInt32Math::ZeroVector;
 	SP_EyeState m_eyeState;
 	SP_EyeState m_newEyeState; // Used from different threads
 
@@ -107,6 +105,15 @@ private:
 
 	VectorInt32Math m_orientMinChanger;
 	VectorInt32Math m_orientMaxChanger;
+
+	int16_t m_latitude = 0;
+	int16_t m_longitude = 0;
+	VectorInt32Math m_position = VectorInt32Math::ZeroVector;
+	uint16_t m_movingProgress = 0;
+	uint32_t m_eatenCrumbNum;
+	VectorInt32Math m_eatenCrumbPos = VectorInt32Math::ZeroVector;
+
+	int64_t m_lastUpdateStateExtTime = 0;
 };
 
 namespace AdminTcp
