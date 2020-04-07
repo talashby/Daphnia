@@ -153,7 +153,7 @@ void ALevelSettings::BeginPlay()
 				break;
 			}
 			FVector location = UPPSettings::ConvertPPhPositionToLocation(outCrumbPos);
-			static std::array<FColor, 4> Colors = { FColor::Green, FColor::Yellow, FColor::Red, FColor::Blue };
+			//static std::array<FColor, 4> Colors = { FColor::Green, FColor::Yellow, FColor::Red, FColor::Blue };
 			int32 materialNum = 0;
 			if (outCrumbColor.m_colorR == 255 && outCrumbColor.m_colorG == 255)
 			{

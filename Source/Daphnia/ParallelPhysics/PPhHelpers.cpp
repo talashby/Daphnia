@@ -30,7 +30,7 @@ std::atomic<uint8_t> s_randomIndexInt8 = 0;
 
 void VectorInt8Math::InitRandom()
 {
-	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+	uint32_t seed = (uint32_t)std::chrono::system_clock::now().time_since_epoch().count();
 	std::default_random_engine generator(seed);
 	if (s_randomUniverseNumbersInt8.empty())
 	{
@@ -73,7 +73,7 @@ std::atomic <uint16_t> s_randomIndexInt16 = 0;
 
 void VectorInt16Math::InitRandom()
 {
-	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+	uint32_t seed = (uint32_t)std::chrono::system_clock::now().time_since_epoch().count();
 	std::default_random_engine generator(seed);
 	if (s_randomUniverseNumbersInt16.empty())
 	{
@@ -116,7 +116,7 @@ std::atomic<int32_t> s_randomIndexInt32 = VectorInt32Math::PPH_INT_MAX;
 bool s_isRandomGeneratedInt32 = false;
 void VectorInt32Math::InitRandom()
 {
-	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+	uint32_t seed = (uint32_t)std::chrono::system_clock::now().time_since_epoch().count();
 	std::default_random_engine generator(seed);
 	if (s_randomUniverseNumbersInt32.empty())
 	{
@@ -173,7 +173,7 @@ VectorFloatMath::VectorFloatMath(float posX, float posY, float posZ) : VectorMat
 BoxIntMath::BoxIntMath(const VectorInt32Math &minVector, const VectorInt32Math &maxVector) : m_minVector(minVector), m_maxVector(maxVector)
 {}
 
-EtherColor::EtherColor(uint8_t colorR, uint8_t colorG, uint8_t colorB) : m_colorB(colorR), m_colorG(colorG), m_colorR(colorB), m_colorA(0)
+EtherColor::EtherColor(uint8_t colorR, uint8_t colorG, uint8_t colorB) : m_colorB(colorB), m_colorG(colorG), m_colorR(colorR), m_colorA(0)
 {}
 
 const PPh::EtherColor EtherColor::ZeroColor(0, 0, 0);

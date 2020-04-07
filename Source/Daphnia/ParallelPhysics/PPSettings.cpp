@@ -83,7 +83,7 @@ void UPPSettings::ConvertGeometry(UWorld *World)
 									static std::array<FColor, 4> Colors = { FColor::Green, FColor::Yellow, FColor::Red, FColor::Blue };
 									if (ii < Colors.size())
 									{
-										PPh::EtherColor etherColor(Colors[ii].B, Colors[ii].G, Colors[ii].R);
+										PPh::EtherColor etherColor(Colors[ii].R, Colors[ii].G, Colors[ii].B);
 										bool bInitEtherCell = PPh::ParallelPhysics::GetInstance()->InitEtherCell(universePos, PPh::EtherType::Crumb, etherColor);
 										check(bInitEtherCell);
 										isCrumb = true;
@@ -108,7 +108,7 @@ void UPPSettings::ConvertGeometry(UWorld *World)
 			}
 		}
 	}
-	//PPh::ParallelPhysics::SaveUniverse("blabla");
+	PPh::ParallelPhysics::SaveUniverse("blabla");
 }
 
 int32 RoundToMinMaxPPhInt(double value)
