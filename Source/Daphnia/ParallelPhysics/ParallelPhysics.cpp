@@ -133,18 +133,48 @@ const VectorInt32Math & ParallelPhysics::GetUniverseSize() const
 std::thread s_simulationThread;
 void ParallelPhysics::StartSimulation()
 {
+	m_isSimulationRunning = true;
 
-	s_simulationThread = std::thread([this]() {
-		m_isSimulationRunning = true;
-		s_waitThreadsCount = 1; // observer thread
-		std::thread observerThread = std::thread([this]()
+	u_short port = CLIENT_UDP_PORT_START;
+	for (;port < CLIENT_UDP_PORT_START + MAX_CLIENTS; ++port)
+	{
+		struct sockaddr_in serverInfo;
+		int len = sizeof(serverInfo);
+		serverInfo.sin_family = AF_INET;
+		serverInfo.sin_port = htons(port);
+		serverInfo.sin_addr.s_addr = inet_addr("127.0.0.1");
+		SOCKET socketC;
+		socketC = socket(AF_INET, SOCK_DGRAM, 0);
+		struct timeval tv;
+		tv.tv_sec = 0;
+		tv.tv_usec = 100000;
+		setsockopt(socketC, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<char*>(&tv), sizeof(struct timeval));
+		//setsockopt(socketC, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)); // timeout 100 ms
+
+	}
+	if (port >= CLIENT_UDP_PORT_START + MAX_CLIENTS)
+	{
+		check(false);
+	}
+
+	//u_long mode = 1;  // 1 to enable non-blocking socket
+	//ioctlsocket(socketC, FIONBIO, &mode);
+	
+
+	s_simulationThread = std::thread([this, port]() {
+		std::thread observerThread = std::thread([this, port]()
 		{
 			while (m_isSimulationRunning)
 			{
-				Observer::GetInstance()->PPhTick();
-				--s_waitThreadsCount;
+				if (port >= CLIENT_UDP_PORT_START && port < CLIENT_UDP_PORT_START + MAX_CLIENTS)
+				{
+					Observer::GetInstance()->PPhTick(port);
+				}
+				else
+				{
+					Sleep(1); // work imitation
+				}
 			}
-			--s_waitThreadsCount;
 		});
 
 		observerThread.join();
@@ -287,13 +317,13 @@ PPh::Observer* Observer::GetInstance()
 	return s_observer;
 }
 
-void Observer::PPhTick()
+void Observer::PPhTick(uint32_t port)
 {
 
 	struct sockaddr_in serverInfo;
 	int len = sizeof(serverInfo);
 	serverInfo.sin_family = AF_INET;
-	serverInfo.sin_port = htons(CLIENT_UDP_PORT);
+	serverInfo.sin_port = htons(port);
 	serverInfo.sin_addr.s_addr = inet_addr("127.0.0.1");
 	static SOCKET socketC = 0;
 	if (!socketC)
@@ -359,11 +389,11 @@ void Observer::PPhTick()
 			while(recvfrom(socketC, buffer, sizeof(buffer), 0, (sockaddr*)&serverInfo, &len) > 0)
 			{
 				static uint64_t time = 0;
-				if (MsgGetStateResponse *msgGetStateResponse = QueryMessage<MsgGetStateResponse>(buffer))
+				if (const MsgGetStateResponse *msgGetStateResponse = QueryMessage<MsgGetStateResponse>(buffer))
 				{
 					time = msgGetStateResponse->m_time;
 				}
-				else if (MsgGetStateExtResponse *msgGetStateExtResponse = QueryMessage<MsgGetStateExtResponse>(buffer))
+				else if (const MsgGetStateExtResponse *msgGetStateExtResponse = QueryMessage<MsgGetStateExtResponse>(buffer))
 				{
 					std::lock_guard<std::mutex> guard(s_observerStateParamsMutex);
 					Observer::GetInstance()->m_latitude = msgGetStateExtResponse->m_latitude;
@@ -376,7 +406,7 @@ void Observer::PPhTick()
 						Observer::GetInstance()->m_eatenCrumbPos = msgGetStateExtResponse->m_eatenCrumbPos;
 					}
 				}
-				else if (MsgSendPhoton *msgSendPhoton = QueryMessage<MsgSendPhoton>(buffer))
+				else if (const MsgSendPhoton *msgSendPhoton = QueryMessage<MsgSendPhoton>(buffer))
 				{
 					// receive photons back // revert Y-coordinate because of texture format
 					m_eyeColorArray[OBSERVER_EYE_SIZE - msgSendPhoton->m_posY - 1][msgSendPhoton->m_posX] = msgSendPhoton->m_color;
@@ -628,7 +658,7 @@ void LoadCrumbs()
 			char buffer[DEFAULT_BUFLEN];
 			if (recv(SendingSocket, buffer, sizeof(buffer), 0) != SOCKET_ERROR)
 			{
-				if (MsgAdminGetNextCrumbResponse *msgRcv = PPh::QueryMessage<MsgAdminGetNextCrumbResponse>(buffer))
+				if (const MsgAdminGetNextCrumbResponse *msgRcv = PPh::QueryMessage<MsgAdminGetNextCrumbResponse>(buffer))
 				{
 					if (msgRcv->m_color == EtherColor::ZeroColor)
 					{

@@ -4,7 +4,10 @@
 
 #pragma pack(push, 1)
 
-#define CLIENT_UDP_PORT 27016
+#define PROTOCOL_VERSION 1
+
+#define CLIENT_UDP_PORT_START 50000
+#define MAX_CLIENTS 10
 
 namespace PPh
 {
@@ -24,6 +27,7 @@ namespace MsgType
 		MoveBackward,
 		// server to client
 		GetVersionResponse,
+		SocketBusyByAnotherObserver,
 		GetStateResponse,
 		GetStateExtResponse,
 		SendPhoton
@@ -34,12 +38,20 @@ class MsgBase
 {
 public:
 	explicit MsgBase(uint8_t type) : m_type(type) {}
-	const char* GetBuffer() { return (const char*)this;	}
+	const char* GetBuffer() const { return (const char*)this;	}
 	uint8_t m_type;
 };
 //**************************************************************************************
 //************************************** Client ****************************************
 //**************************************************************************************
+class MsgGetVersion : public MsgBase
+{
+public:
+	MsgGetVersion() : MsgBase(GetType()) {}
+	static uint8_t GetType() { return MsgType::GetVersion; }
+	uint32_t m_clientVersion;
+};
+
 class MsgGetState : public MsgBase
 {
 public:
@@ -110,6 +122,22 @@ public:
 //**************************************************************************************
 //************************************** Server ****************************************
 //**************************************************************************************
+class MsgGetVersionResponse : public MsgBase
+{
+public:
+	MsgGetVersionResponse() : MsgBase(GetType()) {}
+	static uint8_t GetType() { return MsgType::GetVersionResponse; }
+	uint32_t m_serverVersion;
+};
+
+class MsgSocketBusyByAnotherObserver : public MsgBase
+{
+public:
+	MsgSocketBusyByAnotherObserver() : MsgBase(GetType()) {}
+	static uint8_t GetType() { return MsgType::SocketBusyByAnotherObserver; }
+	uint32_t m_serverVersion;
+};
+
 class MsgGetStateResponse : public MsgBase
 {
 public:
@@ -142,11 +170,11 @@ public:
 };
 
 template<class T>
-T* QueryMessage(char *buf)
+const T* QueryMessage(const char *buf)
 {
 	if (buf[0] == T::GetType())
 	{
-		return (T*)buf;
+		return (const T*)buf;
 	}
 	return nullptr;
 }

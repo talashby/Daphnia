@@ -70,7 +70,7 @@ public:
 
 	static Observer* GetInstance();
 
-	void PPhTick();
+	void PPhTick(uint32_t port);
 
 	void ChangeOrientation(const SP_EyeState &eyeState);
 	SP_EyeColorArray GrabTexture();
