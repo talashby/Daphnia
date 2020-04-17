@@ -16,7 +16,7 @@ namespace MsgType
 	enum MsgType
 	{
 		// client to server
-		GetVersion = 0,
+		CheckVersion = 0,
 		GetState,
 		GetStateExt,
 		RotateLeft,
@@ -26,7 +26,7 @@ namespace MsgType
 		MoveForward,
 		MoveBackward,
 		// server to client
-		GetVersionResponse,
+		CheckVersionResponse,
 		SocketBusyByAnotherObserver,
 		GetStateResponse,
 		GetStateExtResponse,
@@ -44,12 +44,13 @@ public:
 //**************************************************************************************
 //************************************** Client ****************************************
 //**************************************************************************************
-class MsgGetVersion : public MsgBase
+class MsgCheckVersion : public MsgBase
 {
 public:
-	MsgGetVersion() : MsgBase(GetType()) {}
-	static uint8_t GetType() { return MsgType::GetVersion; }
+	MsgCheckVersion() : MsgBase(GetType()) {}
+	static uint8_t GetType() { return MsgType::CheckVersion; }
 	uint32_t m_clientVersion;
+	uint64_t m_observerId;
 };
 
 class MsgGetState : public MsgBase
@@ -122,12 +123,13 @@ public:
 //**************************************************************************************
 //************************************** Server ****************************************
 //**************************************************************************************
-class MsgGetVersionResponse : public MsgBase
+class MsgCheckVersionResponse : public MsgBase
 {
 public:
-	MsgGetVersionResponse() : MsgBase(GetType()) {}
-	static uint8_t GetType() { return MsgType::GetVersionResponse; }
+	MsgCheckVersionResponse() : MsgBase(GetType()) {}
+	static uint8_t GetType() { return MsgType::CheckVersionResponse; }
 	uint32_t m_serverVersion;
+	uint64_t m_observerId;
 };
 
 class MsgSocketBusyByAnotherObserver : public MsgBase

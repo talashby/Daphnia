@@ -134,57 +134,78 @@ std::thread s_simulationThread;
 void ParallelPhysics::StartSimulation()
 {
 	m_isSimulationRunning = true;
-
+	static uint64_t lastObserverId = 0;
+	SOCKET socketC = 0;
 	u_short port = CLIENT_UDP_PORT_START;
-	for (;port < CLIENT_UDP_PORT_START + MAX_CLIENTS; ++port)
+	for (; port < CLIENT_UDP_PORT_START + MAX_CLIENTS; ++port)
 	{
 		struct sockaddr_in serverInfo;
 		int len = sizeof(serverInfo);
 		serverInfo.sin_family = AF_INET;
 		serverInfo.sin_port = htons(port);
 		serverInfo.sin_addr.s_addr = inet_addr("127.0.0.1");
-		SOCKET socketC;
 		socketC = socket(AF_INET, SOCK_DGRAM, 0);
 		struct timeval tv;
 		tv.tv_sec = 0;
-		tv.tv_usec = 100000;
+		tv.tv_usec = 100000; // 10 ms
 		setsockopt(socketC, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<char*>(&tv), sizeof(struct timeval));
-		//setsockopt(socketC, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)); // timeout 100 ms
+		MsgCheckVersion msg;
+		msg.m_clientVersion = PROTOCOL_VERSION;
+		msg.m_observerId = lastObserverId;
+		if (sendto(socketC, (const char*)&msg, sizeof(msg), 0, (sockaddr*)&serverInfo, len) != SOCKET_ERROR)
+		{
+			char buffer[DEFAULT_BUFLEN];
+			if (recvfrom(socketC, buffer, sizeof(buffer), 0, (sockaddr*)&serverInfo, &len) > 0)
+			{
+				if (const MsgCheckVersionResponse *msgReceive = QueryMessage<MsgCheckVersionResponse>(buffer))
+				{
+					if (msgReceive->m_serverVersion == PROTOCOL_VERSION)
+					{
+						lastObserverId = msgReceive->m_observerId;
+						break;
+					}
+					else
+					{
+						// wrong protocol
+						closesocket(socketC);
+						socketC = 0;
+						break;
+					}
+				}
+			}
+		}
 
 	}
-	if (port >= CLIENT_UDP_PORT_START + MAX_CLIENTS)
+	if (socketC)
 	{
-		check(false);
+		u_long mode = 1;  // 1 to enable non-blocking socket
+		ioctlsocket(socketC, FIONBIO, &mode);
+		s_simulationThread = std::thread([this, socketC, port]()
+		{
+			while (m_isSimulationRunning)
+			{
+				Observer::GetInstance()->PPhTick(socketC, port);
+			}
+			closesocket(socketC);
+		});
+	}
+	else
+	{
+		// server not found
 	}
 
 	//u_long mode = 1;  // 1 to enable non-blocking socket
 	//ioctlsocket(socketC, FIONBIO, &mode);
-	
 
-	s_simulationThread = std::thread([this, port]() {
-		std::thread observerThread = std::thread([this, port]()
-		{
-			while (m_isSimulationRunning)
-			{
-				if (port >= CLIENT_UDP_PORT_START && port < CLIENT_UDP_PORT_START + MAX_CLIENTS)
-				{
-					Observer::GetInstance()->PPhTick(port);
-				}
-				else
-				{
-					Sleep(1); // work imitation
-				}
-			}
-		});
-
-		observerThread.join();
-	});
 }
 
 void ParallelPhysics::StopSimulation()
 {
 	m_isSimulationRunning = false;
-	s_simulationThread.join();
+	if (s_simulationThread.native_handle())
+	{
+		s_simulationThread.join();
+	}
 }
 
 bool ParallelPhysics::IsSimulationRunning() const
@@ -317,138 +338,128 @@ PPh::Observer* Observer::GetInstance()
 	return s_observer;
 }
 
-void Observer::PPhTick(uint32_t port)
+void Observer::PPhTick(uint64_t socketC, uint32_t port)
 {
-
 	struct sockaddr_in serverInfo;
 	int len = sizeof(serverInfo);
 	serverInfo.sin_family = AF_INET;
 	serverInfo.sin_port = htons(port);
 	serverInfo.sin_addr.s_addr = inet_addr("127.0.0.1");
-	static SOCKET socketC = 0;
-	if (!socketC)
+	MsgGetState msg;
+	if (sendto(socketC, (const char*)&msg, sizeof(msg), 0, (sockaddr*)&serverInfo, len) != SOCKET_ERROR)
 	{
-		socketC = socket(AF_INET, SOCK_DGRAM, 0);
-		u_long mode = 1;  // 1 to enable non-blocking socket
-		ioctlsocket(socketC, FIONBIO, &mode);
-	}
-	else
-	{
-		MsgGetState msg;
-		if (sendto(socketC, (const char*)&msg, sizeof(msg), 0, (sockaddr*)&serverInfo, len) != SOCKET_ERROR)
+		if (GetTimeMs() - m_lastUpdateStateExtTime > UPDATE_EYE_TEXTURE_OUT)
 		{
-			if (GetTimeMs() - m_lastUpdateStateExtTime > UPDATE_EYE_TEXTURE_OUT)
-			{
-				m_lastUpdateStateExtTime = GetTimeMs();
-				MsgGetStateExt msgGetStateExt;
-				sendto(socketC, (const char*)&msgGetStateExt, sizeof(msgGetStateExt), 0, (sockaddr*)&serverInfo, len);
-			}
+			m_lastUpdateStateExtTime = GetTimeMs();
+			MsgGetStateExt msgGetStateExt;
+			sendto(socketC, (const char*)&msgGetStateExt, sizeof(msgGetStateExt), 0, (sockaddr*)&serverInfo, len);
+		}
 
-			AMyPlayerController *controller = AMyPlayerController::GetInstance();
-			if (controller)
+		AMyPlayerController *controller = AMyPlayerController::GetInstance();
+		if (controller)
+		{
+			if (controller->IsLeft())
 			{
-				if (controller->IsLeft())
+				MsgRotateLeft msgMove;
+				msgMove.m_value = 128;
+				sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
+			}
+			if (controller->IsRight())
+			{
+				MsgRotateRight msgMove;
+				msgMove.m_value = 128;
+				sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
+			}
+			if (controller->IsUp())
+			{
+				MsgRotateDown msgMove;
+				msgMove.m_value = 128;
+				sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
+			}
+			if (controller->IsDown())
+			{
+				MsgRotateUp msgMove;
+				msgMove.m_value = 128;
+				sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
+			}
+			if (controller->IsForward())
+			{
+				MsgMoveForward msgMove;
+				msgMove.m_value = 255;
+				sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
+			}
+			if (controller->IsBackward())
+			{
+				MsgMoveBackward msgMove;
+				msgMove.m_value = 255;
+				sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
+			}
+		}
+
+		char buffer[DEFAULT_BUFLEN];
+		while(recvfrom(socketC, buffer, sizeof(buffer), 0, (sockaddr*)&serverInfo, &len) > 0)
+		{
+			static uint64_t time = 0;
+			if (const MsgGetStateResponse *msgGetStateResponse = QueryMessage<MsgGetStateResponse>(buffer))
+			{
+				time = msgGetStateResponse->m_time;
+			}
+			else if (const MsgGetStateExtResponse *msgGetStateExtResponse = QueryMessage<MsgGetStateExtResponse>(buffer))
+			{
+				std::lock_guard<std::mutex> guard(s_observerStateParamsMutex);
+				Observer::GetInstance()->m_latitude = msgGetStateExtResponse->m_latitude;
+				Observer::GetInstance()->m_longitude = msgGetStateExtResponse->m_longitude;
+				Observer::GetInstance()->m_position = msgGetStateExtResponse->m_pos;
+				Observer::GetInstance()->m_movingProgress = msgGetStateExtResponse->m_movingProgress;
+				if (Observer::GetInstance()->m_eatenCrumbNum < msgGetStateExtResponse->m_eatenCrumbNum)
 				{
-					MsgRotateLeft msgMove;
-					msgMove.m_value = 128;
-					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
-				}
-				if (controller->IsRight())
-				{
-					MsgRotateRight msgMove;
-					msgMove.m_value = 128;
-					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
-				}
-				if (controller->IsUp())
-				{
-					MsgRotateDown msgMove;
-					msgMove.m_value = 128;
-					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
-				}
-				if (controller->IsDown())
-				{
-					MsgRotateUp msgMove;
-					msgMove.m_value = 128;
-					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
-				}
-				if (controller->IsForward())
-				{
-					MsgMoveForward msgMove;
-					msgMove.m_value = 255;
-					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
-				}
-				if (controller->IsBackward())
-				{
-					MsgMoveBackward msgMove;
-					msgMove.m_value = 255;
-					sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
+					Observer::GetInstance()->m_eatenCrumbNum = msgGetStateExtResponse->m_eatenCrumbNum;
+					Observer::GetInstance()->m_eatenCrumbPos = msgGetStateExtResponse->m_eatenCrumbPos;
 				}
 			}
-
-			char buffer[DEFAULT_BUFLEN];
-			while(recvfrom(socketC, buffer, sizeof(buffer), 0, (sockaddr*)&serverInfo, &len) > 0)
+			else if (const MsgSendPhoton *msgSendPhoton = QueryMessage<MsgSendPhoton>(buffer))
 			{
-				static uint64_t time = 0;
-				if (const MsgGetStateResponse *msgGetStateResponse = QueryMessage<MsgGetStateResponse>(buffer))
+				// receive photons back // revert Y-coordinate because of texture format
+				m_eyeColorArray[OBSERVER_EYE_SIZE - msgSendPhoton->m_posY - 1][msgSendPhoton->m_posX] = msgSendPhoton->m_color;
+				m_eyeUpdateTimeArray[OBSERVER_EYE_SIZE - msgSendPhoton->m_posY - 1][msgSendPhoton->m_posX] = time;
+			}
+			// update eye texture
+			if (GetTimeMs() - m_lastTextureUpdateTime > UPDATE_EYE_TEXTURE_OUT)
+			{
+				m_lastTextureUpdateTime = GetTimeMs();
+				SP_EyeColorArray spEyeColorArrayOut;
+				spEyeColorArrayOut = std::atomic_load(&m_spEyeColorArrayOut);
+				if (!spEyeColorArrayOut)
 				{
-					time = msgGetStateResponse->m_time;
-				}
-				else if (const MsgGetStateExtResponse *msgGetStateExtResponse = QueryMessage<MsgGetStateExtResponse>(buffer))
-				{
-					std::lock_guard<std::mutex> guard(s_observerStateParamsMutex);
-					Observer::GetInstance()->m_latitude = msgGetStateExtResponse->m_latitude;
-					Observer::GetInstance()->m_longitude = msgGetStateExtResponse->m_longitude;
-					Observer::GetInstance()->m_position = msgGetStateExtResponse->m_pos;
-					Observer::GetInstance()->m_movingProgress = msgGetStateExtResponse->m_movingProgress;
-					if (Observer::GetInstance()->m_eatenCrumbNum < msgGetStateExtResponse->m_eatenCrumbNum)
+					spEyeColorArrayOut = std::make_shared<EyeColorArray>();
+					EyeColorArray &eyeColorArray = *spEyeColorArrayOut;
+					for (int yy = 0; yy < eyeColorArray.size(); ++yy)
 					{
-						Observer::GetInstance()->m_eatenCrumbNum = msgGetStateExtResponse->m_eatenCrumbNum;
-						Observer::GetInstance()->m_eatenCrumbPos = msgGetStateExtResponse->m_eatenCrumbPos;
-					}
-				}
-				else if (const MsgSendPhoton *msgSendPhoton = QueryMessage<MsgSendPhoton>(buffer))
-				{
-					// receive photons back // revert Y-coordinate because of texture format
-					m_eyeColorArray[OBSERVER_EYE_SIZE - msgSendPhoton->m_posY - 1][msgSendPhoton->m_posX] = msgSendPhoton->m_color;
-					m_eyeUpdateTimeArray[OBSERVER_EYE_SIZE - msgSendPhoton->m_posY - 1][msgSendPhoton->m_posX] = time;
-				}
-				// update eye texture
-				if (GetTimeMs() - m_lastTextureUpdateTime > UPDATE_EYE_TEXTURE_OUT)
-				{
-					m_lastTextureUpdateTime = GetTimeMs();
-					SP_EyeColorArray spEyeColorArrayOut;
-					spEyeColorArrayOut = std::atomic_load(&m_spEyeColorArrayOut);
-					if (!spEyeColorArrayOut)
-					{
-						spEyeColorArrayOut = std::make_shared<EyeColorArray>();
-						EyeColorArray &eyeColorArray = *spEyeColorArrayOut;
-						for (int yy = 0; yy < eyeColorArray.size(); ++yy)
+						for (int xx = 0; xx < eyeColorArray[yy].size(); ++xx)
 						{
-							for (int xx = 0; xx < eyeColorArray[yy].size(); ++xx)
+							eyeColorArray[yy][xx] = m_eyeColorArray[yy][xx];
+							int64_t timeDiff = time - m_eyeUpdateTimeArray[yy][xx];
+							uint8_t alpha = m_eyeColorArray[yy][xx].m_colorA;
+							if (timeDiff < EYE_IMAGE_DELAY)
 							{
-								eyeColorArray[yy][xx] = m_eyeColorArray[yy][xx];
-								int64_t timeDiff = time - m_eyeUpdateTimeArray[yy][xx];
-								uint8_t alpha = m_eyeColorArray[yy][xx].m_colorA;
-								if (timeDiff < EYE_IMAGE_DELAY)
-								{
-									alpha = alpha * (EYE_IMAGE_DELAY - timeDiff) / EYE_IMAGE_DELAY;
-									eyeColorArray[yy][xx].m_colorA = alpha;
-								}
-								else
-								{
-									alpha = 0;
-									//eyeColorArray[ii][jj] = EtherColor::ZeroColor;
-									//eyeColorArray[ii][jj].m_colorA = 255;
-								}
+								alpha = alpha * (EYE_IMAGE_DELAY - timeDiff) / EYE_IMAGE_DELAY;
 								eyeColorArray[yy][xx].m_colorA = alpha;
 							}
+							else
+							{
+								alpha = 0;
+								//eyeColorArray[ii][jj] = EtherColor::ZeroColor;
+								//eyeColorArray[ii][jj].m_colorA = 255;
+							}
+							eyeColorArray[yy][xx].m_colorA = alpha;
 						}
-						std::atomic_store(&m_spEyeColorArrayOut, spEyeColorArrayOut);
 					}
+					std::atomic_store(&m_spEyeColorArrayOut, spEyeColorArrayOut);
 				}
 			}
 		}
 	}
+
 	Sleep(1); // work imitation
 }
 
