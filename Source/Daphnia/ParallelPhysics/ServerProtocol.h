@@ -17,6 +17,7 @@ namespace MsgType
 	{
 		// client to server
 		CheckVersion = 0,
+		GetStatistics,
 		GetState,
 		GetStateExt,
 		RotateLeft,
@@ -25,9 +26,11 @@ namespace MsgType
 		RotateDown,
 		MoveForward,
 		MoveBackward,
+		ClientToServerEnd, // !!!Always last
 		// server to client
 		CheckVersionResponse,
 		SocketBusyByAnotherObserver,
+		GetStatisticsResponse,
 		GetStateResponse,
 		GetStateExtResponse,
 		SendPhoton
@@ -51,6 +54,13 @@ public:
 	static uint8_t GetType() { return MsgType::CheckVersion; }
 	uint32_t m_clientVersion;
 	uint64_t m_observerId;
+};
+
+class MsgGetStatistics: public MsgBase
+{
+public:
+	MsgGetStatistics() : MsgBase(GetType()) {}
+	static uint8_t GetType() { return MsgType::GetStatistics; }
 };
 
 class MsgGetState : public MsgBase
@@ -138,6 +148,18 @@ public:
 	MsgSocketBusyByAnotherObserver() : MsgBase(GetType()) {}
 	static uint8_t GetType() { return MsgType::SocketBusyByAnotherObserver; }
 	uint32_t m_serverVersion;
+};
+
+class MsgGetStatisticsResponse : public MsgBase
+{
+public:
+	MsgGetStatisticsResponse() : MsgBase(GetType()) {}
+	static uint8_t GetType() { return MsgType::GetStatisticsResponse; }
+	uint16_t m_universeThreadsCount;
+	uint32_t m_fps; // quantum of time per second
+	uint32_t m_observerThreadTickTime; // in microseconds
+	uint32_t m_universeThreadMaxTickTime; // in microseconds
+	uint32_t m_universeThreadMinTickTime; // in microseconds
 };
 
 class MsgGetStateResponse : public MsgBase

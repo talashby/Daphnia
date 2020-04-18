@@ -144,11 +144,9 @@ void ParallelPhysics::StartSimulation()
 		serverInfo.sin_family = AF_INET;
 		serverInfo.sin_port = htons(port);
 		serverInfo.sin_addr.s_addr = inet_addr("127.0.0.1");
-		socketC = socket(AF_INET, SOCK_DGRAM, 0);
-		struct timeval tv;
-		tv.tv_sec = 0;
-		tv.tv_usec = 100000; // 10 ms
-		setsockopt(socketC, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<char*>(&tv), sizeof(struct timeval));
+		socketC = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+		DWORD timeout = 1000; // 1000 ms
+		setsockopt(socketC, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<char*>(&timeout), sizeof(DWORD));
 		MsgCheckVersion msg;
 		msg.m_clientVersion = PROTOCOL_VERSION;
 		msg.m_observerId = lastObserverId;
@@ -174,7 +172,8 @@ void ParallelPhysics::StartSimulation()
 				}
 			}
 		}
-
+		socketC = 0;
+		closesocket(socketC);
 	}
 	if (socketC)
 	{
@@ -191,6 +190,7 @@ void ParallelPhysics::StartSimulation()
 	}
 	else
 	{
+		int tt = 0;
 		// server not found
 	}
 
