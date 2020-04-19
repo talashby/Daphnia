@@ -34,12 +34,7 @@ void UPPSettings::InitParallelPhysics()
 {
 	FVector UniverseSize = UniverseBox.GetSize();
 	PPh::VectorInt32Math pphUniverseSize(UniverseSize.X / UniverseEtherCellSize, UniverseSize.Y / UniverseEtherCellSize, UniverseSize.Z / UniverseEtherCellSize);
-	int8 ThreadsCountTmp = ThreadsCount;
-	if (bCalculateNearObserver)
-	{
-		ThreadsCountTmp = 0;
-	}
-	bool bParallelPhysicsInit = PPh::ParallelPhysics::Init(pphUniverseSize, ThreadsCountTmp);
+	bool bParallelPhysicsInit = PPh::ParallelPhysics::Init(pphUniverseSize);
 	check(bParallelPhysicsInit);
 }
 

@@ -24,7 +24,7 @@ class ParallelPhysics
 {
 public:
 
-	static bool Init(const VectorInt32Math &universeSize, uint8_t threadsCount); // returns true if success. threadsCount 0 means simulate near observer
+	static bool Init(const VectorInt32Math &universeSize); // returns true if success. threadsCount 0 means simulate near observer
 	static bool SaveUniverse(const std::string &fileName);
 	static ParallelPhysics* GetInstance();
 
@@ -36,10 +36,11 @@ public:
 
 	bool InitEtherCell(const VectorInt32Math &pos, EtherType::EEtherType type, const EtherColor &color = EtherColor()); // returns true if success
 
-	static uint64_t GetFPS();
-	static bool IsHighPrecisionStatsEnabled();
-	static uint64_t GetTickTimeNsObserverThread(); // average tick time in nanoseconds
-	static std::vector<uint64_t> GetTickTimeNsUniverseThreads(); // average tick time in nanoseconds
+	static uint32_t GetFPS();
+	static uint32_t GetTickTimeMusObserverThread(); // average tick time in microseconds
+	static uint32_t GetUniverseThreadsNum();
+	static uint32_t GetTickTimeMusUniverseThreadsMin(); // average tick time in microseconds
+	static uint32_t GetTickTimeMusUniverseThreadsMax(); // average tick time in microseconds
 
 	bool GetNextCrumb(VectorInt32Math &outCrumbPos, EtherColor &outCrumbColor);
 private:
@@ -57,6 +58,7 @@ constexpr int8_t EYE_FOV = 90; // Daphnia eye fov
 typedef int32_t PhotonParam; // warning! Depends on OBSERVER_EYE_SIZE
 constexpr int32_t OBSERVER_EYE_SIZE = 16; // pixels
 constexpr int32_t UPDATE_EYE_TEXTURE_OUT = 20; // milliseconds
+constexpr int32_t STATISTIC_REQUEST_PERIOD = 900; // milliseconds
 typedef std::array< std::array<OrientationVectorMath, OBSERVER_EYE_SIZE>, OBSERVER_EYE_SIZE> EyeArray;
 typedef std::shared_ptr< EyeArray > SP_EyeState;
 typedef std::array< std::array<EtherColor, OBSERVER_EYE_SIZE>, OBSERVER_EYE_SIZE> EyeColorArray;
@@ -114,6 +116,7 @@ private:
 	VectorInt32Math m_eatenCrumbPos = VectorInt32Math::ZeroVector;
 
 	int64_t m_lastUpdateStateExtTime = 0;
+	int64_t m_lastStatisticRequestTime = 0;
 };
 
 namespace AdminTcp

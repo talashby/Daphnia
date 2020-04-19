@@ -164,14 +164,13 @@ void UMyHudWidget::ShowPPhStats(int16_t latitude, int16_t longitude)
 		if (pTextBlockStats && PPh::ParallelPhysics::GetInstance()->IsSimulationRunning())
 		{
 			FString sFps = FString("FPS (quantum of time per second): ") + FString::FromInt(PPh::ParallelPhysics::GetFPS());
-			if (PPh::ParallelPhysics::IsHighPrecisionStatsEnabled())
+			uint32_t universeThreadsNum = PPh::ParallelPhysics::GetUniverseThreadsNum();
+			sFps += "\nUniverse threads count: " + FString::FromInt(PPh::ParallelPhysics::GetUniverseThreadsNum());
+			if (universeThreadsNum)
 			{
-				sFps += "\nTick time(ms). Observer thread: " + FString::SanitizeFloat(PPh::ParallelPhysics::GetTickTimeNsObserverThread()/1000000.0f);
-				std::vector<uint64_t> fpsUniverseThreads = PPh::ParallelPhysics::GetTickTimeNsUniverseThreads();
-				for (int ii = 0; ii < fpsUniverseThreads.size(); ++ii)
-				{
-					sFps += "\nTick time(ms). Universe thread " + FString::FromInt(ii) + ": " + FString::SanitizeFloat(fpsUniverseThreads[ii]/1000000.0f);
-				}
+				sFps += "\nTick time(ms). Observer thread: " + FString::SanitizeFloat(PPh::ParallelPhysics::GetTickTimeMusObserverThread()/1000.0f);
+				sFps += "\nTick time(ms). Fastest universe thread: " + FString::SanitizeFloat(PPh::ParallelPhysics::GetTickTimeMusUniverseThreadsMin() / 1000.0f);
+				sFps += "\nTick time(ms). Slowest universe thread: " + FString::SanitizeFloat(PPh::ParallelPhysics::GetTickTimeMusUniverseThreadsMax() / 1000.0f);
 			}
 			sFps += FString("\nLattitude: ") + FString::FromInt(latitude);
 			sFps += FString("\nLongitude: ") + FString::FromInt(longitude);

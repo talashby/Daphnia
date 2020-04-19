@@ -31,12 +31,12 @@ ParallelPhysics *s_parallelPhysicsInstance = nullptr;
 std::vector< std::vector< std::vector<struct EtherCell> > > s_universe;
 std::atomic<int32_t> s_waitThreadsCount = 0; // thread synchronization variable
 // stats
-uint64_t s_quantumOfTimePerSecond = 0;
-#define HIGH_PRECISION_STATS 1
-std::vector<uint64_t> s_timingsUniverseThreads;
-std::vector<uint64_t> s_TickTimeNsAverageUniverseThreads;
-uint64_t s_timingsObserverThread;
-uint64_t s_TickTimeNsAverageObserverThread;
+uint32_t s_quantumOfTimePerSecond = 0;
+uint32_t s_universeThreadsNum = 0;
+uint32_t s_TickTimeMusAverageUniverseThreadsMin = 0;
+uint32_t s_TickTimeMusAverageUniverseThreadsMax = 0;
+uint32_t s_TickTimeMusAverageObserverThread = 0;
+
 
 struct Photon
 {
@@ -58,7 +58,7 @@ struct EtherCell
 	std::array <std::array<Photon, 26>, 2> m_photons;
 };
 
-bool ParallelPhysics::Init(const VectorInt32Math &universeSize, uint8_t threadsCount)
+bool ParallelPhysics::Init(const VectorInt32Math &universeSize)
 {
 	if (0 < universeSize.m_posX && 0 < universeSize.m_posY && 0 < universeSize.m_posZ)
 	{
@@ -254,28 +254,29 @@ bool ParallelPhysics::InitEtherCell(const VectorInt32Math &pos, EtherType::EEthe
 	return false;
 }
 
-uint64_t ParallelPhysics::GetFPS()
+uint32_t ParallelPhysics::GetFPS()
 {
 	return s_quantumOfTimePerSecond;
 }
 
-bool ParallelPhysics::IsHighPrecisionStatsEnabled()
+uint32_t ParallelPhysics::GetTickTimeMusObserverThread()
 {
-#ifdef HIGH_PRECISION_STATS
-	return true;
-#else
-	return false;
-#endif
+	return s_TickTimeMusAverageObserverThread;
 }
 
-uint64_t ParallelPhysics::GetTickTimeNsObserverThread()
+uint32_t ParallelPhysics::GetUniverseThreadsNum()
 {
-	return s_TickTimeNsAverageObserverThread;
+	return s_universeThreadsNum;
 }
 
-std::vector<uint64_t> ParallelPhysics::GetTickTimeNsUniverseThreads()
+uint32_t ParallelPhysics::GetTickTimeMusUniverseThreadsMin()
 {
-	return s_TickTimeNsAverageUniverseThreads;
+	return s_TickTimeMusAverageUniverseThreadsMin;
+}
+
+uint32_t ParallelPhysics::GetTickTimeMusUniverseThreadsMax()
+{
+	return s_TickTimeMusAverageUniverseThreadsMax;
 }
 
 bool ParallelPhysics::GetNextCrumb(VectorInt32Math &outCrumbPos, EtherColor &outCrumbColor)
@@ -354,6 +355,12 @@ void Observer::PPhTick(uint64_t socketC, uint32_t port)
 			MsgGetStateExt msgGetStateExt;
 			sendto(socketC, (const char*)&msgGetStateExt, sizeof(msgGetStateExt), 0, (sockaddr*)&serverInfo, len);
 		}
+		if (GetTimeMs() - m_lastStatisticRequestTime > STATISTIC_REQUEST_PERIOD)
+		{
+			m_lastStatisticRequestTime = GetTimeMs();
+			MsgGetStatistics msgGetStatistics;
+			sendto(socketC, (const char*)&msgGetStatistics, sizeof(msgGetStatistics), 0, (sockaddr*)&serverInfo, len);
+		}
 
 		AMyPlayerController *controller = AMyPlayerController::GetInstance();
 		if (controller)
@@ -423,6 +430,16 @@ void Observer::PPhTick(uint64_t socketC, uint32_t port)
 				m_eyeColorArray[OBSERVER_EYE_SIZE - msgSendPhoton->m_posY - 1][msgSendPhoton->m_posX] = msgSendPhoton->m_color;
 				m_eyeUpdateTimeArray[OBSERVER_EYE_SIZE - msgSendPhoton->m_posY - 1][msgSendPhoton->m_posX] = time;
 			}
+			else if (const MsgGetStatisticsResponse *msgRcv = QueryMessage<MsgGetStatisticsResponse>(buffer))
+			{
+				s_quantumOfTimePerSecond = msgRcv->m_fps;
+				s_TickTimeMusAverageObserverThread = msgRcv->m_observerThreadTickTime;
+				s_TickTimeMusAverageUniverseThreadsMin = msgRcv->m_universeThreadMinTickTime;
+				s_TickTimeMusAverageUniverseThreadsMax = msgRcv->m_universeThreadMaxTickTime;
+				s_universeThreadsNum = msgRcv->m_universeThreadsCount;
+			}
+
+
 			// update eye texture
 			if (GetTimeMs() - m_lastTextureUpdateTime > UPDATE_EYE_TEXTURE_OUT)
 			{
