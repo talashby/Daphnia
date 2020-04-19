@@ -36,10 +36,10 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	void PlayCrumbSound() const;
-
-	UFUNCTION()
-	void OnGameObjectOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-									int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void EatCrumb(AActor *actor);
+	//UFUNCTION()
+	//void OnGameObjectOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+	//								int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 
@@ -54,7 +54,7 @@ protected:
 private:
 //	class AAmbientSound* SpawnAmbientSound();
 	void GenerateItems(const FRoomVolumeSettings &Settings);
-	void SpawnCrumb(FVector pos, int32 crumbMaterialNum);
+	AActor*  SpawnCrumb(FVector pos, int32 crumbMaterialNum);
 	void OnMapLoaded();
 	void LoadCrumbsFromServer();
 // ****************************************************

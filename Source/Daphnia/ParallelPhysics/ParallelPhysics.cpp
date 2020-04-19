@@ -55,7 +55,7 @@ struct EtherCell
 	{}
 	int32_t m_type;
 	EtherColor m_color;
-	std::array <std::array<Photon, 26>, 2> m_photons;
+	AActor *m_crumbActor;
 };
 
 bool ParallelPhysics::Init(const VectorInt32Math &universeSize)
@@ -71,18 +71,7 @@ bool ParallelPhysics::Init(const VectorInt32Math &universeSize)
 				itZ.resize(0);
 				EtherCell cell(EtherType::Space);
 				cell.m_color = EtherColor::ZeroColor;
-				{
-					for (int ii = 0; ii < cell.m_photons[0].size(); ++ii)
-					{
-						cell.m_photons[0][ii].m_color.m_colorA = 0;
-					}
-				}
-				{
-					for (int ii = 0; ii < cell.m_photons[1].size(); ++ii)
-					{
-						cell.m_photons[1][ii].m_color.m_colorA = 0;
-					}
-				}
+				cell.m_crumbActor = nullptr;
 				itZ.resize(universeSize.m_posZ, cell);
 			}
 		}
@@ -216,16 +205,6 @@ bool ParallelPhysics::IsSimulationRunning() const
 ParallelPhysics::ParallelPhysics()
 {}
 
-int32_t ParallelPhysics::GetCellPhotonIndex(const VectorInt32Math &unitVector)
-{
-	int32_t index = (unitVector.m_posX + 1) * 9 + (unitVector.m_posY + 1) * 3 + (unitVector.m_posZ + 1);
-	if (index > 13)
-	{
-		--index;
-	}
-	return index;
-}
-
 bool ParallelPhysics::InitEtherCell(const VectorInt32Math &pos, EtherType::EEtherType type, const EtherColor &color)
 {
 	if (s_universe.size() > pos.m_posX)
@@ -237,16 +216,6 @@ bool ParallelPhysics::InitEtherCell(const VectorInt32Math &pos, EtherType::EEthe
 				EtherCell &cell = s_universe[pos.m_posX][pos.m_posY][pos.m_posZ];
 				cell.m_type = type;
 				cell.m_color = color;
-				for (int ii = 0; ii < cell.m_photons[0].size(); ++ii)
-				{
-					Photon &photon = cell.m_photons[0][ii];
-					photon.m_color = EtherColor::ZeroColor;
-				}
-				for (int ii = 0; ii < cell.m_photons[1].size(); ++ii)
-				{
-					Photon &photon = cell.m_photons[1][ii];
-					photon.m_color = EtherColor::ZeroColor;
-				}
 				return true;
 			}
 		}
@@ -320,6 +289,18 @@ bool ParallelPhysics::GetNextCrumb(VectorInt32Math &outCrumbPos, EtherColor &out
 		s_posZ = 0;
 	}
 	return bResult;
+}
+
+void ParallelPhysics::EtherCellSetCrumbActor(const VectorInt32Math &pos, AActor *crumbActor)
+{
+	EtherCell &cell = s_universe[pos.m_posX][pos.m_posY][pos.m_posZ];
+	cell.m_crumbActor = crumbActor;
+}
+
+AActor* ParallelPhysics::EtherCellGetCrumbActor(const VectorInt32Math &pos)
+{
+	EtherCell &cell = s_universe[pos.m_posX][pos.m_posY][pos.m_posZ];
+	return cell.m_crumbActor;
 }
 
 Observer* s_observer = nullptr;

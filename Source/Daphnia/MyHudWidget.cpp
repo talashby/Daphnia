@@ -88,7 +88,7 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 		ADaphniaPawn::GetInstance()->SetActorRotation(orient);
 		if (outEatenCrumbPos != PPh::VectorInt32Math::ZeroVector)
 		{
-			ALevelSettings::GetInstance()->PlayCrumbSound();
+			ALevelSettings::GetInstance()->EatCrumb(PPh::ParallelPhysics::EtherCellGetCrumbActor(outEatenCrumbPos));
 		}
 		ShowPPhStats(outLatitude, outLongitude);
 		if (pEyeViewImage && pEyeViewImage->IsVisible())

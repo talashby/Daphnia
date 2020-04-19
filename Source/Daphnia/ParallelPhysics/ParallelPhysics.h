@@ -28,7 +28,7 @@ public:
 	static bool SaveUniverse(const std::string &fileName);
 	static ParallelPhysics* GetInstance();
 
-	const VectorInt32Math & GetUniverseSize() const;
+	const VectorInt32Math &GetUniverseSize() const;
 
 	void StartSimulation();
 	void StopSimulation();
@@ -43,10 +43,10 @@ public:
 	static uint32_t GetTickTimeMusUniverseThreadsMax(); // average tick time in microseconds
 
 	bool GetNextCrumb(VectorInt32Math &outCrumbPos, EtherColor &outCrumbColor);
+	static void EtherCellSetCrumbActor(const VectorInt32Math &pos, AActor *crumbActor);
+	static AActor* EtherCellGetCrumbActor(const VectorInt32Math &pos);
 private:
 	ParallelPhysics();
-
-	static int32_t GetCellPhotonIndex(const VectorInt32Math &unitVector);
 
 	VectorInt32Math m_universeSize = VectorInt32Math::ZeroVector;
 	uint8_t m_threadsCount = 1;
@@ -112,7 +112,7 @@ private:
 	int16_t m_longitude = 0;
 	VectorInt32Math m_position = VectorInt32Math::ZeroVector;
 	uint16_t m_movingProgress = 0;
-	uint32_t m_eatenCrumbNum;
+	uint32_t m_eatenCrumbNum = 0;
 	VectorInt32Math m_eatenCrumbPos = VectorInt32Math::ZeroVector;
 
 	int64_t m_lastUpdateStateExtTime = 0;

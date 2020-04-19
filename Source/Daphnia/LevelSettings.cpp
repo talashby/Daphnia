@@ -175,7 +175,8 @@ void ALevelSettings::BeginPlay()
 			{
 				check(false);
 			}
-			SpawnCrumb(location, materialNum);
+			AActor *crumb = SpawnCrumb(location, materialNum);
+			PPh::ParallelPhysics::EtherCellSetCrumbActor(outCrumbPos, crumb);
 		}
 	}
 }
@@ -191,7 +192,25 @@ void ALevelSettings::PlayCrumbSound() const
 	UGameplayStatics::PlaySound2D(GetWorld(), EatCrumbSound);
 }
 
-void ALevelSettings::OnGameObjectOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ALevelSettings::EatCrumb(AActor *actor)
+{
+	if (actor)
+	{
+		const TArray<UActorComponent *>& Comps = actor->GetInstanceComponents();
+		for (auto& Comp : Comps)
+		{
+			UAudioComponent* Snd = Cast<UAudioComponent>(Comp);
+			if (Snd)
+			{
+				Snd->Stop();
+			}
+		}
+		actor->Destroy();
+		PlayCrumbSound();
+	}
+}
+
+/*void ALevelSettings::OnGameObjectOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor == ADaphniaPawn::GetInstance())
 	{
@@ -224,7 +243,7 @@ void ALevelSettings::OnGameObjectOverlapBegin(UPrimitiveComponent* OverlappedCom
 			PlayCrumbSound();
 		}
 	}
-}
+}*/
 
 std::random_device rd;
 std::mt19937 e1(rd());
@@ -317,13 +336,13 @@ void ALevelSettings::GenerateItems(const FRoomVolumeSettings &Settings)
 	}
 }
 
-void ALevelSettings::SpawnCrumb(FVector pos, int32 crumbMaterialNum)
+AActor* ALevelSettings::SpawnCrumb(FVector pos, int32 crumbMaterialNum)
 {
 	int32 MaterialsNum = GameObjectMaterials.Num();
 	check(crumbMaterialNum < MaterialsNum);
 	if (crumbMaterialNum >= MaterialsNum)
 	{
-		return;
+		return nullptr;
 	}
 	// Spawn!
 	AStaticMeshActor *pGameObject = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), pos, FRotator(0, 0, 0));
@@ -342,7 +361,7 @@ void ALevelSettings::SpawnCrumb(FVector pos, int32 crumbMaterialNum)
 		FCollisionResponseContainer collision_response;
 		collision_response.SetAllChannels(ECollisionResponse::ECR_Overlap);
 		FoundComp->SetCollisionResponseToChannels(collision_response);
-		FoundComp->OnComponentBeginOverlap.AddUniqueDynamic(ALevelSettings::GetInstance(), &ALevelSettings::OnGameObjectOverlapBegin);
+		//FoundComp->OnComponentBeginOverlap.AddUniqueDynamic(ALevelSettings::GetInstance(), &ALevelSettings::OnGameObjectOverlapBegin);
 		{ // add sound component
 			if (CrumbMusic)
 			{
@@ -359,6 +378,8 @@ void ALevelSettings::SpawnCrumb(FVector pos, int32 crumbMaterialNum)
 	if (aOverlapActors.Num())
 	{
 		pGameObject->Destroy();
+		return nullptr;
 	}
+	return pGameObject;
 }
 
