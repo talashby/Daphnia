@@ -30,13 +30,6 @@ ParallelPhysics *s_parallelPhysicsInstance = nullptr;
 
 std::vector< std::vector< std::vector<struct EtherCell> > > s_universe;
 std::atomic<int32_t> s_waitThreadsCount = 0; // thread synchronization variable
-// stats
-uint32_t s_quantumOfTimePerSecond = 0;
-uint32_t s_universeThreadsNum = 0;
-uint32_t s_TickTimeMusAverageUniverseThreadsMin = 0;
-uint32_t s_TickTimeMusAverageUniverseThreadsMax = 0;
-uint32_t s_TickTimeMusAverageObserverThread = 0;
-
 
 struct Photon
 {
@@ -223,31 +216,6 @@ bool ParallelPhysics::InitEtherCell(const VectorInt32Math &pos, EtherType::EEthe
 	return false;
 }
 
-uint32_t ParallelPhysics::GetFPS()
-{
-	return s_quantumOfTimePerSecond;
-}
-
-uint32_t ParallelPhysics::GetTickTimeMusObserverThread()
-{
-	return s_TickTimeMusAverageObserverThread;
-}
-
-uint32_t ParallelPhysics::GetUniverseThreadsNum()
-{
-	return s_universeThreadsNum;
-}
-
-uint32_t ParallelPhysics::GetTickTimeMusUniverseThreadsMin()
-{
-	return s_TickTimeMusAverageUniverseThreadsMin;
-}
-
-uint32_t ParallelPhysics::GetTickTimeMusUniverseThreadsMax()
-{
-	return s_TickTimeMusAverageUniverseThreadsMax;
-}
-
 bool ParallelPhysics::GetNextCrumb(VectorInt32Math &outCrumbPos, EtherColor &outCrumbColor)
 {
 	static int32_t s_posX = 0;
@@ -305,6 +273,7 @@ AActor* ParallelPhysics::EtherCellGetCrumbActor(const VectorInt32Math &pos)
 
 Observer* s_observer = nullptr;
 std::mutex s_observerStateParamsMutex;
+std::mutex s_serverStatisticsMutex;
 
 void Observer::Init()
 {
@@ -413,11 +382,14 @@ void Observer::PPhTick(uint64_t socketC, uint32_t port)
 			}
 			else if (const MsgGetStatisticsResponse *msgRcv = QueryMessage<MsgGetStatisticsResponse>(buffer))
 			{
-				s_quantumOfTimePerSecond = msgRcv->m_fps;
-				s_TickTimeMusAverageObserverThread = msgRcv->m_observerThreadTickTime;
-				s_TickTimeMusAverageUniverseThreadsMin = msgRcv->m_universeThreadMinTickTime;
-				s_TickTimeMusAverageUniverseThreadsMax = msgRcv->m_universeThreadMaxTickTime;
-				s_universeThreadsNum = msgRcv->m_universeThreadsCount;
+				std::lock_guard<std::mutex> guard(s_serverStatisticsMutex);
+				m_quantumOfTimePerSecond = msgRcv->m_fps;
+				m_TickTimeMusAverageObserverThread = msgRcv->m_observerThreadTickTime;
+				m_TickTimeMusAverageUniverseThreadsMin = msgRcv->m_universeThreadMinTickTime;
+				m_TickTimeMusAverageUniverseThreadsMax = msgRcv->m_universeThreadMaxTickTime;
+				m_universeThreadsNum = msgRcv->m_universeThreadsCount;
+				m_clientServerPerformanceRatio = msgRcv->m_clientServerPerformanceRatio;
+				m_serverClientPerformanceRatio = msgRcv->m_serverClientPerformanceRatio;
 			}
 
 
@@ -458,7 +430,24 @@ void Observer::PPhTick(uint64_t socketC, uint32_t port)
 		}
 	}
 
-	Sleep(1); // work imitation
+	__int64 timeEllapsed;
+	__int64 timeStart;
+	__int64 timeDelta;
+
+	QueryPerformanceFrequency((LARGE_INTEGER*)(&timeDelta));
+
+	__int64 timeToWait = (double)timeDelta * (double)200 / 1000000.0f;
+
+	QueryPerformanceCounter((LARGE_INTEGER*)(&timeStart));
+
+	timeEllapsed = timeStart;
+
+	while ((timeEllapsed - timeStart) < timeToWait)
+	{
+		QueryPerformanceCounter((LARGE_INTEGER*)(&timeEllapsed));
+
+	};
+	//Sleep(1); // work imitation
 }
 
 void Observer::ChangeOrientation(const SP_EyeState &eyeState)
@@ -490,7 +479,8 @@ const VectorInt32Math& Observer::GetOrientMaxChanger() const
 	return m_orientMaxChanger;
 }
 
-void Observer::GetStateParams(VectorInt32Math &outPosition, uint16_t &outMovingProgress, int16_t &outLatitude, int16_t &outLongitude, VectorInt32Math &outEatenCrumbPos)
+void Observer::GetStateParams(VectorInt32Math &outPosition, uint16_t &outMovingProgress, int16_t &outLatitude,
+	int16_t &outLongitude, VectorInt32Math &outEatenCrumbPos)
 {
 	std::lock_guard<std::mutex> guard(s_observerStateParamsMutex);
 	outPosition = m_position;
@@ -499,6 +489,21 @@ void Observer::GetStateParams(VectorInt32Math &outPosition, uint16_t &outMovingP
 	outLongitude = m_longitude;
 	outEatenCrumbPos = m_eatenCrumbPos;
 	m_eatenCrumbPos = VectorInt32Math::ZeroVector;
+}
+
+void Observer::GetStatisticsParams(uint32_t &outQuantumOfTimePerSecond, uint32_t &outUniverseThreadsNum,
+	uint32_t &outTickTimeMusAverageUniverseThreadsMin, uint32_t &outTickTimeMusAverageUniverseThreadsMax,
+	uint32_t &outTickTimeMusAverageObserverThread, uint64_t &outClientServerPerformanceRatio,
+	uint64_t &outServerClientPerformanceRatio)
+{
+	std::lock_guard<std::mutex> guard(s_serverStatisticsMutex);
+	outQuantumOfTimePerSecond = m_quantumOfTimePerSecond;
+	outUniverseThreadsNum = m_universeThreadsNum;
+	outTickTimeMusAverageUniverseThreadsMin = m_TickTimeMusAverageUniverseThreadsMin;
+	outTickTimeMusAverageUniverseThreadsMax = m_TickTimeMusAverageUniverseThreadsMax;
+	outTickTimeMusAverageObserverThread = m_TickTimeMusAverageObserverThread;
+	outClientServerPerformanceRatio = m_clientServerPerformanceRatio;
+	outServerClientPerformanceRatio = m_serverClientPerformanceRatio;
 }
 
 int32_t RoundToMinMaxPPhInt(float value)

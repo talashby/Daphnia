@@ -163,15 +163,26 @@ void UMyHudWidget::ShowPPhStats(int16_t latitude, int16_t longitude)
 		lastTime = PPh::GetTimeMs();
 		if (pTextBlockStats && PPh::ParallelPhysics::GetInstance()->IsSimulationRunning())
 		{
-			FString sFps = FString("FPS (quantum of time per second): ") + FString::FromInt(PPh::ParallelPhysics::GetFPS());
-			uint32_t universeThreadsNum = PPh::ParallelPhysics::GetUniverseThreadsNum();
-			sFps += "\nUniverse threads count: " + FString::FromInt(PPh::ParallelPhysics::GetUniverseThreadsNum());
-			if (universeThreadsNum)
+			uint32_t outQuantumOfTimePerSecond;
+			uint32_t outUniverseThreadsNum;
+			uint32_t outTickTimeMusAverageUniverseThreadsMin;
+			uint32_t outTickTimeMusAverageUniverseThreadsMax;
+			uint32_t outTickTimeMusAverageObserverThread;
+			uint64_t outClientServerPerformanceRatio;
+			uint64_t outServerClientPerformanceRatio;
+			PPh::Observer::GetInstance()->GetStatisticsParams(outQuantumOfTimePerSecond, outUniverseThreadsNum,
+				outTickTimeMusAverageUniverseThreadsMin, outTickTimeMusAverageUniverseThreadsMax,
+				outTickTimeMusAverageObserverThread, outClientServerPerformanceRatio, outServerClientPerformanceRatio);
+			FString sFps = FString("FPS (quantum of time per second): ") + FString::FromInt(outQuantumOfTimePerSecond);
+			sFps += "\nUniverse threads count: " + FString::FromInt(outUniverseThreadsNum);
+			if (outUniverseThreadsNum)
 			{
-				sFps += "\nTick time(ms). Observer thread: " + FString::SanitizeFloat(PPh::ParallelPhysics::GetTickTimeMusObserverThread()/1000.0f);
-				sFps += "\nTick time(ms). Fastest universe thread: " + FString::SanitizeFloat(PPh::ParallelPhysics::GetTickTimeMusUniverseThreadsMin() / 1000.0f);
-				sFps += "\nTick time(ms). Slowest universe thread: " + FString::SanitizeFloat(PPh::ParallelPhysics::GetTickTimeMusUniverseThreadsMax() / 1000.0f);
+				sFps += "\nTick time(ms). Observer thread: " + FString::SanitizeFloat(outTickTimeMusAverageObserverThread / 1000.0f);
+				sFps += "\nTick time(ms). Fastest universe thread: " + FString::SanitizeFloat(outTickTimeMusAverageUniverseThreadsMin / 1000.0f);
+				sFps += "\nTick time(ms). Slowest universe thread: " + FString::SanitizeFloat(outTickTimeMusAverageUniverseThreadsMax / 1000.0f);
 			}
+			sFps += "\nClient-Server performance ratio: " + FString::SanitizeFloat(outClientServerPerformanceRatio / 1000.0f);
+			sFps += "\nServer-Client performance ratio: " + FString::SanitizeFloat(outServerClientPerformanceRatio / 1000.0f);
 			sFps += FString("\nLattitude: ") + FString::FromInt(latitude);
 			sFps += FString("\nLongitude: ") + FString::FromInt(longitude);
 			pTextBlockStats->SetText(FText::FromString(sFps));

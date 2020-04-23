@@ -160,6 +160,8 @@ public:
 	uint32_t m_observerThreadTickTime; // in microseconds
 	uint32_t m_universeThreadMaxTickTime; // in microseconds
 	uint32_t m_universeThreadMinTickTime; // in microseconds
+	uint64_t m_clientServerPerformanceRatio; // in milli how much client ticks more often than server ticks
+	uint64_t m_serverClientPerformanceRatio; // in milli how much server ticks more often than client ticks
 };
 
 class MsgGetStateResponse : public MsgBase

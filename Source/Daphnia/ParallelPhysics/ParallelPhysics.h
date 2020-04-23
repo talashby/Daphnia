@@ -36,12 +36,6 @@ public:
 
 	bool InitEtherCell(const VectorInt32Math &pos, EtherType::EEtherType type, const EtherColor &color = EtherColor()); // returns true if success
 
-	static uint32_t GetFPS();
-	static uint32_t GetTickTimeMusObserverThread(); // average tick time in microseconds
-	static uint32_t GetUniverseThreadsNum();
-	static uint32_t GetTickTimeMusUniverseThreadsMin(); // average tick time in microseconds
-	static uint32_t GetTickTimeMusUniverseThreadsMax(); // average tick time in microseconds
-
 	bool GetNextCrumb(VectorInt32Math &outCrumbPos, EtherColor &outCrumbColor);
 	static void EtherCellSetCrumbActor(const VectorInt32Math &pos, AActor *crumbActor);
 	static AActor* EtherCellGetCrumbActor(const VectorInt32Math &pos);
@@ -84,6 +78,13 @@ public:
 	void GetStateParams(VectorInt32Math &outPosition, uint16_t &outMovingProgress, int16_t &outLatitude, int16_t &outLongitude, 
 		VectorInt32Math &outEatenCrumbPos);
 
+	void GetStatisticsParams(uint32_t &outQuantumOfTimePerSecond, uint32_t &outUniverseThreadsNum,
+		uint32_t &outTickTimeMusAverageUniverseThreadsMin, // average tick time in microseconds
+		uint32_t &outTickTimeMusAverageUniverseThreadsMax, // average tick time in microseconds
+		uint32_t &outTickTimeMusAverageObserverThread, // average tick time in microseconds
+		uint64_t &outClientServerPerformanceRatio,
+		uint64_t &outServerClientPerformanceRatio);
+
 private:
 	friend class ParallelPhysics;
 	void SetPosition(const VectorInt32Math &pos);
@@ -117,6 +118,15 @@ private:
 
 	int64_t m_lastUpdateStateExtTime = 0;
 	int64_t m_lastStatisticRequestTime = 0;
+
+	// statistics
+	uint32_t m_quantumOfTimePerSecond = 0;
+	uint32_t m_universeThreadsNum = 0;
+	uint32_t m_TickTimeMusAverageUniverseThreadsMin = 0;
+	uint32_t m_TickTimeMusAverageUniverseThreadsMax = 0;
+	uint32_t m_TickTimeMusAverageObserverThread = 0;
+	uint64_t m_clientServerPerformanceRatio = 0;
+	uint64_t m_serverClientPerformanceRatio = 0;
 };
 
 namespace AdminTcp
