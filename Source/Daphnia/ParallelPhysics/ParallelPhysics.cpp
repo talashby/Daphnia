@@ -172,12 +172,8 @@ void ParallelPhysics::StartSimulation()
 	}
 	else
 	{
-		int tt = 0;
 		// server not found
 	}
-
-	//u_long mode = 1;  // 1 to enable non-blocking socket
-	//ioctlsocket(socketC, FIONBIO, &mode);
 
 }
 
@@ -318,37 +314,37 @@ void Observer::PPhTick(uint64_t socketC, uint32_t port)
 			if (controller->IsLeft())
 			{
 				MsgRotateLeft msgMove;
-				msgMove.m_value = 128;
+				msgMove.m_value = 4;
 				sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
 			}
 			if (controller->IsRight())
 			{
 				MsgRotateRight msgMove;
-				msgMove.m_value = 128;
+				msgMove.m_value = 4;
 				sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
 			}
 			if (controller->IsUp())
 			{
 				MsgRotateDown msgMove;
-				msgMove.m_value = 128;
+				msgMove.m_value = 4;
 				sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
 			}
 			if (controller->IsDown())
 			{
 				MsgRotateUp msgMove;
-				msgMove.m_value = 128;
+				msgMove.m_value = 4;
 				sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
 			}
 			if (controller->IsForward())
 			{
 				MsgMoveForward msgMove;
-				msgMove.m_value = 255;
+				msgMove.m_value = 16;
 				sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
 			}
 			if (controller->IsBackward())
 			{
 				MsgMoveBackward msgMove;
-				msgMove.m_value = 255;
+				msgMove.m_value = 16;
 				sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
 			}
 		}
@@ -436,7 +432,7 @@ void Observer::PPhTick(uint64_t socketC, uint32_t port)
 
 	QueryPerformanceFrequency((LARGE_INTEGER*)(&timeDelta));
 
-	__int64 timeToWait = (double)timeDelta * (double)200 / 1000000.0f;
+	__int64 timeToWait = (double)timeDelta * (double)30 / 1000000.0f;
 
 	QueryPerformanceCounter((LARGE_INTEGER*)(&timeStart));
 
