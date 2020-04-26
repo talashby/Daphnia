@@ -7,8 +7,6 @@
 #include "fstream"
 #include "atomic"
 #include "chrono"
-#include "AdminProtocol.h"
-#include "ServerProtocol.h"
 #include "../MyPlayerController.h"
 
 #undef UNICODE
@@ -16,7 +14,6 @@
 #undef TEXT
 #include <windows.h>
 #include <winsock2.h>
-#include "iosfwd"
 #include "mutex"
 #undef min
 #undef max
@@ -29,17 +26,6 @@ namespace PPh
 ParallelPhysics *s_parallelPhysicsInstance = nullptr;
 
 std::vector< std::vector< std::vector<struct EtherCell> > > s_universe;
-std::atomic<int32_t> s_waitThreadsCount = 0; // thread synchronization variable
-
-struct Photon
-{
-	Photon() = default;
-	explicit Photon(const OrientationVectorMath &orientation) : m_orientation(orientation)
-	{}
-	EtherColor m_color;
-	OrientationVectorMath m_orientation;
-	PhotonParam m_param;
-};
 
 struct EtherCell
 {
@@ -118,8 +104,8 @@ void ParallelPhysics::StartSimulation()
 	m_isSimulationRunning = true;
 	static uint64_t lastObserverId = 0;
 	SOCKET socketC = 0;
-	u_short port = CLIENT_UDP_PORT_START;
-	for (; port < CLIENT_UDP_PORT_START + MAX_CLIENTS; ++port)
+	u_short port = CommonParams::CLIENT_UDP_PORT_START;
+	for (; port < CommonParams::CLIENT_UDP_PORT_START + CommonParams::MAX_CLIENTS; ++port)
 	{
 		struct sockaddr_in serverInfo;
 		int len = sizeof(serverInfo);
@@ -130,16 +116,16 @@ void ParallelPhysics::StartSimulation()
 		DWORD timeout = 1000; // 1000 ms
 		setsockopt(socketC, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<char*>(&timeout), sizeof(DWORD));
 		MsgCheckVersion msg;
-		msg.m_clientVersion = PROTOCOL_VERSION;
+		msg.m_clientVersion = CommonParams::PROTOCOL_VERSION;
 		msg.m_observerId = lastObserverId;
 		if (sendto(socketC, (const char*)&msg, sizeof(msg), 0, (sockaddr*)&serverInfo, len) != SOCKET_ERROR)
 		{
-			char buffer[DEFAULT_BUFLEN];
+			char buffer[CommonParams::DEFAULT_BUFLEN];
 			if (recvfrom(socketC, buffer, sizeof(buffer), 0, (sockaddr*)&serverInfo, &len) > 0)
 			{
 				if (const MsgCheckVersionResponse *msgReceive = QueryMessage<MsgCheckVersionResponse>(buffer))
 				{
-					if (msgReceive->m_serverVersion == PROTOCOL_VERSION)
+					if (msgReceive->m_serverVersion == CommonParams::PROTOCOL_VERSION)
 					{
 						lastObserverId = msgReceive->m_observerId;
 						break;
@@ -349,7 +335,7 @@ void Observer::PPhTick(uint64_t socketC, uint32_t port)
 			}
 		}
 
-		char buffer[DEFAULT_BUFLEN];
+		char buffer[CommonParams::DEFAULT_BUFLEN];
 		while(recvfrom(socketC, buffer, sizeof(buffer), 0, (sockaddr*)&serverInfo, &len) > 0)
 		{
 			static uint64_t time = 0;
@@ -373,8 +359,8 @@ void Observer::PPhTick(uint64_t socketC, uint32_t port)
 			else if (const MsgSendPhoton *msgSendPhoton = QueryMessage<MsgSendPhoton>(buffer))
 			{
 				// receive photons back // revert Y-coordinate because of texture format
-				m_eyeColorArray[OBSERVER_EYE_SIZE - msgSendPhoton->m_posY - 1][msgSendPhoton->m_posX] = msgSendPhoton->m_color;
-				m_eyeUpdateTimeArray[OBSERVER_EYE_SIZE - msgSendPhoton->m_posY - 1][msgSendPhoton->m_posX] = time;
+				m_eyeColorArray[CommonParams::OBSERVER_EYE_SIZE - msgSendPhoton->m_posY - 1][msgSendPhoton->m_posX] = msgSendPhoton->m_color;
+				m_eyeUpdateTimeArray[CommonParams::OBSERVER_EYE_SIZE - msgSendPhoton->m_posY - 1][msgSendPhoton->m_posX] = time;
 			}
 			else if (const MsgGetStatisticsResponse *msgRcv = QueryMessage<MsgGetStatisticsResponse>(buffer))
 			{
@@ -595,108 +581,6 @@ void Observer::CalculateOrientChangers(const EyeArray &eyeArray)
 	}
 }
 
-namespace AdminTcp
-{
-namespace
-{
-	WSADATA wsaData;
-	SOCKET SendingSocket;
-}
-bool Connect()
-{
-	// Server/receiver address
-	SOCKADDR_IN ServerAddr;
-	// Server/receiver port to connect to
-	unsigned int Port = ADMIN_TCP_PORT;
-	int  RetCode;
 
-	// Initialize Winsock version 2.2
-	WSAStartup(MAKEWORD(2, 2), &wsaData);
-	printf("Client: Winsock DLL status is %s.\n", wsaData.szSystemStatus);
-
-	// Create a new socket to make a client connection.
-	// AF_INET = 2, The Internet Protocol version 4 (IPv4) address family, TCP protocol
-	SendingSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (SendingSocket == INVALID_SOCKET)
-	{
-		printf("Client: socket() failed! Error code: %d\n", WSAGetLastError());
-		// Do the clean up
-		WSACleanup();
-		// Exit with error
-		return false;
-	}
-	else
-	{
-		printf("Client: socket() is OK!\n");
-	}
-	// Set up a SOCKADDR_IN structure that will be used to connect
-	// to a listening server.
-	ServerAddr.sin_family = AF_INET;
-	// Port no.
-	ServerAddr.sin_port = htons(Port);
-	// The IP address
-	ServerAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-	// Make a connection to the server with socket SendingSocket.
-	RetCode = connect(SendingSocket, (SOCKADDR *)&ServerAddr, sizeof(ServerAddr));
-	if (RetCode != 0)
-	{
-		printf("Client: connect() failed! Error code: %d\n", WSAGetLastError());
-		// Close the socket
-		closesocket(SendingSocket);
-		// Do the clean up
-		WSACleanup();
-		// Exit with error
-		return false;
-	}
-	else
-	{
-		printf("Client: connect() is OK, got connected...\n");
-		printf("Client: Ready for sending and/or receiving data...\n");
-	}
-
-	return true;
-}
-
-void LoadCrumbs()
-{
-	do
-	{
-		PPh::MsgAdminGetNextCrumb msg;
-		if (send(SendingSocket, (const char*)&msg, sizeof(msg), 0) != SOCKET_ERROR)
-		{
-			char buffer[DEFAULT_BUFLEN];
-			if (recv(SendingSocket, buffer, sizeof(buffer), 0) != SOCKET_ERROR)
-			{
-				if (const MsgAdminGetNextCrumbResponse *msgRcv = PPh::QueryMessage<MsgAdminGetNextCrumbResponse>(buffer))
-				{
-					if (msgRcv->m_color == EtherColor::ZeroColor)
-					{
-						break;
-					}
-					ParallelPhysics::GetInstance()->InitEtherCell(VectorInt32Math(msgRcv->m_posX, msgRcv->m_posY, msgRcv->m_posZ), EtherType::Crumb, msgRcv->m_color);
-				}
-			}
-			else
-			{
-				break;
-			}
-		}
-		else
-		{
-			break;
-		}
-	} while (true);
-}
-
-void Disconnect()
-{
-	// Close the socket
-	closesocket(SendingSocket);
-	// Do the clean up
-	WSACleanup();
-}
-
-}
 
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "PPhHelpers.h"
+#include "ServerProtocol.h"
 #include "memory"
 #include "array"
 #include "vector"
@@ -43,20 +44,16 @@ private:
 	ParallelPhysics();
 
 	VectorInt32Math m_universeSize = VectorInt32Math::ZeroVector;
-	uint8_t m_threadsCount = 1;
-	bool m_bSimulateNearObserver = false;
 	bool m_isSimulationRunning = false;
 };
 
-constexpr int8_t EYE_FOV = 90; // Daphnia eye fov
 typedef int32_t PhotonParam; // warning! Depends on OBSERVER_EYE_SIZE
-constexpr int32_t OBSERVER_EYE_SIZE = 16; // pixels
 constexpr int32_t UPDATE_EYE_TEXTURE_OUT = 20; // milliseconds
 constexpr int32_t STATISTIC_REQUEST_PERIOD = 900; // milliseconds
-typedef std::array< std::array<OrientationVectorMath, OBSERVER_EYE_SIZE>, OBSERVER_EYE_SIZE> EyeArray;
+typedef std::array< std::array<OrientationVectorMath, CommonParams::OBSERVER_EYE_SIZE>, CommonParams::OBSERVER_EYE_SIZE> EyeArray;
 typedef std::shared_ptr< EyeArray > SP_EyeState;
-typedef std::array< std::array<EtherColor, OBSERVER_EYE_SIZE>, OBSERVER_EYE_SIZE> EyeColorArray;
-typedef std::array< std::array<uint64_t, OBSERVER_EYE_SIZE>, OBSERVER_EYE_SIZE> EyeUpdateTimeArray;
+typedef std::array< std::array<EtherColor, CommonParams::OBSERVER_EYE_SIZE>, CommonParams::OBSERVER_EYE_SIZE> EyeColorArray;
+typedef std::array< std::array<uint64_t, CommonParams::OBSERVER_EYE_SIZE>, CommonParams::OBSERVER_EYE_SIZE> EyeUpdateTimeArray;
 typedef std::shared_ptr< EyeColorArray > SP_EyeColorArray;
 
 class Observer
@@ -129,10 +126,4 @@ private:
 	uint64_t m_serverClientPerformanceRatio = 0;
 };
 
-namespace AdminTcp
-{
-	bool Connect();
-	void LoadCrumbs();
-	void Disconnect();
-}
 }

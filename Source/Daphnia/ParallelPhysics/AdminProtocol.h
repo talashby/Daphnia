@@ -6,7 +6,6 @@
 
 #define ADMIN_TCP_PORT 27015
 #define ADMIN_TCP_PORT_STR "27015"
-#define DEFAULT_BUFLEN 512
 
 namespace PPh
 {
