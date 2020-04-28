@@ -31,10 +31,6 @@ public:
 
 	const VectorInt32Math &GetUniverseSize() const;
 
-	void StartSimulation();
-	void StopSimulation();
-	bool IsSimulationRunning() const;
-
 	bool InitEtherCell(const VectorInt32Math &pos, EtherType::EEtherType type, const EtherColor &color = EtherColor()); // returns true if success
 
 	bool GetNextCrumb(VectorInt32Math &outCrumbPos, EtherColor &outCrumbColor);
@@ -44,7 +40,6 @@ private:
 	ParallelPhysics();
 
 	VectorInt32Math m_universeSize = VectorInt32Math::ZeroVector;
-	bool m_isSimulationRunning = false;
 };
 
 typedef int32_t PhotonParam; // warning! Depends on OBSERVER_EYE_SIZE
@@ -60,10 +55,15 @@ class Observer
 {
 public:
 	static void Init();
-
 	static Observer* GetInstance();
+	Observer() = default;
+	virtual ~Observer() = default;
 
-	void PPhTick(uint64_t socketC, uint32_t port);
+	void StartSimulation();
+	void StopSimulation();
+	bool IsSimulationRunning() const;
+
+	virtual void PPhTick();
 
 	void ChangeOrientation(const SP_EyeState &eyeState);
 	SP_EyeColorArray GrabTexture();
@@ -81,12 +81,19 @@ public:
 		uint32_t &outTickTimeMusAverageObserverThread, // average tick time in microseconds
 		uint64_t &outClientServerPerformanceRatio,
 		uint64_t &outServerClientPerformanceRatio);
-
+protected:
+	const char* RecvServerMsg(); // returns nullptr if error occur
+	bool SendServerMsg(const MsgBase &msg, int32_t msgSize); // returns false if error occur
 private:
 	friend class ParallelPhysics;
 	void SetPosition(const VectorInt32Math &pos);
 	void CalculateOrientChangers(const EyeArray &eyeArray);
 	OrientationVectorMath MaximizePPhOrientation(const VectorFloatMath &orientationVector);
+
+	bool m_isSimulationRunning = false;
+
+	uint64_t m_socketC;
+	uint32_t m_port;
 
 	SP_EyeState m_eyeState;
 	SP_EyeState m_newEyeState; // Used from different threads

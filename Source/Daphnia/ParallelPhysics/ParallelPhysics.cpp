@@ -98,85 +98,6 @@ const VectorInt32Math & ParallelPhysics::GetUniverseSize() const
 	return m_universeSize;
 }
 
-std::thread s_simulationThread;
-void ParallelPhysics::StartSimulation()
-{
-	m_isSimulationRunning = true;
-	static uint64_t lastObserverId = 0;
-	SOCKET socketC = 0;
-	u_short port = CommonParams::CLIENT_UDP_PORT_START;
-	for (; port < CommonParams::CLIENT_UDP_PORT_START + CommonParams::MAX_CLIENTS; ++port)
-	{
-		struct sockaddr_in serverInfo;
-		int len = sizeof(serverInfo);
-		serverInfo.sin_family = AF_INET;
-		serverInfo.sin_port = htons(port);
-		serverInfo.sin_addr.s_addr = inet_addr("127.0.0.1");
-		socketC = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-		DWORD timeout = 1000; // 1000 ms
-		setsockopt(socketC, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<char*>(&timeout), sizeof(DWORD));
-		MsgCheckVersion msg;
-		msg.m_clientVersion = CommonParams::PROTOCOL_VERSION;
-		msg.m_observerId = lastObserverId;
-		if (sendto(socketC, (const char*)&msg, sizeof(msg), 0, (sockaddr*)&serverInfo, len) != SOCKET_ERROR)
-		{
-			char buffer[CommonParams::DEFAULT_BUFLEN];
-			if (recvfrom(socketC, buffer, sizeof(buffer), 0, (sockaddr*)&serverInfo, &len) > 0)
-			{
-				if (const MsgCheckVersionResponse *msgReceive = QueryMessage<MsgCheckVersionResponse>(buffer))
-				{
-					if (msgReceive->m_serverVersion == CommonParams::PROTOCOL_VERSION)
-					{
-						lastObserverId = msgReceive->m_observerId;
-						break;
-					}
-					else
-					{
-						// wrong protocol
-						closesocket(socketC);
-						socketC = 0;
-						break;
-					}
-				}
-			}
-		}
-		socketC = 0;
-		closesocket(socketC);
-	}
-	if (socketC)
-	{
-		u_long mode = 1;  // 1 to enable non-blocking socket
-		ioctlsocket(socketC, FIONBIO, &mode);
-		s_simulationThread = std::thread([this, socketC, port]()
-		{
-			while (m_isSimulationRunning)
-			{
-				Observer::GetInstance()->PPhTick(socketC, port);
-			}
-			closesocket(socketC);
-		});
-	}
-	else
-	{
-		// server not found
-	}
-
-}
-
-void ParallelPhysics::StopSimulation()
-{
-	m_isSimulationRunning = false;
-	if (s_simulationThread.native_handle())
-	{
-		s_simulationThread.join();
-	}
-}
-
-bool ParallelPhysics::IsSimulationRunning() const
-{
-	return m_isSimulationRunning;
-}
-
 ParallelPhysics::ParallelPhysics()
 {}
 
@@ -271,27 +192,101 @@ PPh::Observer* Observer::GetInstance()
 	return s_observer;
 }
 
-void Observer::PPhTick(uint64_t socketC, uint32_t port)
+std::thread s_simulationThread;
+void Observer::StartSimulation()
 {
-	struct sockaddr_in serverInfo;
-	int len = sizeof(serverInfo);
-	serverInfo.sin_family = AF_INET;
-	serverInfo.sin_port = htons(port);
-	serverInfo.sin_addr.s_addr = inet_addr("127.0.0.1");
+	m_isSimulationRunning = true;
+	static uint64_t lastObserverId = 0;
+	m_socketC = 0;
+	m_port = CommonParams::CLIENT_UDP_PORT_START;
+	for (; m_port < CommonParams::CLIENT_UDP_PORT_START + CommonParams::MAX_CLIENTS; ++m_port)
+	{
+		struct sockaddr_in serverInfo;
+		int len = sizeof(serverInfo);
+		serverInfo.sin_family = AF_INET;
+		serverInfo.sin_port = htons(m_port);
+		serverInfo.sin_addr.s_addr = inet_addr("127.0.0.1");
+		m_socketC = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+		DWORD timeout = 1000; // 1000 ms
+		setsockopt(m_socketC, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<char*>(&timeout), sizeof(DWORD));
+		MsgCheckVersion msg;
+		msg.m_clientVersion = CommonParams::PROTOCOL_VERSION;
+		msg.m_observerId = lastObserverId;
+		if (sendto(m_socketC, (const char*)&msg, sizeof(msg), 0, (sockaddr*)&serverInfo, len) != SOCKET_ERROR)
+		{
+			char buffer[CommonParams::DEFAULT_BUFLEN];
+			if (recvfrom(m_socketC, buffer, sizeof(buffer), 0, (sockaddr*)&serverInfo, &len) > 0)
+			{
+				if (const MsgCheckVersionResponse *msgReceive = QueryMessage<MsgCheckVersionResponse>(buffer))
+				{
+					if (msgReceive->m_serverVersion == CommonParams::PROTOCOL_VERSION)
+					{
+						lastObserverId = msgReceive->m_observerId;
+						break;
+					}
+					else
+					{
+						// wrong protocol
+						closesocket(m_socketC);
+						m_socketC = 0;
+						break;
+					}
+				}
+			}
+		}
+		m_socketC = 0;
+		closesocket(m_socketC);
+	}
+	if (m_socketC)
+	{
+		u_long mode = 1;  // 1 to enable non-blocking socket
+		ioctlsocket(m_socketC, FIONBIO, &mode);
+		s_simulationThread = std::thread([this]()
+		{
+			while (m_isSimulationRunning)
+			{
+				Observer::GetInstance()->PPhTick();
+			}
+			closesocket(m_socketC);
+		});
+	}
+	else
+	{
+		// server not found
+	}
+
+}
+
+void Observer::StopSimulation()
+{
+	m_isSimulationRunning = false;
+	if (s_simulationThread.native_handle())
+	{
+		s_simulationThread.join();
+	}
+}
+
+bool Observer::IsSimulationRunning() const
+{
+	return m_isSimulationRunning;
+}
+
+void Observer::PPhTick()
+{
 	MsgGetState msg;
-	if (sendto(socketC, (const char*)&msg, sizeof(msg), 0, (sockaddr*)&serverInfo, len) != SOCKET_ERROR)
+	if (SendServerMsg(msg, sizeof(msg)))
 	{
 		if (GetTimeMs() - m_lastUpdateStateExtTime > UPDATE_EYE_TEXTURE_OUT)
 		{
 			m_lastUpdateStateExtTime = GetTimeMs();
 			MsgGetStateExt msgGetStateExt;
-			sendto(socketC, (const char*)&msgGetStateExt, sizeof(msgGetStateExt), 0, (sockaddr*)&serverInfo, len);
+			SendServerMsg(msgGetStateExt, sizeof(msgGetStateExt));
 		}
 		if (GetTimeMs() - m_lastStatisticRequestTime > STATISTIC_REQUEST_PERIOD)
 		{
 			m_lastStatisticRequestTime = GetTimeMs();
 			MsgGetStatistics msgGetStatistics;
-			sendto(socketC, (const char*)&msgGetStatistics, sizeof(msgGetStatistics), 0, (sockaddr*)&serverInfo, len);
+			SendServerMsg(msgGetStatistics, sizeof(msgGetStatistics));
 		}
 
 		AMyPlayerController *controller = AMyPlayerController::GetInstance();
@@ -301,42 +296,41 @@ void Observer::PPhTick(uint64_t socketC, uint32_t port)
 			{
 				MsgRotateLeft msgMove;
 				msgMove.m_value = 4;
-				sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
+				SendServerMsg(msgMove, sizeof(msgMove));
 			}
 			if (controller->IsRight())
 			{
 				MsgRotateRight msgMove;
 				msgMove.m_value = 4;
-				sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
+				SendServerMsg(msgMove, sizeof(msgMove));
 			}
 			if (controller->IsUp())
 			{
 				MsgRotateDown msgMove;
 				msgMove.m_value = 4;
-				sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
+				SendServerMsg(msgMove, sizeof(msgMove));
 			}
 			if (controller->IsDown())
 			{
 				MsgRotateUp msgMove;
 				msgMove.m_value = 4;
-				sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
+				SendServerMsg(msgMove, sizeof(msgMove));
 			}
 			if (controller->IsForward())
 			{
 				MsgMoveForward msgMove;
 				msgMove.m_value = 16;
-				sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
+				SendServerMsg(msgMove, sizeof(msgMove));
 			}
 			if (controller->IsBackward())
 			{
 				MsgMoveBackward msgMove;
 				msgMove.m_value = 16;
-				sendto(socketC, (const char*)&msgMove, sizeof(msgMove), 0, (sockaddr*)&serverInfo, len);
+				SendServerMsg(msgMove, sizeof(msgMove));
 			}
 		}
 
-		char buffer[CommonParams::DEFAULT_BUFLEN];
-		while(recvfrom(socketC, buffer, sizeof(buffer), 0, (sockaddr*)&serverInfo, &len) > 0)
+		while(const char *buffer = RecvServerMsg())
 		{
 			static uint64_t time = 0;
 			if (const MsgGetStateResponse *msgGetStateResponse = QueryMessage<MsgGetStateResponse>(buffer))
@@ -486,6 +480,35 @@ void Observer::GetStatisticsParams(uint32_t &outQuantumOfTimePerSecond, uint32_t
 	outTickTimeMusAverageObserverThread = m_TickTimeMusAverageObserverThread;
 	outClientServerPerformanceRatio = m_clientServerPerformanceRatio;
 	outServerClientPerformanceRatio = m_serverClientPerformanceRatio;
+}
+
+const char* Observer::RecvServerMsg()
+{
+	static char buffer[CommonParams::DEFAULT_BUFLEN];
+	struct sockaddr_in fromCur;
+	int fromlen = sizeof(sockaddr_in);
+	int result = recvfrom(m_socketC, buffer, sizeof(buffer), 0, (sockaddr*)&fromCur, &fromlen);
+	if (result > 0)
+	{
+		return &buffer[0];
+	}
+
+	return nullptr;
+}
+
+bool Observer::SendServerMsg(const MsgBase &msg, int32_t msgSize)
+{
+	struct sockaddr_in serverInfo;
+	int len = sizeof(serverInfo);
+	serverInfo.sin_family = AF_INET;
+	serverInfo.sin_port = htons(m_port);
+	serverInfo.sin_addr.s_addr = inet_addr("127.0.0.1");
+	if (sendto(m_socketC, (const char*)&msg, msgSize, 0, (sockaddr*)&serverInfo, len) == SOCKET_ERROR)
+	{
+		printf("SendServerMsg sendto error");
+		return false;
+	}
+	return true;
 }
 
 int32_t RoundToMinMaxPPhInt(float value)

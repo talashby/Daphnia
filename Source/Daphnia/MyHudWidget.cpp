@@ -61,9 +61,9 @@ void UMyHudWidget::NativeOnInitialized()
 
 void UMyHudWidget::NativeDestruct()
 {
-	if (PPh::ParallelPhysics::GetInstance() && PPh::ParallelPhysics::GetInstance()->IsSimulationRunning())
+	if (PPh::Observer::GetInstance() && PPh::Observer::GetInstance()->IsSimulationRunning())
 	{
-		PPh::ParallelPhysics::GetInstance()->StopSimulation();
+		PPh::Observer::GetInstance()->StopSimulation();
 	}
 }
 
@@ -74,7 +74,7 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 		return;
 	}
 
-	if (PPh::ParallelPhysics::GetInstance()->IsSimulationRunning() && PPh::Observer::GetInstance())
+	if (PPh::Observer::GetInstance() && PPh::Observer::GetInstance()->IsSimulationRunning())
 	{
 		PPh::VectorInt32Math outPosition;
 		uint16_t outMovingProgress;
@@ -161,7 +161,7 @@ void UMyHudWidget::ShowPPhStats(int16_t latitude, int16_t longitude)
 	if (PPh::GetTimeMs() - lastTime > 500)
 	{
 		lastTime = PPh::GetTimeMs();
-		if (pTextBlockStats && PPh::ParallelPhysics::GetInstance()->IsSimulationRunning())
+		if (pTextBlockStats && PPh::Observer::GetInstance()->IsSimulationRunning())
 		{
 			uint32_t outQuantumOfTimePerSecond;
 			uint32_t outUniverseThreadsNum;
@@ -204,9 +204,9 @@ void UMyHudWidget::SwitchCameraView()
 void UMyHudWidget::SwitchToParallelPhysics()
 {
 	UWidget *BoxStats = WidgetTree->FindWidget<UWidget>(TEXT("Border_Stats"));
-	if (PPh::ParallelPhysics::GetInstance()->IsSimulationRunning())
+	if (PPh::Observer::GetInstance() && PPh::Observer::GetInstance()->IsSimulationRunning())
 	{
-		PPh::ParallelPhysics::GetInstance()->StopSimulation();
+		PPh::Observer::GetInstance()->StopSimulation();
 		if (BoxStats)
 		{
 			BoxStats->SetVisibility(ESlateVisibility::Hidden);
@@ -223,7 +223,7 @@ void UMyHudWidget::SwitchToParallelPhysics()
 			FVector pawnLocation = ADaphniaPawn::GetInstance()->GetActorLocation();
 //			PPh::VectorInt32Math position = UPPSettings::ConvertLocationToPPhPosition(pawnLocation);
 			PPh::Observer::Init();
-			PPh::ParallelPhysics::GetInstance()->StartSimulation();
+			PPh::Observer::GetInstance()->StartSimulation();
 //			m_PawnRotation = ADaphniaPawn::GetInstance()->GetActorRotation();
 //			m_ObserverPos = PPh::Observer::GetInstance()->GetPosition();
 
