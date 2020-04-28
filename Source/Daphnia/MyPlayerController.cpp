@@ -2,7 +2,7 @@
 
 
 #include "MyPlayerController.h"
-
+#include "ParallelPhysics/ParallelPhysics.h"
 #include "DaphniaPawn.h"
 
 static AMyPlayerController* s_InstancePtr;
@@ -79,26 +79,32 @@ bool AMyPlayerController::InputKey(FKey Key, EInputEvent EventType, float Amount
 		if ("A" == Key.GetFName() || "Left" == Key.GetFName())
 		{
 			m_isLeft = state;
+			PPh::Observer::GetInstance()->SetIsLeft(state);
 		}
 		else if ("D" == Key.GetFName() || "Right" == Key.GetFName())
 		{
 			m_isRight = state;
+			PPh::Observer::GetInstance()->SetIsRight(state);
 		}
 		else if ("W" == Key.GetFName() || "Up" == Key.GetFName())
 		{
 			m_isUp = state;
+			PPh::Observer::GetInstance()->SetIsUp(state);
 		}
 		else if ("S" == Key.GetFName() || "Down" == Key.GetFName())
 		{
 			m_isDown = state;
+			PPh::Observer::GetInstance()->SetIsDown(state);
 		}
 		else if ("SpaceBar" == Key.GetFName())
 		{
 			m_isForward = state;
+			PPh::Observer::GetInstance()->SetIsForward(state);
 		}
 		else if ("Backslash" == Key.GetFName())
 		{
 			m_isBackward = state;
+			PPh::Observer::GetInstance()->SetIsBackward(state);
 		}
 	}
 

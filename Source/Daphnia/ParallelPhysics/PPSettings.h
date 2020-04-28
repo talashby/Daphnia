@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "PPhHelpers.h"
+#include "ParallelPhysics.h"
 #include "PPSettings.generated.h"
 
 /**
@@ -40,4 +41,14 @@ private:
 	/** Universe size. */
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	FBox UniverseBox = FBox(EForceInit::ForceInit);
+};
+
+class MyObserver : public PPh::Observer
+{
+public:
+	MyObserver();
+	~MyObserver();
+
+private:
+
 };

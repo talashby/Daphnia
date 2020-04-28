@@ -80,7 +80,7 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 		uint16_t outMovingProgress;
 		int16_t outLatitude, outLongitude;
 		PPh::VectorInt32Math outEatenCrumbPos;
-		PPh::Observer::GetInstance()->GetStateParams(outPosition, outMovingProgress, outLatitude, outLongitude, outEatenCrumbPos);
+		PPh::Observer::GetInstance()->GetStateExtParams(outPosition, outMovingProgress, outLatitude, outLongitude, outEatenCrumbPos);
 		FVector location = UPPSettings::ConvertPPhPositionToLocation(outPosition);
 		ADaphniaPawn::GetInstance()->SetActorLocation(location);
 		FRotator orient(outLatitude, outLongitude, 0);
@@ -222,7 +222,7 @@ void UMyHudWidget::SwitchToParallelPhysics()
 			eyeState = GetPawnEyeState(World);
 			FVector pawnLocation = ADaphniaPawn::GetInstance()->GetActorLocation();
 //			PPh::VectorInt32Math position = UPPSettings::ConvertLocationToPPhPosition(pawnLocation);
-			PPh::Observer::Init();
+			PPh::Observer::Init(new MyObserver());
 			PPh::Observer::GetInstance()->StartSimulation();
 //			m_PawnRotation = ADaphniaPawn::GetInstance()->GetActorRotation();
 //			m_ObserverPos = PPh::Observer::GetInstance()->GetPosition();

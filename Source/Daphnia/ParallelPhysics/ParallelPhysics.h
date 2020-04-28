@@ -54,7 +54,7 @@ typedef std::shared_ptr< EyeColorArray > SP_EyeColorArray;
 class Observer
 {
 public:
-	static void Init();
+	static void Init(Observer *observer = nullptr);
 	static Observer* GetInstance();
 	Observer() = default;
 	virtual ~Observer() = default;
@@ -63,7 +63,7 @@ public:
 	void StopSimulation();
 	bool IsSimulationRunning() const;
 
-	virtual void PPhTick();
+	void PPhTick();
 
 	void ChangeOrientation(const SP_EyeState &eyeState);
 	SP_EyeColorArray GrabTexture();
@@ -72,7 +72,7 @@ public:
 	const VectorInt32Math& GetOrientMinChanger() const;
 	const VectorInt32Math& GetOrientMaxChanger() const;
 
-	void GetStateParams(VectorInt32Math &outPosition, uint16_t &outMovingProgress, int16_t &outLatitude, int16_t &outLongitude, 
+	void GetStateExtParams(VectorInt32Math &outPosition, uint16_t &outMovingProgress, int16_t &outLatitude, int16_t &outLongitude, 
 		VectorInt32Math &outEatenCrumbPos);
 
 	void GetStatisticsParams(uint32_t &outQuantumOfTimePerSecond, uint32_t &outUniverseThreadsNum,
@@ -81,9 +81,19 @@ public:
 		uint32_t &outTickTimeMusAverageObserverThread, // average tick time in microseconds
 		uint64_t &outClientServerPerformanceRatio,
 		uint64_t &outServerClientPerformanceRatio);
+
+	// Set motor neurons
+	void SetIsLeft(bool value) { m_isLeft = value; }
+	void SetIsRight(bool value) { m_isRight = value; }
+	void SetIsUp(bool value) { m_isUp = value; }
+	void SetIsDown(bool value) { m_isDown = value; }
+	void SetIsForward(bool value) { m_isForward = value; }
+	void SetIsBackward(bool value) { m_isBackward = value; }
+
 protected:
 	const char* RecvServerMsg(); // returns nullptr if error occur
 	bool SendServerMsg(const MsgBase &msg, int32_t msgSize); // returns false if error occur
+	virtual void HandleReceivedMessage(const char *buffer);
 private:
 	friend class ParallelPhysics;
 	void SetPosition(const VectorInt32Math &pos);
@@ -131,6 +141,9 @@ private:
 	uint32_t m_TickTimeMusAverageObserverThread = 0;
 	uint64_t m_clientServerPerformanceRatio = 0;
 	uint64_t m_serverClientPerformanceRatio = 0;
+
+	// motor neurons
+	bool m_isLeft=false, m_isRight=false, m_isUp=false, m_isDown=false, m_isForward=false, m_isBackward=false;
 };
 
 }

@@ -6,7 +6,8 @@
 #include "Engine/StaticMeshActor.h"
 #include "EngineUtils.h"
 #include "array"
-#include "ParallelPhysics.h"
+
+
 
 static UPPSettings *s_PPSettings = nullptr;
 
@@ -196,4 +197,13 @@ PPh::OrientationVectorMath UPPSettings::ConvertRotationToPPhOrientation(const FV
 	pphOrientation.m_posZ = FixFloatErrors(pphOrientation.m_posZ, maxPPhComponent);
 
 	return pphOrientation;
+}
+
+
+MyObserver::MyObserver()
+{
+}
+
+MyObserver::~MyObserver()
+{
 }

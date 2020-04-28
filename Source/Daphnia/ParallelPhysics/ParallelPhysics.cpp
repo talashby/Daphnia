@@ -7,7 +7,6 @@
 #include "fstream"
 #include "atomic"
 #include "chrono"
-#include "../MyPlayerController.h"
 
 #undef UNICODE
 #define WIN32_LEAN_AND_MEAN
@@ -178,13 +177,20 @@ Observer* s_observer = nullptr;
 std::mutex s_observerStateParamsMutex;
 std::mutex s_serverStatisticsMutex;
 
-void Observer::Init()
+void Observer::Init(Observer *observer)
 {
 	if (s_observer)
 	{
 		delete s_observer;
 	}
-	s_observer = new Observer();
+	if (observer)
+	{
+		s_observer = observer;
+	}
+	else
+	{
+		s_observer = new Observer();
+	}
 }
 
 PPh::Observer* Observer::GetInstance()
@@ -289,53 +295,49 @@ void Observer::PPhTick()
 			SendServerMsg(msgGetStatistics, sizeof(msgGetStatistics));
 		}
 
-		AMyPlayerController *controller = AMyPlayerController::GetInstance();
-		if (controller)
+		if (m_isLeft)
 		{
-			if (controller->IsLeft())
-			{
-				MsgRotateLeft msgMove;
-				msgMove.m_value = 4;
-				SendServerMsg(msgMove, sizeof(msgMove));
-			}
-			if (controller->IsRight())
-			{
-				MsgRotateRight msgMove;
-				msgMove.m_value = 4;
-				SendServerMsg(msgMove, sizeof(msgMove));
-			}
-			if (controller->IsUp())
-			{
-				MsgRotateDown msgMove;
-				msgMove.m_value = 4;
-				SendServerMsg(msgMove, sizeof(msgMove));
-			}
-			if (controller->IsDown())
-			{
-				MsgRotateUp msgMove;
-				msgMove.m_value = 4;
-				SendServerMsg(msgMove, sizeof(msgMove));
-			}
-			if (controller->IsForward())
-			{
-				MsgMoveForward msgMove;
-				msgMove.m_value = 16;
-				SendServerMsg(msgMove, sizeof(msgMove));
-			}
-			if (controller->IsBackward())
-			{
-				MsgMoveBackward msgMove;
-				msgMove.m_value = 16;
-				SendServerMsg(msgMove, sizeof(msgMove));
-			}
+			MsgRotateLeft msgMove;
+			msgMove.m_value = 4;
+			SendServerMsg(msgMove, sizeof(msgMove));
+		}
+		if (m_isRight)
+		{
+			MsgRotateRight msgMove;
+			msgMove.m_value = 4;
+			SendServerMsg(msgMove, sizeof(msgMove));
+		}
+		if (m_isUp)
+		{
+			MsgRotateDown msgMove;
+			msgMove.m_value = 4;
+			SendServerMsg(msgMove, sizeof(msgMove));
+		}
+		if (m_isDown)
+		{
+			MsgRotateUp msgMove;
+			msgMove.m_value = 4;
+			SendServerMsg(msgMove, sizeof(msgMove));
+		}
+		if (m_isForward)
+		{
+			MsgMoveForward msgMove;
+			msgMove.m_value = 16;
+			SendServerMsg(msgMove, sizeof(msgMove));
+		}
+		if (m_isBackward)
+		{
+			MsgMoveBackward msgMove;
+			msgMove.m_value = 16;
+			SendServerMsg(msgMove, sizeof(msgMove));
 		}
 
+		static uint64_t timeOfTheUniverse = 0;
 		while(const char *buffer = RecvServerMsg())
 		{
-			static uint64_t time = 0;
 			if (const MsgGetStateResponse *msgGetStateResponse = QueryMessage<MsgGetStateResponse>(buffer))
 			{
-				time = msgGetStateResponse->m_time;
+				timeOfTheUniverse = msgGetStateResponse->m_time;
 			}
 			else if (const MsgGetStateExtResponse *msgGetStateExtResponse = QueryMessage<MsgGetStateExtResponse>(buffer))
 			{
@@ -354,7 +356,7 @@ void Observer::PPhTick()
 			{
 				// receive photons back // revert Y-coordinate because of texture format
 				m_eyeColorArray[CommonParams::OBSERVER_EYE_SIZE - msgSendPhoton->m_posY - 1][msgSendPhoton->m_posX] = msgSendPhoton->m_color;
-				m_eyeUpdateTimeArray[CommonParams::OBSERVER_EYE_SIZE - msgSendPhoton->m_posY - 1][msgSendPhoton->m_posX] = time;
+				m_eyeUpdateTimeArray[CommonParams::OBSERVER_EYE_SIZE - msgSendPhoton->m_posY - 1][msgSendPhoton->m_posX] = timeOfTheUniverse;
 			}
 			else if (const MsgGetStatisticsResponse *msgRcv = QueryMessage<MsgGetStatisticsResponse>(buffer))
 			{
@@ -367,41 +369,44 @@ void Observer::PPhTick()
 				m_clientServerPerformanceRatio = msgRcv->m_clientServerPerformanceRatio;
 				m_serverClientPerformanceRatio = msgRcv->m_serverClientPerformanceRatio;
 			}
-
-
-			// update eye texture
-			if (GetTimeMs() - m_lastTextureUpdateTime > UPDATE_EYE_TEXTURE_OUT)
+			else
 			{
-				m_lastTextureUpdateTime = GetTimeMs();
-				SP_EyeColorArray spEyeColorArrayOut;
-				spEyeColorArrayOut = std::atomic_load(&m_spEyeColorArrayOut);
-				if (!spEyeColorArrayOut)
+				HandleReceivedMessage(buffer);
+			}
+		}
+
+		// update eye texture
+		if (timeOfTheUniverse && GetTimeMs() - m_lastTextureUpdateTime > UPDATE_EYE_TEXTURE_OUT)
+		{
+			m_lastTextureUpdateTime = GetTimeMs();
+			SP_EyeColorArray spEyeColorArrayOut;
+			spEyeColorArrayOut = std::atomic_load(&m_spEyeColorArrayOut);
+			if (!spEyeColorArrayOut)
+			{
+				spEyeColorArrayOut = std::make_shared<EyeColorArray>();
+				EyeColorArray &eyeColorArray = *spEyeColorArrayOut;
+				for (int yy = 0; yy < eyeColorArray.size(); ++yy)
 				{
-					spEyeColorArrayOut = std::make_shared<EyeColorArray>();
-					EyeColorArray &eyeColorArray = *spEyeColorArrayOut;
-					for (int yy = 0; yy < eyeColorArray.size(); ++yy)
+					for (int xx = 0; xx < eyeColorArray[yy].size(); ++xx)
 					{
-						for (int xx = 0; xx < eyeColorArray[yy].size(); ++xx)
+						eyeColorArray[yy][xx] = m_eyeColorArray[yy][xx];
+						int64_t timeDiff = timeOfTheUniverse - m_eyeUpdateTimeArray[yy][xx];
+						uint8_t alpha = m_eyeColorArray[yy][xx].m_colorA;
+						if (timeDiff < EYE_IMAGE_DELAY)
 						{
-							eyeColorArray[yy][xx] = m_eyeColorArray[yy][xx];
-							int64_t timeDiff = time - m_eyeUpdateTimeArray[yy][xx];
-							uint8_t alpha = m_eyeColorArray[yy][xx].m_colorA;
-							if (timeDiff < EYE_IMAGE_DELAY)
-							{
-								alpha = alpha * (EYE_IMAGE_DELAY - timeDiff) / EYE_IMAGE_DELAY;
-								eyeColorArray[yy][xx].m_colorA = alpha;
-							}
-							else
-							{
-								alpha = 0;
-								//eyeColorArray[ii][jj] = EtherColor::ZeroColor;
-								//eyeColorArray[ii][jj].m_colorA = 255;
-							}
+							alpha = alpha * (EYE_IMAGE_DELAY - timeDiff) / EYE_IMAGE_DELAY;
 							eyeColorArray[yy][xx].m_colorA = alpha;
 						}
+						else
+						{
+							alpha = 0;
+							//eyeColorArray[ii][jj] = EtherColor::ZeroColor;
+							//eyeColorArray[ii][jj].m_colorA = 255;
+						}
+						eyeColorArray[yy][xx].m_colorA = alpha;
 					}
-					std::atomic_store(&m_spEyeColorArrayOut, spEyeColorArrayOut);
 				}
+				std::atomic_store(&m_spEyeColorArrayOut, spEyeColorArrayOut);
 			}
 		}
 	}
@@ -455,7 +460,7 @@ const VectorInt32Math& Observer::GetOrientMaxChanger() const
 	return m_orientMaxChanger;
 }
 
-void Observer::GetStateParams(VectorInt32Math &outPosition, uint16_t &outMovingProgress, int16_t &outLatitude,
+void Observer::GetStateExtParams(VectorInt32Math &outPosition, uint16_t &outMovingProgress, int16_t &outLatitude,
 	int16_t &outLongitude, VectorInt32Math &outEatenCrumbPos)
 {
 	std::lock_guard<std::mutex> guard(s_observerStateParamsMutex);
@@ -561,6 +566,11 @@ OrientationVectorMath Observer::MaximizePPhOrientation(const VectorFloatMath &or
 	//pphOrientation.m_posZ = FixFloatErrors(pphOrientation.m_posZ, maxPPhComponent);
 
 	return pphOrientation;
+}
+
+void Observer::HandleReceivedMessage(const char *buffer)
+{
+	printf("Unhandled message from server: %d", buffer[0]);
 }
 
 void Observer::SetPosition(const VectorInt32Math &pos)
