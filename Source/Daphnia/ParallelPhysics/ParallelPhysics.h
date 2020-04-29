@@ -10,38 +10,6 @@
 namespace PPh
 {
 
-struct EtherType
-{
-	enum EEtherType
-	{
-		Space = 0,
-		Crumb,
-		Block,
-		Observer
-	};
-};
-
-class ParallelPhysics
-{
-public:
-
-	static bool Init(const VectorInt32Math &universeSize); // returns true if success. threadsCount 0 means simulate near observer
-	static bool SaveUniverse(const std::string &fileName);
-	static ParallelPhysics* GetInstance();
-
-	const VectorInt32Math &GetUniverseSize() const;
-
-	bool InitEtherCell(const VectorInt32Math &pos, EtherType::EEtherType type, const EtherColor &color = EtherColor()); // returns true if success
-
-	bool GetNextCrumb(VectorInt32Math &outCrumbPos, EtherColor &outCrumbColor);
-	static void EtherCellSetCrumbActor(const VectorInt32Math &pos, AActor *crumbActor);
-	static AActor* EtherCellGetCrumbActor(const VectorInt32Math &pos);
-private:
-	ParallelPhysics();
-
-	VectorInt32Math m_universeSize = VectorInt32Math::ZeroVector;
-};
-
 typedef int32_t PhotonParam; // warning! Depends on OBSERVER_EYE_SIZE
 constexpr int32_t UPDATE_EYE_TEXTURE_OUT = 20; // milliseconds
 constexpr int32_t STATISTIC_REQUEST_PERIOD = 900; // milliseconds

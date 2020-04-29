@@ -102,6 +102,17 @@ namespace PPh
 		VectorInt32Math m_maxVector = VectorInt32Math::ZeroVector;
 	};
 
+	struct EtherType
+	{
+		enum EEtherType
+		{
+			Space = 0,
+			Crumb,
+			Block,
+			Observer
+		};
+	};
+
 	class EtherColor
 	{
 	public:

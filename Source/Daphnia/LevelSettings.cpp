@@ -148,7 +148,7 @@ void ALevelSettings::BeginPlay()
 		{
 			PPh::VectorInt32Math outCrumbPos;
 			PPh::EtherColor outCrumbColor;
-			bool bResult = PPh::ParallelPhysics::GetInstance()->GetNextCrumb(outCrumbPos, outCrumbColor);
+			bool bResult = PPh::AdminUniverse::GetNextCrumb(outCrumbPos, outCrumbColor);
 			if (!bResult)
 			{
 				break;
@@ -177,7 +177,7 @@ void ALevelSettings::BeginPlay()
 				check(false);
 			}
 			AActor *crumb = SpawnCrumb(location, materialNum);
-			PPh::ParallelPhysics::EtherCellSetCrumbActor(outCrumbPos, crumb);
+			PPh::AdminUniverse::EtherCellSetCrumbActor(outCrumbPos, crumb);
 		}
 	}
 }

@@ -2,6 +2,7 @@
 
 
 #include "PPSettings.h"
+#include "AdminTcpClient.h"
 #include "../LevelSettings.h"
 #include "Engine/StaticMeshActor.h"
 #include "EngineUtils.h"
@@ -35,7 +36,7 @@ void UPPSettings::InitParallelPhysics()
 {
 	FVector UniverseSize = UniverseBox.GetSize();
 	PPh::VectorInt32Math pphUniverseSize(UniverseSize.X / UniverseEtherCellSize, UniverseSize.Y / UniverseEtherCellSize, UniverseSize.Z / UniverseEtherCellSize);
-	bool bParallelPhysicsInit = PPh::ParallelPhysics::Init(pphUniverseSize);
+	bool bParallelPhysicsInit = PPh::AdminUniverse::Init(pphUniverseSize);
 	check(bParallelPhysicsInit);
 }
 
@@ -80,7 +81,7 @@ void UPPSettings::ConvertGeometry(UWorld *World)
 									if (ii < Colors.size())
 									{
 										PPh::EtherColor etherColor(Colors[ii].R, Colors[ii].G, Colors[ii].B);
-										bool bInitEtherCell = PPh::ParallelPhysics::GetInstance()->InitEtherCell(universePos, PPh::EtherType::Crumb, etherColor);
+										bool bInitEtherCell = PPh::AdminUniverse::InitEtherCell(universePos, PPh::EtherType::Crumb, etherColor);
 										check(bInitEtherCell);
 										isCrumb = true;
 										break;
@@ -95,7 +96,7 @@ void UPPSettings::ConvertGeometry(UWorld *World)
 							{
 								constexpr uint8 blockGrayColor = 50;
 								PPh::EtherColor etherColor(blockGrayColor, blockGrayColor, blockGrayColor);
-								bool bInitEtherCell = PPh::ParallelPhysics::GetInstance()->InitEtherCell(universePos, PPh::EtherType::Block, etherColor);
+								bool bInitEtherCell = PPh::AdminUniverse::InitEtherCell(universePos, PPh::EtherType::Block, etherColor);
 								check(bInitEtherCell);
 							}
 						}
@@ -104,7 +105,7 @@ void UPPSettings::ConvertGeometry(UWorld *World)
 			}
 		}
 	}
-	PPh::ParallelPhysics::SaveUniverse("blabla");
+	PPh::AdminUniverse::SaveUniverse("blabla");
 }
 
 int32 RoundToMinMaxPPhInt(double value)
@@ -143,7 +144,7 @@ PPh::VectorInt32Math UPPSettings::ConvertLocationToPPhPosition(const FVector &Lo
 	FVector UniverseBoxMin = UPPSettings::GetInstance()->UniverseBox.Min;
 	int32 UniverseEtherCellSize = UPPSettings::GetInstance()->UniverseEtherCellSize;
 	PPh::VectorInt32Math universePos;
-	PPh::VectorInt32Math pphUniverseSize = PPh::ParallelPhysics::GetInstance()->GetUniverseSize();
+	PPh::VectorInt32Math pphUniverseSize = PPh::AdminUniverse::GetUniverseSize();
 	universePos.m_posX = (Location.X - UniverseBoxMin.X) / UniverseEtherCellSize;
 	check(0 <= universePos.m_posX && universePos.m_posX < pphUniverseSize.m_posX);
 	universePos.m_posX = std::max(0, universePos.m_posX);

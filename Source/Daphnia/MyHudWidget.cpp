@@ -8,7 +8,7 @@
 #include "Components/Image.h"
 #include "Runtime/UMG/Public/UMG.h"
 #include "Materials/MaterialInstanceDynamic.h"
-#include "ParallelPhysics/ParallelPhysics.h"
+#include "ParallelPhysics/AdminTcpClient.h"
 #include "array"
 #include "Kismet/GameplayStatics.h"
 #include "LevelSettings.h"
@@ -69,11 +69,6 @@ void UMyHudWidget::NativeDestruct()
 
 void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 {
-	if (!PPh::ParallelPhysics::GetInstance())
-	{
-		return;
-	}
-
 	if (PPh::Observer::GetInstance() && PPh::Observer::GetInstance()->IsSimulationRunning())
 	{
 		PPh::VectorInt32Math outPosition;
@@ -88,7 +83,7 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 		ADaphniaPawn::GetInstance()->SetActorRotation(orient);
 		if (outEatenCrumbPos != PPh::VectorInt32Math::ZeroVector)
 		{
-			ALevelSettings::GetInstance()->EatCrumb(PPh::ParallelPhysics::EtherCellGetCrumbActor(outEatenCrumbPos));
+			ALevelSettings::GetInstance()->EatCrumb(PPh::AdminUniverse::EtherCellGetCrumbActor(outEatenCrumbPos));
 		}
 		ShowPPhStats(outLatitude, outLongitude);
 		if (pEyeViewImage && pEyeViewImage->IsVisible())
