@@ -23,7 +23,7 @@ class Observer
 {
 public:
 	static void Init(Observer *observer = nullptr);
-	static Observer* GetInstance();
+	static Observer* Instance();
 	Observer() = default;
 	virtual ~Observer() = default;
 
@@ -33,7 +33,6 @@ public:
 
 	void PPhTick();
 
-	void ChangeOrientation(const SP_EyeState &eyeState);
 	SP_EyeColorArray GrabTexture();
 	VectorInt32Math GetPosition() const;
 
@@ -62,23 +61,13 @@ protected:
 	const char* RecvServerMsg(); // returns nullptr if error occur
 	bool SendServerMsg(const MsgBase &msg, int32_t msgSize); // returns false if error occur
 	virtual void HandleReceivedMessage(const char *buffer);
-private:
-	friend class ParallelPhysics;
-	void SetPosition(const VectorInt32Math &pos);
-	void CalculateOrientChangers(const EyeArray &eyeArray);
-	OrientationVectorMath MaximizePPhOrientation(const VectorFloatMath &orientationVector);
 
 	bool m_isSimulationRunning = false;
 
-	uint64_t m_socketC;
+	uint32_t m_socketC;
 	uint32_t m_port;
 
-	SP_EyeState m_eyeState;
-	SP_EyeState m_newEyeState; // Used from different threads
-
 	const int32_t EYE_IMAGE_DELAY = 5000; // quantum of time
-	//const uint32_t EYE_FOV = PPH_INT_MAX/2; // quantum of length (MAX_INT/2 - 90 degrees; MAX_INT - 180 degrees; 2*MAX_INT - 360 degrees)
-
 	const int32_t ECHOLOCATION_FREQUENCY = 1; // quantum of time
 	int32_t m_echolocationCounter = 0;
 

@@ -61,21 +61,21 @@ void UMyHudWidget::NativeOnInitialized()
 
 void UMyHudWidget::NativeDestruct()
 {
-	if (PPh::Observer::GetInstance() && PPh::Observer::GetInstance()->IsSimulationRunning())
+	if (PPh::Observer::Instance() && PPh::Observer::Instance()->IsSimulationRunning())
 	{
-		PPh::Observer::GetInstance()->StopSimulation();
+		PPh::Observer::Instance()->StopSimulation();
 	}
 }
 
 void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 {
-	if (PPh::Observer::GetInstance() && PPh::Observer::GetInstance()->IsSimulationRunning())
+	if (PPh::Observer::Instance() && PPh::Observer::Instance()->IsSimulationRunning())
 	{
 		PPh::VectorInt32Math outPosition;
 		uint16_t outMovingProgress;
 		int16_t outLatitude, outLongitude;
 		PPh::VectorInt32Math outEatenCrumbPos;
-		PPh::Observer::GetInstance()->GetStateExtParams(outPosition, outMovingProgress, outLatitude, outLongitude, outEatenCrumbPos);
+		PPh::Observer::Instance()->GetStateExtParams(outPosition, outMovingProgress, outLatitude, outLongitude, outEatenCrumbPos);
 		FVector location = UPPSettings::ConvertPPhPositionToLocation(outPosition);
 		ADaphniaPawn::GetInstance()->SetActorLocation(location);
 		FRotator orient(outLatitude, outLongitude, 0);
@@ -95,7 +95,7 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 				PPh::Observer::GetInstance()->ChangeOrientation(eyeState);
 			}
 			*/
-			PPh::SP_EyeColorArray spEyeColorArray = PPh::Observer::GetInstance()->GrabTexture();
+			PPh::SP_EyeColorArray spEyeColorArray = PPh::Observer::Instance()->GrabTexture();
 			if (spEyeColorArray)
 			{
 				const int32 EyeTextureSize = PPh::CommonParams::OBSERVER_EYE_SIZE;
@@ -156,7 +156,7 @@ void UMyHudWidget::ShowPPhStats(int16_t latitude, int16_t longitude)
 	if (PPh::GetTimeMs() - lastTime > 500)
 	{
 		lastTime = PPh::GetTimeMs();
-		if (pTextBlockStats && PPh::Observer::GetInstance()->IsSimulationRunning())
+		if (pTextBlockStats && PPh::Observer::Instance()->IsSimulationRunning())
 		{
 			uint32_t outQuantumOfTimePerSecond;
 			uint32_t outUniverseThreadsNum;
@@ -165,7 +165,7 @@ void UMyHudWidget::ShowPPhStats(int16_t latitude, int16_t longitude)
 			uint32_t outTickTimeMusAverageObserverThread;
 			uint64_t outClientServerPerformanceRatio;
 			uint64_t outServerClientPerformanceRatio;
-			PPh::Observer::GetInstance()->GetStatisticsParams(outQuantumOfTimePerSecond, outUniverseThreadsNum,
+			PPh::Observer::Instance()->GetStatisticsParams(outQuantumOfTimePerSecond, outUniverseThreadsNum,
 				outTickTimeMusAverageUniverseThreadsMin, outTickTimeMusAverageUniverseThreadsMax,
 				outTickTimeMusAverageObserverThread, outClientServerPerformanceRatio, outServerClientPerformanceRatio);
 			FString sFps = FString("FPS (quantum of time per second): ") + FString::FromInt(outQuantumOfTimePerSecond);
@@ -199,9 +199,9 @@ void UMyHudWidget::SwitchCameraView()
 void UMyHudWidget::SwitchToParallelPhysics()
 {
 	UWidget *BoxStats = WidgetTree->FindWidget<UWidget>(TEXT("Border_Stats"));
-	if (PPh::Observer::GetInstance() && PPh::Observer::GetInstance()->IsSimulationRunning())
+	if (PPh::Observer::Instance() && PPh::Observer::Instance()->IsSimulationRunning())
 	{
-		PPh::Observer::GetInstance()->StopSimulation();
+		PPh::Observer::Instance()->StopSimulation();
 		if (BoxStats)
 		{
 			BoxStats->SetVisibility(ESlateVisibility::Hidden);
@@ -218,7 +218,7 @@ void UMyHudWidget::SwitchToParallelPhysics()
 			FVector pawnLocation = ADaphniaPawn::GetInstance()->GetActorLocation();
 //			PPh::VectorInt32Math position = UPPSettings::ConvertLocationToPPhPosition(pawnLocation);
 			PPh::Observer::Init(new MyObserver());
-			PPh::Observer::GetInstance()->StartSimulation();
+			PPh::Observer::Instance()->StartSimulation();
 //			m_PawnRotation = ADaphniaPawn::GetInstance()->GetActorRotation();
 //			m_ObserverPos = PPh::Observer::GetInstance()->GetPosition();
 

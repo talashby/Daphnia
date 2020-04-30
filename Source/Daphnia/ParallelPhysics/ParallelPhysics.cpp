@@ -17,6 +17,8 @@
 #undef max
 
 #pragma warning( disable : 4996)
+// Need to link with Ws2_32.lib
+#pragma comment (lib, "Ws2_32.lib")
 
 namespace PPh
 {
@@ -41,7 +43,7 @@ void Observer::Init(Observer *observer)
 	}
 }
 
-PPh::Observer* Observer::GetInstance()
+PPh::Observer* Observer::Instance()
 {
 	return s_observer;
 }
@@ -99,7 +101,7 @@ void Observer::StartSimulation()
 		{
 			while (m_isSimulationRunning)
 			{
-				Observer::GetInstance()->PPhTick();
+				Observer::Instance()->PPhTick();
 			}
 			closesocket(m_socketC);
 		});
@@ -190,14 +192,14 @@ void Observer::PPhTick()
 			else if (const MsgGetStateExtResponse *msgGetStateExtResponse = QueryMessage<MsgGetStateExtResponse>(buffer))
 			{
 				std::lock_guard<std::mutex> guard(s_observerStateParamsMutex);
-				Observer::GetInstance()->m_latitude = msgGetStateExtResponse->m_latitude;
-				Observer::GetInstance()->m_longitude = msgGetStateExtResponse->m_longitude;
-				Observer::GetInstance()->m_position = msgGetStateExtResponse->m_pos;
-				Observer::GetInstance()->m_movingProgress = msgGetStateExtResponse->m_movingProgress;
-				if (Observer::GetInstance()->m_eatenCrumbNum < msgGetStateExtResponse->m_eatenCrumbNum)
+				Observer::Instance()->m_latitude = msgGetStateExtResponse->m_latitude;
+				Observer::Instance()->m_longitude = msgGetStateExtResponse->m_longitude;
+				Observer::Instance()->m_position = msgGetStateExtResponse->m_pos;
+				Observer::Instance()->m_movingProgress = msgGetStateExtResponse->m_movingProgress;
+				if (Observer::Instance()->m_eatenCrumbNum < msgGetStateExtResponse->m_eatenCrumbNum)
 				{
-					Observer::GetInstance()->m_eatenCrumbNum = msgGetStateExtResponse->m_eatenCrumbNum;
-					Observer::GetInstance()->m_eatenCrumbPos = msgGetStateExtResponse->m_eatenCrumbPos;
+					Observer::Instance()->m_eatenCrumbNum = msgGetStateExtResponse->m_eatenCrumbNum;
+					Observer::Instance()->m_eatenCrumbPos = msgGetStateExtResponse->m_eatenCrumbPos;
 				}
 			}
 			else if (const MsgSendPhoton *msgSendPhoton = QueryMessage<MsgSendPhoton>(buffer))
@@ -233,16 +235,16 @@ void Observer::PPhTick()
 			{
 				spEyeColorArrayOut = std::make_shared<EyeColorArray>();
 				EyeColorArray &eyeColorArray = *spEyeColorArrayOut;
-				for (int yy = 0; yy < eyeColorArray.size(); ++yy)
+				for (uint32_t yy = 0; yy < eyeColorArray.size(); ++yy)
 				{
-					for (int xx = 0; xx < eyeColorArray[yy].size(); ++xx)
+					for (uint32_t xx = 0; xx < eyeColorArray[yy].size(); ++xx)
 					{
 						eyeColorArray[yy][xx] = m_eyeColorArray[yy][xx];
 						int64_t timeDiff = timeOfTheUniverse - m_eyeUpdateTimeArray[yy][xx];
 						uint8_t alpha = m_eyeColorArray[yy][xx].m_colorA;
 						if (timeDiff < EYE_IMAGE_DELAY)
 						{
-							alpha = alpha * (EYE_IMAGE_DELAY - timeDiff) / EYE_IMAGE_DELAY;
+							alpha = (uint8_t)(alpha * (EYE_IMAGE_DELAY - timeDiff) / EYE_IMAGE_DELAY);
 							eyeColorArray[yy][xx].m_colorA = alpha;
 						}
 						else
@@ -259,13 +261,13 @@ void Observer::PPhTick()
 		}
 	}
 
-	__int64 timeEllapsed;
-	__int64 timeStart;
-	__int64 timeDelta;
+	int64_t timeEllapsed;
+	int64_t timeStart;
+	int64_t timeDelta;
 
 	QueryPerformanceFrequency((LARGE_INTEGER*)(&timeDelta));
 
-	__int64 timeToWait = (double)timeDelta * (double)30 / 1000000.0f;
+	int64_t timeToWait = (int64_t)((double)timeDelta * (double)30 / 1000000.0);
 
 	QueryPerformanceCounter((LARGE_INTEGER*)(&timeStart));
 
@@ -277,11 +279,6 @@ void Observer::PPhTick()
 
 	};
 	//Sleep(1); // work imitation
-}
-
-void Observer::ChangeOrientation(const SP_EyeState &eyeState)
-{
-	std::atomic_store(&m_newEyeState, eyeState);
 }
 
 SP_EyeColorArray Observer::GrabTexture()
@@ -379,89 +376,10 @@ int32_t RoundToMinMaxPPhInt(float value)
 	return result;
 }
 
-/*int32_t FixFloatErrors(int32_t component, int32_t maxComponentValue)
-{
-	int32_t componentCorrect = component;
-	if (std::abs(component) == maxComponentValue)
-	{
-		if (0 > component)
-		{
-			componentCorrect = PPh::OrientationVectorMath::PPH_INT_MIN;
-		}
-		else
-		{
-			componentCorrect = PPh::OrientationVectorMath::PPH_INT_MAX;
-		}
-	}
-	return componentCorrect;
-}*/
-
-OrientationVectorMath Observer::MaximizePPhOrientation(const VectorFloatMath &orientationVector)
-{
-	float maxComponent = std::max(std::max(std::abs(orientationVector.m_posX), std::abs(orientationVector.m_posY)), std::abs(orientationVector.m_posZ));
-	double factor = 0;
-	if (maxComponent > 0)
-	{
-		factor = OrientationVectorMath::PPH_INT_MAX / (double)maxComponent;
-	}
-
-	OrientationVectorMath pphOrientation(RoundToMinMaxPPhInt(orientationVector.m_posX*factor), RoundToMinMaxPPhInt(orientationVector.m_posY*factor),
-		RoundToMinMaxPPhInt(orientationVector.m_posZ*factor));
-
-	//int32_t maxPPhComponent = std::max(std::max(std::abs(pphOrientation.m_posX), std::abs(pphOrientation.m_posY)), std::abs(pphOrientation.m_posZ));
-	//pphOrientation.m_posX = FixFloatErrors(pphOrientation.m_posX, maxPPhComponent);
-	//pphOrientation.m_posY = FixFloatErrors(pphOrientation.m_posY, maxPPhComponent);
-	//pphOrientation.m_posZ = FixFloatErrors(pphOrientation.m_posZ, maxPPhComponent);
-
-	return pphOrientation;
-}
-
 void Observer::HandleReceivedMessage(const char *buffer)
 {
 	printf("Unhandled message from server: %d", buffer[0]);
 }
-
-void Observer::SetPosition(const VectorInt32Math &pos)
-{
-	m_position = pos;
-}
-
-void Observer::CalculateOrientChangers(const EyeArray &eyeArray)
-{
-	OrientationVectorMath orientMin(OrientationVectorMath::PPH_INT_MAX, OrientationVectorMath::PPH_INT_MAX, OrientationVectorMath::PPH_INT_MAX);
-	OrientationVectorMath orientMax(OrientationVectorMath::PPH_INT_MIN, OrientationVectorMath::PPH_INT_MIN, OrientationVectorMath::PPH_INT_MIN);
-	for (int ii = 0; ii < eyeArray.size(); ++ii)
-	{
-		for (int jj = 0; jj < eyeArray[ii].size(); ++jj)
-		{
-			orientMin.m_posX = std::min(orientMin.m_posX, eyeArray[ii][jj].m_posX);
-			orientMin.m_posY = std::min(orientMin.m_posY, eyeArray[ii][jj].m_posY);
-			orientMin.m_posZ = std::min(orientMin.m_posZ, eyeArray[ii][jj].m_posZ);
-			orientMax.m_posX = std::max(orientMax.m_posX, eyeArray[ii][jj].m_posX);
-			orientMax.m_posY = std::max(orientMax.m_posY, eyeArray[ii][jj].m_posY);
-			orientMax.m_posZ = std::max(orientMax.m_posZ, eyeArray[ii][jj].m_posZ);
-		}
-	}
-
-	m_orientMinChanger = VectorInt32Math(VectorInt32Math::PPH_INT_MAX, VectorInt32Math::PPH_INT_MAX, VectorInt32Math::PPH_INT_MAX);
-	for (int ii = 0; ii < 3; ++ii)
-	{
-		if (0 <= orientMin.m_posArray[ii] && 0 <= orientMax.m_posArray[ii])
-		{
-			m_orientMinChanger.m_posArray[ii] = 0;
-		}
-	}
-
-	m_orientMaxChanger = VectorInt32Math(VectorInt32Math::PPH_INT_MAX, VectorInt32Math::PPH_INT_MAX, VectorInt32Math::PPH_INT_MAX);
-	for (int ii = 0; ii < 3; ++ii)
-	{
-		if (0 >= orientMin.m_posArray[ii] && 0 >= orientMax.m_posArray[ii])
-		{
-			m_orientMaxChanger.m_posArray[ii] = 0;
-		}
-	}
-}
-
 
 
 }
