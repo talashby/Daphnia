@@ -71,7 +71,7 @@ protected:
 	const int32_t ECHOLOCATION_FREQUENCY = 1; // quantum of time
 	int32_t m_echolocationCounter = 0;
 
-	EyeColorArray m_eyeColorArray = EyeColorArray();
+	EyeColorArray m_eyeColorArray = EyeColorArray(); // photon (x,y) placed to [CommonParams::OBSERVER_EYE_SIZE - y -1][x] for simple copy to texture purpose
 	EyeUpdateTimeArray m_eyeUpdateTimeArray = EyeUpdateTimeArray();
 
 	int64_t m_lastTextureUpdateTime = 0;
