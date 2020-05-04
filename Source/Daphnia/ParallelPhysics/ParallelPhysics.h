@@ -64,7 +64,7 @@ protected:
 
 	bool m_isSimulationRunning = false;
 
-	uint32_t m_socketC;
+	uint64_t m_socketC;
 	uint32_t m_port;
 
 	const int32_t EYE_IMAGE_DELAY = 5000; // quantum of time
