@@ -74,18 +74,20 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 		PPh::VectorInt32Math outPosition;
 		uint16_t outMovingProgress;
 		int16_t outLatitude, outLongitude;
+		bool outIsEatenCrumb = false;
 		PPh::VectorInt32Math outEatenCrumbPos;
-		PPh::Observer::Instance()->GetStateExtParams(outPosition, outMovingProgress, outLatitude, outLongitude, outEatenCrumbPos);
+		PPh::Observer::Instance()->GetStateExtParams(outPosition, outMovingProgress, outLatitude, outLongitude, outIsEatenCrumb);
 		FVector location = UPPSettings::ConvertPPhPositionToLocation(outPosition);
 		ADaphniaPawn::GetInstance()->SetActorLocation(location);
 		FRotator orient(outLatitude, outLongitude, 0);
 		//orient.Vector() * outMovingProgress / std::numeric_limits<uint16_t>.max() ;
 		ADaphniaPawn::GetInstance()->SetActorRotation(orient);
-		if (outEatenCrumbPos != PPh::VectorInt32Math::ZeroVector)
+		if (outIsEatenCrumb)
 		{
+			outEatenCrumbPos = PPh::Observer::Instance()->GrabEatenCrumbPos();
 			ALevelSettings::GetInstance()->EatCrumb(PPh::AdminUniverse::EtherCellGetCrumbActor(outEatenCrumbPos));
 		}
-		ShowPPhStats(outLatitude, outLongitude);
+		ShowPPhStats(outLatitude, outLongitude, outPosition);
 		if (pEyeViewImage && pEyeViewImage->IsVisible())
 		{
 			/*if (m_PawnRotation != ADaphniaPawn::GetInstance()->GetActorRotation())
@@ -150,7 +152,7 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 	Super::NativeTick(MyGeometry, InDeltaTime);
 }
 
-void UMyHudWidget::ShowPPhStats(int16_t latitude, int16_t longitude)
+void UMyHudWidget::ShowPPhStats(int16_t latitude, int16_t longitude, const PPh::VectorInt32Math &position)
 {
 	static int64 lastTime = PPh::GetTimeMs();
 	if (PPh::GetTimeMs() - lastTime > 500)
@@ -178,6 +180,8 @@ void UMyHudWidget::ShowPPhStats(int16_t latitude, int16_t longitude)
 			}
 			sFps += "\nClient-Server performance ratio: " + FString::SanitizeFloat(outClientServerPerformanceRatio / 1000.0f);
 			sFps += "\nServer-Client performance ratio: " + FString::SanitizeFloat(outServerClientPerformanceRatio / 1000.0f);
+			sFps += FString("\nPosition: (") + FString::FromInt(position.m_posX) + ", " + FString::FromInt(position.m_posY) + ", " +
+				FString::FromInt(position.m_posZ) + ")";
 			sFps += FString("\nLattitude: ") + FString::FromInt(latitude);
 			sFps += FString("\nLongitude: ") + FString::FromInt(longitude);
 			pTextBlockStats->SetText(FText::FromString(sFps));

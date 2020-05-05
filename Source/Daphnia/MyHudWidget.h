@@ -41,7 +41,7 @@ protected:
 	bool m_bDisableRenderCheckBox = false;
 
 private:
-	void ShowPPhStats(int16_t latitude, int16_t longitude);
+	void ShowPPhStats(int16_t latitude, int16_t longitude, const PPh::VectorInt32Math &position);
 
 	class UImage *pEyeViewImage = nullptr;
 	class UTextBlock *pTextBlockStats = nullptr;

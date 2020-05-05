@@ -40,7 +40,8 @@ public:
 	const VectorInt32Math& GetOrientMaxChanger() const;
 
 	void GetStateExtParams(VectorInt32Math &outPosition, uint16_t &outMovingProgress, int16_t &outLatitude, int16_t &outLongitude, 
-		VectorInt32Math &outEatenCrumbPos);
+		bool &outIsEatenCrumb) const;
+	VectorInt32Math GrabEatenCrumbPos();
 
 	void GetStatisticsParams(uint32_t &outQuantumOfTimePerSecond, uint32_t &outUniverseThreadsNum,
 		uint32_t &outTickTimeMusAverageUniverseThreadsMin, // average tick time in microseconds
@@ -85,6 +86,7 @@ protected:
 	VectorInt32Math m_position = VectorInt32Math::ZeroVector;
 	uint16_t m_movingProgress = 0;
 	uint32_t m_eatenCrumbNum = 0;
+	bool m_isEatenCrumb = false;
 	VectorInt32Math m_eatenCrumbPos = VectorInt32Math::ZeroVector;
 
 	int64_t m_lastUpdateStateExtTime = 0;

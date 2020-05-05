@@ -214,6 +214,7 @@ void Observer::PPhTick()
 				{
 					Observer::Instance()->m_eatenCrumbNum = msgGetStateExtResponse->m_eatenCrumbNum;
 					Observer::Instance()->m_eatenCrumbPos = msgGetStateExtResponse->m_eatenCrumbPos;
+					Observer::Instance()->m_isEatenCrumb = true;
 				}
 			}
 			else if (const MsgSendPhoton *msgSendPhoton = QueryMessage<MsgSendPhoton>(buffer))
@@ -321,15 +322,25 @@ const VectorInt32Math& Observer::GetOrientMaxChanger() const
 }
 
 void Observer::GetStateExtParams(VectorInt32Math &outPosition, uint16_t &outMovingProgress, int16_t &outLatitude,
-	int16_t &outLongitude, VectorInt32Math &outEatenCrumbPos)
+	int16_t &outLongitude, bool &outIsEatenCrumb) const
 {
 	std::lock_guard<std::mutex> guard(s_observerStateParamsMutex);
 	outPosition = m_position;
 	outMovingProgress = m_movingProgress;
 	outLatitude = m_latitude;
 	outLongitude = m_longitude;
-	outEatenCrumbPos = m_eatenCrumbPos;
-	m_eatenCrumbPos = VectorInt32Math::ZeroVector;
+	outIsEatenCrumb = m_isEatenCrumb;
+}
+
+VectorInt32Math Observer::GrabEatenCrumbPos()
+{
+	std::lock_guard<std::mutex> guard(s_observerStateParamsMutex);
+	if (m_isEatenCrumb)
+	{
+		m_isEatenCrumb = false;
+		return m_eatenCrumbPos;
+	}
+	return VectorInt32Math::ZeroVector;
 }
 
 void Observer::GetStatisticsParams(uint32_t &outQuantumOfTimePerSecond, uint32_t &outUniverseThreadsNum,
