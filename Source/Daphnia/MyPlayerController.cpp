@@ -2,7 +2,7 @@
 
 
 #include "MyPlayerController.h"
-#include "ParallelPhysics/ParallelPhysics.h"
+#include "ParallelPhysics/ObserverClient.h"
 #include "DaphniaPawn.h"
 
 static AMyPlayerController* s_InstancePtr;
@@ -79,32 +79,32 @@ bool AMyPlayerController::InputKey(FKey Key, EInputEvent EventType, float Amount
 		if ("A" == Key.GetFName() || "Left" == Key.GetFName())
 		{
 			m_isLeft = state;
-			PPh::Observer::Instance()->SetIsLeft(state);
+			PPh::ObserverClient::Instance()->SetIsLeft(state);
 		}
 		else if ("D" == Key.GetFName() || "Right" == Key.GetFName())
 		{
 			m_isRight = state;
-			PPh::Observer::Instance()->SetIsRight(state);
+			PPh::ObserverClient::Instance()->SetIsRight(state);
 		}
 		else if ("W" == Key.GetFName() || "Up" == Key.GetFName())
 		{
 			m_isUp = state;
-			PPh::Observer::Instance()->SetIsUp(state);
+			PPh::ObserverClient::Instance()->SetIsUp(state);
 		}
 		else if ("S" == Key.GetFName() || "Down" == Key.GetFName())
 		{
 			m_isDown = state;
-			PPh::Observer::Instance()->SetIsDown(state);
+			PPh::ObserverClient::Instance()->SetIsDown(state);
 		}
 		else if ("SpaceBar" == Key.GetFName())
 		{
 			m_isForward = state;
-			PPh::Observer::Instance()->SetIsForward(state);
+			PPh::ObserverClient::Instance()->SetIsForward(state);
 		}
 		else if ("Backslash" == Key.GetFName())
 		{
 			m_isBackward = state;
-			PPh::Observer::Instance()->SetIsBackward(state);
+			PPh::ObserverClient::Instance()->SetIsBackward(state);
 		}
 	}
 

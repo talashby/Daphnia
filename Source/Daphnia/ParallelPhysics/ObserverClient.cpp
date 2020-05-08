@@ -1,5 +1,5 @@
 
-#include "ParallelPhysics.h"
+#include "ObserverClient.h"
 #include "vector"
 #include "algorithm"
 #include "array"
@@ -23,7 +23,7 @@
 namespace PPh
 {
 
-Observer* s_observer = nullptr;
+ObserverClient* s_observer = nullptr;
 std::mutex s_observerStateParamsMutex;
 std::mutex s_serverStatisticsMutex;
 
@@ -31,7 +31,7 @@ bool b_wsaInitialised = false;
 WSADATA s_wsaData;
 
 
-void Observer::Init(Observer *observer)
+void ObserverClient::Init(ObserverClient *observer)
 {
 	if (s_observer)
 	{
@@ -43,17 +43,17 @@ void Observer::Init(Observer *observer)
 	}
 	else
 	{
-		s_observer = new Observer();
+		s_observer = new ObserverClient();
 	}
 }
 
-PPh::Observer* Observer::Instance()
+PPh::ObserverClient* ObserverClient::Instance()
 {
 	return s_observer;
 }
 
 std::thread s_simulationThread;
-void Observer::StartSimulation()
+void ObserverClient::StartSimulation()
 {
 	// Initialize Winsock version 2.2
 	bool wsaResult = WSAStartup(MAKEWORD(2, 2), &s_wsaData);
@@ -110,7 +110,7 @@ void Observer::StartSimulation()
 		{
 			while (m_isSimulationRunning)
 			{
-				Observer::Instance()->PPhTick();
+				ObserverClient::Instance()->PPhTick();
 			}
 			closesocket(m_socketC);
 		});
@@ -122,7 +122,7 @@ void Observer::StartSimulation()
 
 }
 
-void Observer::StopSimulation()
+void ObserverClient::StopSimulation()
 {
 	if (b_wsaInitialised)
 	{
@@ -136,12 +136,12 @@ void Observer::StopSimulation()
 	}
 }
 
-bool Observer::IsSimulationRunning() const
+bool ObserverClient::IsSimulationRunning() const
 {
 	return m_isSimulationRunning;
 }
 
-void Observer::PPhTick()
+void ObserverClient::PPhTick()
 {
 	MsgGetState msg;
 	if (SendServerMsg(msg, sizeof(msg)))
@@ -206,15 +206,15 @@ void Observer::PPhTick()
 			else if (const MsgGetStateExtResponse *msgGetStateExtResponse = QueryMessage<MsgGetStateExtResponse>(buffer))
 			{
 				std::lock_guard<std::mutex> guard(s_observerStateParamsMutex);
-				Observer::Instance()->m_latitude = msgGetStateExtResponse->m_latitude;
-				Observer::Instance()->m_longitude = msgGetStateExtResponse->m_longitude;
-				Observer::Instance()->m_position = msgGetStateExtResponse->m_pos;
-				Observer::Instance()->m_movingProgress = msgGetStateExtResponse->m_movingProgress;
-				if (Observer::Instance()->m_eatenCrumbNum < msgGetStateExtResponse->m_eatenCrumbNum)
+				ObserverClient::Instance()->m_latitude = msgGetStateExtResponse->m_latitude;
+				ObserverClient::Instance()->m_longitude = msgGetStateExtResponse->m_longitude;
+				ObserverClient::Instance()->m_position = msgGetStateExtResponse->m_pos;
+				ObserverClient::Instance()->m_movingProgress = msgGetStateExtResponse->m_movingProgress;
+				if (ObserverClient::Instance()->m_eatenCrumbNum < msgGetStateExtResponse->m_eatenCrumbNum)
 				{
-					Observer::Instance()->m_eatenCrumbNum = msgGetStateExtResponse->m_eatenCrumbNum;
-					Observer::Instance()->m_eatenCrumbPos = msgGetStateExtResponse->m_eatenCrumbPos;
-					Observer::Instance()->m_isEatenCrumb = true;
+					ObserverClient::Instance()->m_eatenCrumbNum = msgGetStateExtResponse->m_eatenCrumbNum;
+					ObserverClient::Instance()->m_eatenCrumbPos = msgGetStateExtResponse->m_eatenCrumbPos;
+					ObserverClient::Instance()->m_isEatenCrumb = true;
 				}
 			}
 			else if (const MsgSendPhoton *msgSendPhoton = QueryMessage<MsgSendPhoton>(buffer))
@@ -297,7 +297,7 @@ void Observer::PPhTick()
 	//Sleep(1); // work imitation
 }
 
-SP_EyeColorArray Observer::GrabTexture()
+SP_EyeColorArray ObserverClient::GrabTexture()
 {
 	SP_EyeColorArray spEyeColorArrayOut;
 	std::atomic_store(&spEyeColorArrayOut, m_spEyeColorArrayOut);
@@ -306,22 +306,22 @@ SP_EyeColorArray Observer::GrabTexture()
 	return spEyeColorArrayOut;
 }
 
-PPh::VectorInt32Math Observer::GetPosition() const
+PPh::VectorInt32Math ObserverClient::GetPosition() const
 {
 	return m_position;
 }
 
-const VectorInt32Math& Observer::GetOrientMinChanger() const
+const VectorInt32Math& ObserverClient::GetOrientMinChanger() const
 {
 	return m_orientMinChanger;
 }
 
-const VectorInt32Math& Observer::GetOrientMaxChanger() const
+const VectorInt32Math& ObserverClient::GetOrientMaxChanger() const
 {
 	return m_orientMaxChanger;
 }
 
-void Observer::GetStateExtParams(VectorInt32Math &outPosition, uint16_t &outMovingProgress, int16_t &outLatitude,
+void ObserverClient::GetStateExtParams(VectorInt32Math &outPosition, uint16_t &outMovingProgress, int16_t &outLatitude,
 	int16_t &outLongitude, bool &outIsEatenCrumb) const
 {
 	std::lock_guard<std::mutex> guard(s_observerStateParamsMutex);
@@ -332,7 +332,7 @@ void Observer::GetStateExtParams(VectorInt32Math &outPosition, uint16_t &outMovi
 	outIsEatenCrumb = m_isEatenCrumb;
 }
 
-VectorInt32Math Observer::GrabEatenCrumbPos()
+VectorInt32Math ObserverClient::GrabEatenCrumbPos()
 {
 	std::lock_guard<std::mutex> guard(s_observerStateParamsMutex);
 	if (m_isEatenCrumb)
@@ -343,7 +343,7 @@ VectorInt32Math Observer::GrabEatenCrumbPos()
 	return VectorInt32Math::ZeroVector;
 }
 
-void Observer::GetStatisticsParams(uint32_t &outQuantumOfTimePerSecond, uint32_t &outUniverseThreadsNum,
+void ObserverClient::GetStatisticsParams(uint32_t &outQuantumOfTimePerSecond, uint32_t &outUniverseThreadsNum,
 	uint32_t &outTickTimeMusAverageUniverseThreadsMin, uint32_t &outTickTimeMusAverageUniverseThreadsMax,
 	uint32_t &outTickTimeMusAverageObserverThread, uint64_t &outClientServerPerformanceRatio,
 	uint64_t &outServerClientPerformanceRatio)
@@ -358,7 +358,7 @@ void Observer::GetStatisticsParams(uint32_t &outQuantumOfTimePerSecond, uint32_t
 	outServerClientPerformanceRatio = m_serverClientPerformanceRatio;
 }
 
-const char* Observer::RecvServerMsg()
+const char* ObserverClient::RecvServerMsg()
 {
 	static char buffer[CommonParams::DEFAULT_BUFLEN];
 	struct sockaddr_in fromCur;
@@ -372,7 +372,7 @@ const char* Observer::RecvServerMsg()
 	return nullptr;
 }
 
-bool Observer::SendServerMsg(const MsgBase &msg, int32_t msgSize)
+bool ObserverClient::SendServerMsg(const MsgBase &msg, int32_t msgSize)
 {
 	struct sockaddr_in serverInfo;
 	int len = sizeof(serverInfo);
@@ -402,7 +402,7 @@ int32_t RoundToMinMaxPPhInt(float value)
 	return result;
 }
 
-void Observer::HandleReceivedMessage(const char *buffer)
+void ObserverClient::HandleReceivedMessage(const char *buffer)
 {
 	printf("Unhandled message from server: %d", buffer[0]);
 }

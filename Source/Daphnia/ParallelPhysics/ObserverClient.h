@@ -19,13 +19,13 @@ typedef std::array< std::array<EtherColor, CommonParams::OBSERVER_EYE_SIZE>, Com
 typedef std::array< std::array<uint64_t, CommonParams::OBSERVER_EYE_SIZE>, CommonParams::OBSERVER_EYE_SIZE> EyeUpdateTimeArray;
 typedef std::shared_ptr< EyeColorArray > SP_EyeColorArray;
 
-class Observer
+class ObserverClient
 {
 public:
-	static void Init(Observer *observer = nullptr);
-	static Observer* Instance();
-	Observer() = default;
-	virtual ~Observer() = default;
+	static void Init(ObserverClient *observer = nullptr);
+	static ObserverClient* Instance();
+	ObserverClient() = default;
+	virtual ~ObserverClient() = default;
 
 	void StartSimulation();
 	void StopSimulation();

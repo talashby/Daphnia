@@ -12,7 +12,7 @@
 #include "Helper.h"
 #include "Components/AudioComponent.h"
 #include "ParallelPhysics/PPSettings.h"
-#include "ParallelPhysics/ParallelPhysics.h"
+#include "ParallelPhysics/ObserverClient.h"
 #include "ParallelPhysics/AdminTcpClient.h"
 
 // **************************** FRoomVolumeSettings *********************************

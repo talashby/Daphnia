@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "PPhHelpers.h"
-#include "ParallelPhysics.h"
+#include "ObserverClient.h"
 #include "PPSettings.generated.h"
 
 /**
@@ -43,7 +43,7 @@ private:
 	FBox UniverseBox = FBox(EForceInit::ForceInit);
 };
 
-class MyObserver : public PPh::Observer
+class MyObserver : public PPh::ObserverClient
 {
 public:
 	MyObserver();
