@@ -64,16 +64,7 @@ void AMyPlayerController::SetupInputComponent()
 
 bool AMyPlayerController::InputKey(FKey Key, EInputEvent EventType, float AmountDepressed, bool bGamepad)
 {
-	float fLocationX, fLocationY;
-	GetMousePosition(fLocationX, fLocationY);
-	if ("LeftMouseButton" == Key.GetFName())
-	{
-		if (EInputEvent::IE_Pressed == EventType || EInputEvent::IE_DoubleClick == EventType)
-		{
-			ClickPressed(FVector(fLocationX, fLocationY, 0));
-		}
-	}
-	if (EventType == IE_Pressed || EventType == IE_Released)
+	if (PPh::ObserverClient::Instance() && (EventType == IE_Pressed || EventType == IE_Released))
 	{
 		bool state = EventType == IE_Pressed;
 		if ("A" == Key.GetFName() || "Left" == Key.GetFName())

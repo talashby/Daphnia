@@ -258,5 +258,13 @@ void Disconnect()
 	WSACleanup();
 }
 
+void RegisterAdminObserver(uint64_t observerId)
+{
+	PPh::MsgRegisterAdminObserver msg;
+	msg.m_observerId = observerId;
+	send(SendingSocket, (const char*)&msg, sizeof(msg), 0);
+}
+
+
 } // namespace AdminTcp
 } // namespace PPh

@@ -47,6 +47,8 @@ public:
 
 	const TArray<class UMaterialInstance*>& GetGameObjectMaterials() const;
 
+	AActor* SpawnOtherObserver();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -92,6 +94,12 @@ private:
 	UPROPERTY()
 	class UPPSettings *PPSettings = nullptr;
 	TSubclassOf<class UPPSettings> PPSettingsClass = nullptr; // blueprint class
+
+	UPROPERTY()
+	UStaticMesh *m_observerMesh;
+
+	UPROPERTY()
+	UMaterialInterface *m_observerMaterial;
 
 	int iCurrentDoorToOpen;
 	bool bIsFinished;

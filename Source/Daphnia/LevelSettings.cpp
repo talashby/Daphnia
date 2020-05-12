@@ -55,6 +55,17 @@ ALevelSettings::ALevelSettings()
 			PPSettings = Cast<UPPSettings>(PPSettingsClass->GetDefaultObject());
 		}
 	}
+	
+	{
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> meshAsset(TEXT("StaticMesh'/Game/Flying/Meshes/UFO.UFO'"));
+		check(meshAsset.Object);
+		m_observerMesh = meshAsset.Object;
+	}
+	{
+		static ConstructorHelpers::FObjectFinder<UMaterialInterface> materialAsset(TEXT("MaterialInstanceConstant'/Game/Flying/Meshes/UFOMaterial.UFOMaterial'"));
+		check(materialAsset.Object);
+		m_observerMaterial = materialAsset.Object;
+	}
 }
 
 void ALevelSettings::OnConstruction(const FTransform& Transform)
@@ -207,7 +218,10 @@ void ALevelSettings::EatCrumb(AActor *actor)
 			}
 		}
 		actor->Destroy();
-		PlayCrumbSound();
+		//PlayCrumbSound();
+
+		UAudioComponent* NewAudioComponent = UGameplayStatics::SpawnSoundAtLocation(GetWorld(), EatCrumbSound, actor->GetActorLocation());
+		NewAudioComponent->Play();
 	}
 }
 
@@ -333,8 +347,47 @@ void ALevelSettings::GenerateItems(const FRoomVolumeSettings &Settings)
 
 		int32 iRnd = rand() % MaterialsNum;
 		SpawnCrumb(FVector(iPlaceX, iPlaceY, iPlaceZ), iRnd);
-
 	}
+}
+
+AActor* ALevelSettings::SpawnOtherObserver()
+{
+	// Spawn!
+	AStaticMeshActor *pGameObject = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FVector::ZeroVector, FRotator(0, 0, 0));
+	pGameObject->SetMobility(EComponentMobility::Movable);
+	TArray<UStaticMeshComponent*> Comps;
+	pGameObject->GetComponents(Comps);
+	if (Comps.Num() > 0)
+	{
+		UStaticMeshComponent* FoundComp = Comps[0];
+		FoundComp->SetStaticMesh(m_observerMesh);
+
+		FoundComp->SetMaterial(0, m_observerMaterial);
+		FoundComp->SetCastShadow(true);
+		FoundComp->SetGenerateOverlapEvents(true);
+		FCollisionResponseContainer collision_response;
+		collision_response.SetAllChannels(ECollisionResponse::ECR_Overlap);
+		FoundComp->SetCollisionResponseToChannels(collision_response);
+		//FoundComp->OnComponentBeginOverlap.AddUniqueDynamic(ALevelSettings::GetInstance(), &ALevelSettings::OnGameObjectOverlapBegin);
+		/*{ // add sound component
+			if (CrumbMusic)
+			{
+				UAudioComponent* NewAudioComponent = UGameplayStatics::SpawnSoundAtLocation(GetWorld(), CrumbMusic, pGameObject->GetActorLocation());
+				pGameObject->AddInstanceComponent(NewAudioComponent);
+				NewAudioComponent->Play();
+			}
+		}*/
+	}
+
+	/*TSet<AActor*> aOverlapActors;
+	pGameObject->UpdateOverlaps();
+	pGameObject->GetOverlappingActors(aOverlapActors);
+	if (aOverlapActors.Num())
+	{
+		pGameObject->Destroy();
+		return nullptr;
+	}*/
+	return pGameObject;
 }
 
 AActor* ALevelSettings::SpawnCrumb(FVector pos, int32 crumbMaterialNum)

@@ -6,6 +6,8 @@
 #include "UObject/NoExportTypes.h"
 #include "PPhHelpers.h"
 #include "ObserverClient.h"
+#include <map>
+
 #include "PPSettings.generated.h"
 
 /**
@@ -43,12 +45,29 @@ private:
 	FBox UniverseBox = FBox(EForceInit::ForceInit);
 };
 
+struct ObserverData
+{
+	PPh::VectorInt32Math m_pos;
+	int16_t m_latitude;
+	int16_t m_longitude;
+	AActor *m_actor = nullptr;
+};
+
+typedef std::map<uint64_t, ObserverData> OtherObserversMap;
+
 class MyObserver : public PPh::ObserverClient
 {
 public:
 	MyObserver();
 	~MyObserver();
 
-private:
+	static MyObserver* MyInstance();
+	const OtherObserversMap& GetOtherObserversMap() const;
+	void SetOtherObserverActor(uint64_t observerId, AActor *actor);
 
+protected:
+	void HandleReceivedMessage(const char *buffer) override;
+
+private:
+	OtherObserversMap m_otherObserversMap;
 };

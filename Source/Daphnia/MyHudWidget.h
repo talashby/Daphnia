@@ -42,6 +42,7 @@ protected:
 
 private:
 	void ShowPPhStats(int16_t latitude, int16_t longitude, const PPh::VectorInt32Math &position);
+	AActor* SpawnObserverMesh();
 
 	class UImage *pEyeViewImage = nullptr;
 	class UTextBlock *pTextBlockStats = nullptr;

@@ -208,3 +208,29 @@ MyObserver::MyObserver()
 MyObserver::~MyObserver()
 {
 }
+
+MyObserver* MyObserver::MyInstance()
+{
+	return (MyObserver*)Instance();
+}
+
+const OtherObserversMap& MyObserver::GetOtherObserversMap() const
+{
+	return m_otherObserversMap;
+}
+
+void MyObserver::SetOtherObserverActor(uint64_t observerId, class AActor *actor)
+{
+	m_otherObserversMap[observerId].m_actor = actor;
+}
+
+void MyObserver::HandleReceivedMessage(const char *buffer)
+{
+	if (const PPh::MsgToAdminSomeObserverPosChanged *msgRcv = PPh::QueryMessage<PPh::MsgToAdminSomeObserverPosChanged>(buffer))
+	{
+		ObserverData &observerData = m_otherObserversMap[msgRcv->m_observerId];
+		observerData.m_pos = msgRcv->m_pos;
+		observerData.m_latitude = msgRcv->m_latitude;
+		observerData.m_longitude = msgRcv->m_longitude;
+	}
+}

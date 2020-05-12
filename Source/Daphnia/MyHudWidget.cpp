@@ -71,6 +71,25 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 {
 	if (PPh::ObserverClient::Instance() && PPh::ObserverClient::Instance()->IsSimulationRunning())
 	{
+		const auto &otherObserversMap = MyObserver::MyInstance()->GetOtherObserversMap();
+		for (const auto &it : otherObserversMap)
+		{
+			if (it.second.m_actor == nullptr)
+			{
+				AActor *actor = ALevelSettings::GetInstance()->SpawnOtherObserver();
+				MyObserver::MyInstance()->SetOtherObserverActor(it.first, actor);
+			}
+			AActor *crumb = PPh::AdminUniverse::EtherCellGetCrumbActor(it.second.m_pos);
+			if (crumb)
+			{
+				ALevelSettings::GetInstance()->EatCrumb(crumb);
+				PPh::AdminUniverse::EtherCellSetCrumbActor(it.second.m_pos, nullptr);
+			}
+			it.second.m_actor->SetActorLocation(UPPSettings::ConvertPPhPositionToLocation(it.second.m_pos));
+			FRotator orient(it.second.m_latitude, it.second.m_longitude, 0);
+			it.second.m_actor->SetActorRotation(orient);
+		}
+
 		PPh::VectorInt32Math outPosition;
 		uint16_t outMovingProgress;
 		int16_t outLatitude, outLongitude;
@@ -86,17 +105,11 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 		{
 			outEatenCrumbPos = PPh::ObserverClient::Instance()->GrabEatenCrumbPos();
 			ALevelSettings::GetInstance()->EatCrumb(PPh::AdminUniverse::EtherCellGetCrumbActor(outEatenCrumbPos));
+			PPh::AdminUniverse::EtherCellSetCrumbActor(outEatenCrumbPos, nullptr);
 		}
 		ShowPPhStats(outLatitude, outLongitude, outPosition);
 		if (pEyeViewImage && pEyeViewImage->IsVisible())
 		{
-			/*if (m_PawnRotation != ADaphniaPawn::GetInstance()->GetActorRotation())
-			{
-				m_PawnRotation = ADaphniaPawn::GetInstance()->GetActorRotation();
-				PPh::SP_EyeState eyeState = GetPawnEyeState(GetWorld());
-				PPh::Observer::GetInstance()->ChangeOrientation(eyeState);
-			}
-			*/
 			PPh::SP_EyeColorArray spEyeColorArray = PPh::ObserverClient::Instance()->GrabTexture();
 			if (spEyeColorArray)
 			{
@@ -223,6 +236,10 @@ void UMyHudWidget::SwitchToParallelPhysics()
 //			PPh::VectorInt32Math position = UPPSettings::ConvertLocationToPPhPosition(pawnLocation);
 			PPh::ObserverClient::Init(new MyObserver());
 			PPh::ObserverClient::Instance()->StartSimulation();
+			uint64_t observerId = PPh::ObserverClient::Instance()->GetLastObserverID();
+			PPh::AdminTcp::Connect();
+			PPh::AdminTcp::RegisterAdminObserver(observerId);
+			PPh::AdminTcp::Disconnect();
 //			m_PawnRotation = ADaphniaPawn::GetInstance()->GetActorRotation();
 //			m_ObserverPos = PPh::Observer::GetInstance()->GetPosition();
 

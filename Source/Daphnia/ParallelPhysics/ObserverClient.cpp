@@ -27,8 +27,9 @@ ObserverClient* s_observer = nullptr;
 std::mutex s_observerStateParamsMutex;
 std::mutex s_serverStatisticsMutex;
 
-bool b_wsaInitialised = false;
+bool s_wsaInitialised = false;
 WSADATA s_wsaData;
+uint64_t s_lastObserverId = 0;
 
 
 void ObserverClient::Init(ObserverClient *observer)
@@ -57,11 +58,10 @@ void ObserverClient::StartSimulation()
 {
 	// Initialize Winsock version 2.2
 	bool wsaResult = WSAStartup(MAKEWORD(2, 2), &s_wsaData);
-	b_wsaInitialised = 0 == wsaResult;
+	s_wsaInitialised = 0 == wsaResult;
 	printf("Client: Winsock DLL status is %s.\n", s_wsaData.szSystemStatus);
 
 	m_isSimulationRunning = true;
-	static uint64_t lastObserverId = 0;
 	m_socketC = 0;
 	m_port = CommonParams::CLIENT_UDP_PORT_START;
 	for (; m_port < CommonParams::CLIENT_UDP_PORT_START + CommonParams::MAX_CLIENTS; ++m_port)
@@ -71,12 +71,12 @@ void ObserverClient::StartSimulation()
 		serverInfo.sin_family = AF_INET;
 		serverInfo.sin_port = htons(m_port);
 		serverInfo.sin_addr.s_addr = inet_addr("127.0.0.1");
-		m_socketC = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+		m_socketC = (uint32_t)socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 		DWORD timeout = 1000; // 1000 ms
 		setsockopt(m_socketC, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<char*>(&timeout), sizeof(DWORD));
 		MsgCheckVersion msg;
 		msg.m_clientVersion = CommonParams::PROTOCOL_VERSION;
-		msg.m_observerId = lastObserverId;
+		msg.m_observerId = s_lastObserverId;
 		if (sendto(m_socketC, (const char*)&msg, sizeof(msg), 0, (sockaddr*)&serverInfo, len) != SOCKET_ERROR)
 		{
 			char buffer[CommonParams::DEFAULT_BUFLEN];
@@ -86,7 +86,7 @@ void ObserverClient::StartSimulation()
 				{
 					if (msgReceive->m_serverVersion == CommonParams::PROTOCOL_VERSION)
 					{
-						lastObserverId = msgReceive->m_observerId;
+						s_lastObserverId = msgReceive->m_observerId;
 						break;
 					}
 					else
@@ -124,10 +124,10 @@ void ObserverClient::StartSimulation()
 
 void ObserverClient::StopSimulation()
 {
-	if (b_wsaInitialised)
+	if (s_wsaInitialised)
 	{
 		WSACleanup();
-		b_wsaInitialised = false;
+		s_wsaInitialised = false;
 	}
 	m_isSimulationRunning = false;
 	if (s_simulationThread.native_handle())
@@ -139,6 +139,11 @@ void ObserverClient::StopSimulation()
 bool ObserverClient::IsSimulationRunning() const
 {
 	return m_isSimulationRunning;
+}
+
+uint64_t ObserverClient::GetLastObserverID() const
+{
+	return s_lastObserverId;
 }
 
 void ObserverClient::PPhTick()
@@ -406,6 +411,5 @@ void ObserverClient::HandleReceivedMessage(const char *buffer)
 {
 	printf("Unhandled message from server: %d", buffer[0]);
 }
-
 
 }

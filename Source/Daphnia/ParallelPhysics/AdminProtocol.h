@@ -14,12 +14,10 @@ namespace MsgTypeAdmin
 	enum MsgTypeAdmin
 	{
 		// client to server
-		GetVersion = 0,
-		Authorise,
+		RegisterObserver = 0,
 		GetNextCrumb,
+		RegisterAdminObserver,
 		// server to client
-		GetVersionResponse,
-		AuthoriseResponse,
 		GetNextCrumbResponse
 	};
 }
@@ -33,6 +31,14 @@ class MsgAdminGetNextCrumb : public MsgBase
 public:
 	MsgAdminGetNextCrumb() : MsgBase(GetType()) {}
 	static uint8_t GetType() { return MsgTypeAdmin::GetNextCrumb; }
+};
+
+class MsgRegisterAdminObserver : public MsgBase
+{
+public:
+	MsgRegisterAdminObserver() : MsgBase(GetType()) {}
+	static uint8_t GetType() { return MsgTypeAdmin::RegisterAdminObserver; }
+	uint64_t m_observerId;
 };
 //**************************************************************************************
 //************************************** Server ****************************************

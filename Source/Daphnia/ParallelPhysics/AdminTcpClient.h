@@ -26,6 +26,7 @@ namespace AdminTcp
 {
 	bool Connect();
 	void LoadCrumbs();
+	void RegisterAdminObserver(uint64_t observerId);
 	void Disconnect();
 } // namespace AdminTcp
 

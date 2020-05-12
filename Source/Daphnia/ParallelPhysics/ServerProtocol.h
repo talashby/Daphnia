@@ -37,7 +37,8 @@ namespace MsgType
 		GetStatisticsResponse,
 		GetStateResponse,
 		GetStateExtResponse,
-		SendPhoton
+		SendPhoton,
+		ToAdminSomeObserverPosChanged
 	};
 }
 
@@ -198,6 +199,19 @@ public:
 	uint8_t m_posX;
 	uint8_t m_posY;
 };
+
+class MsgToAdminSomeObserverPosChanged : public MsgBase
+{
+public:
+	MsgToAdminSomeObserverPosChanged() : MsgBase(GetType()) {}
+	static uint8_t GetType() { return MsgType::ToAdminSomeObserverPosChanged; }
+	uint64_t m_observerId;
+	VectorInt32Math m_pos;
+	int16_t m_latitude;
+	int16_t m_longitude;
+};
+
+// -----------------------------------------------------------
 
 template<class T>
 const T* QueryMessage(const char *buf)

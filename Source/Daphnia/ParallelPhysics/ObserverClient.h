@@ -31,6 +31,8 @@ public:
 	void StopSimulation();
 	bool IsSimulationRunning() const;
 
+	uint64_t GetLastObserverID() const; // returns last observer ID successfully connected to server
+
 	void PPhTick();
 
 	SP_EyeColorArray GrabTexture();
@@ -63,9 +65,10 @@ protected:
 	bool SendServerMsg(const MsgBase &msg, int32_t msgSize); // returns false if error occur
 	virtual void HandleReceivedMessage(const char *buffer);
 
+private:
 	bool m_isSimulationRunning = false;
 
-	uint64_t m_socketC;
+	uint32_t m_socketC;
 	uint32_t m_port;
 
 	const int32_t EYE_IMAGE_DELAY = 5000; // quantum of time
