@@ -70,7 +70,7 @@ void ObserverClient::StartSimulation()
 		int len = sizeof(serverInfo);
 		serverInfo.sin_family = AF_INET;
 		serverInfo.sin_port = htons(m_port);
-		serverInfo.sin_addr.s_addr = inet_addr("127.0.0.1");
+		serverInfo.sin_addr.s_addr = inet_addr(SERVER_IP);
 		m_socketC = (uint32_t)socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 		DWORD timeout = 1000; // 1000 ms
 		setsockopt(m_socketC, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<char*>(&timeout), sizeof(DWORD));
@@ -383,7 +383,7 @@ bool ObserverClient::SendServerMsg(const MsgBase &msg, int32_t msgSize)
 	int len = sizeof(serverInfo);
 	serverInfo.sin_family = AF_INET;
 	serverInfo.sin_port = htons(m_port);
-	serverInfo.sin_addr.s_addr = inet_addr("127.0.0.1");
+	serverInfo.sin_addr.s_addr = inet_addr(SERVER_IP);
 	if (sendto(m_socketC, (const char*)&msg, msgSize, 0, (sockaddr*)&serverInfo, len) == SOCKET_ERROR)
 	{
 		printf("SendServerMsg sendto error");
