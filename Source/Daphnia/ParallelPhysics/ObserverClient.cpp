@@ -384,7 +384,7 @@ bool ObserverClient::SendServerMsg(const MsgBase &msg, int32_t msgSize)
 	serverInfo.sin_family = AF_INET;
 	serverInfo.sin_port = htons(m_port);
 	serverInfo.sin_addr.s_addr = inet_addr(SERVER_IP);
-	if (sendto(m_socketC, (const char*)&msg, msgSize, 0, (sockaddr*)&serverInfo, len) == SOCKET_ERROR)
+	if (sendto(m_socketC, msg.GetBuffer(), msgSize, 0, (sockaddr*)&serverInfo, len) == SOCKET_ERROR)
 	{
 		printf("SendServerMsg sendto error");
 		return false;
