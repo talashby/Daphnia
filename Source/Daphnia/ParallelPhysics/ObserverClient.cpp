@@ -211,15 +211,15 @@ void ObserverClient::PPhTick()
 			else if (const MsgGetStateExtResponse *msgGetStateExtResponse = QueryMessage<MsgGetStateExtResponse>(buffer))
 			{
 				std::lock_guard<std::mutex> guard(s_observerStateParamsMutex);
-				ObserverClient::Instance()->m_latitude = msgGetStateExtResponse->m_latitude;
-				ObserverClient::Instance()->m_longitude = msgGetStateExtResponse->m_longitude;
-				ObserverClient::Instance()->m_position = msgGetStateExtResponse->m_pos;
-				ObserverClient::Instance()->m_movingProgress = msgGetStateExtResponse->m_movingProgress;
-				if (ObserverClient::Instance()->m_eatenCrumbNum < msgGetStateExtResponse->m_eatenCrumbNum)
+				m_latitude = msgGetStateExtResponse->m_latitude;
+				m_longitude = msgGetStateExtResponse->m_longitude;
+				m_position = msgGetStateExtResponse->m_pos;
+				m_movingProgress = msgGetStateExtResponse->m_movingProgress;
+				if (m_eatenCrumbNum < msgGetStateExtResponse->m_eatenCrumbNum)
 				{
-					ObserverClient::Instance()->m_eatenCrumbNum = msgGetStateExtResponse->m_eatenCrumbNum;
-					ObserverClient::Instance()->m_eatenCrumbPos = msgGetStateExtResponse->m_eatenCrumbPos;
-					ObserverClient::Instance()->m_isEatenCrumb = true;
+					m_eatenCrumbNum = msgGetStateExtResponse->m_eatenCrumbNum;
+					m_eatenCrumbPos = msgGetStateExtResponse->m_eatenCrumbPos;
+					m_isEatenCrumb = true;
 				}
 			}
 			else if (const MsgSendPhoton *msgSendPhoton = QueryMessage<MsgSendPhoton>(buffer))
