@@ -11,7 +11,7 @@ namespace PPh
 {
 
 typedef int32_t PhotonParam; // warning! Depends on OBSERVER_EYE_SIZE
-constexpr int32_t UPDATE_EYE_TEXTURE_OUT = 20; // milliseconds
+constexpr int32_t UPDATE_EYE_TEXTURE_OUT = 20; // (milliseconds) how often update internal texture data 
 constexpr int32_t STATISTIC_REQUEST_PERIOD = 900; // milliseconds
 constexpr const char *SERVER_IP = "127.0.0.1";
 

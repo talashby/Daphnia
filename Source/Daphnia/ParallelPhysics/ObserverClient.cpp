@@ -151,7 +151,7 @@ void ObserverClient::PPhTick()
 	MsgGetState msg;
 	if (SendServerMsg(msg, sizeof(msg)))
 	{
-		if (GetTimeMs() - m_lastUpdateStateExtTime > UPDATE_EYE_TEXTURE_OUT)
+		if (GetTimeMs() - m_lastUpdateStateExtTime > 20) // get position/orientation data every n milliseconds
 		{
 			m_lastUpdateStateExtTime = GetTimeMs();
 			MsgGetStateExt msgGetStateExt;
