@@ -86,7 +86,7 @@ void ObserverClient::StartSimulation()
 				{
 					if (msgReceive->m_serverVersion == CommonParams::PROTOCOL_VERSION)
 					{
-						s_lastObserverId = msgReceive->m_observerId;
+						s_lastObserverId = msgReceive->m_observerId; // in future s_lastObserverId can be stored to disk and used after restart client
 						break;
 					}
 					else

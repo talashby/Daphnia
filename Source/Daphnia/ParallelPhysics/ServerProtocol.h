@@ -58,7 +58,7 @@ public:
 	MsgCheckVersion() : MsgBase(GetType()) {}
 	static uint8_t GetType() { return MsgType::CheckVersion; }
 	uint32_t m_clientVersion;
-	uint64_t m_observerId;
+	uint64_t m_observerId; // used to restore connection after restart client. If not need this send 0
 };
 
 class MsgGetStatistics: public MsgBase
