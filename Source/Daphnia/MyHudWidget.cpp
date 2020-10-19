@@ -28,15 +28,15 @@ PPh::SP_EyeState GetPawnEyeState(UWorld* World)
 		FIntPoint Pos = ViewportClient->Viewport->GetInitialPositionXY();
 		FIntPoint Size = ViewportClient->Viewport->GetSizeXY();
 		FVector worldOrigin, worldDirection;
-		check(eyeArray.size() == PPh::CommonParams::OBSERVER_EYE_SIZE);
-		for (int ii = 0; ii < PPh::CommonParams::OBSERVER_EYE_SIZE; ++ii)
+		check(eyeArray.size() == PPh::GetObserverEyeSize());
+		for (int ii = 0; ii < PPh::GetObserverEyeSize(); ++ii)
 		{
-			check(eyeArray[ii].size() == PPh::CommonParams::OBSERVER_EYE_SIZE);
-			for (int jj = 0; jj < PPh::CommonParams::OBSERVER_EYE_SIZE; ++jj)
+			check(eyeArray[ii].size() == PPh::GetObserverEyeSize());
+			for (int jj = 0; jj < PPh::GetObserverEyeSize(); ++jj)
 			{
 				FVector2D PosFloat;
-				PosFloat.X = (float)Pos.X + Size.X * ((float)jj / (PPh::CommonParams::OBSERVER_EYE_SIZE - 1));
-				PosFloat.Y = (float)Pos.Y + Size.Y * ((float)ii / (PPh::CommonParams::OBSERVER_EYE_SIZE - 1));
+				PosFloat.X = (float)Pos.X + Size.X * ((float)jj / (PPh::GetObserverEyeSize() - 1));
+				PosFloat.Y = (float)Pos.Y + Size.Y * ((float)ii / (PPh::GetObserverEyeSize() - 1));
 
 				UGameplayStatics::DeprojectScreenToWorld(AMyPlayerController::GetInstance(), PosFloat, worldOrigin, worldDirection);
 				eyeArray[ii][jj] = UPPSettings::ConvertRotationToPPhOrientation(worldDirection);
@@ -113,7 +113,7 @@ void UMyHudWidget::NativeTick(const FGeometry &MyGeometry, float InDeltaTime)
 			PPh::SP_EyeColorArray spEyeColorArray = PPh::ObserverClient::Instance()->GrabTexture();
 			if (spEyeColorArray)
 			{
-				const int32 EyeTextureSize = PPh::CommonParams::OBSERVER_EYE_SIZE;
+				const int32 EyeTextureSize = PPh::GetObserverEyeSize();
 				if (!pEyeViewTexture2D)
 				{
 					pEyeViewTexture2D = UTexture2D::CreateTransient(EyeTextureSize, EyeTextureSize);

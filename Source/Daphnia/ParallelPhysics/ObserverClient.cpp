@@ -77,6 +77,7 @@ void ObserverClient::StartSimulation()
 		MsgCheckVersion msg;
 		msg.m_clientVersion = CommonParams::PROTOCOL_VERSION;
 		msg.m_observerId = s_lastObserverId;
+		msg.m_observerType = static_cast<uint8_t>(OBSERVER_TYPE);
 		if (sendto(m_socketC, (const char*)&msg, sizeof(msg), 0, (sockaddr*)&serverInfo, len) != SOCKET_ERROR)
 		{
 			char buffer[CommonParams::DEFAULT_BUFLEN];
@@ -225,9 +226,9 @@ void ObserverClient::PPhTick()
 			else if (const MsgSendPhoton *msgSendPhoton = QueryMessage<MsgSendPhoton>(buffer))
 			{
 				// receive photons back // revert Y-coordinate because of texture format
-				// photon (x,y) placed to [CommonParams::OBSERVER_EYE_SIZE - y -1][x] for simple copy to texture purpose
-				m_eyeColorArray[CommonParams::OBSERVER_EYE_SIZE - msgSendPhoton->m_posY - 1][msgSendPhoton->m_posX] = msgSendPhoton->m_color;
-				m_eyeUpdateTimeArray[CommonParams::OBSERVER_EYE_SIZE - msgSendPhoton->m_posY - 1][msgSendPhoton->m_posX] = timeOfTheUniverse;
+				// photon (x,y) placed to [GetObserverEyeSize() - y -1][x] for simple copy to texture purpose
+				m_eyeColorArray[GetObserverEyeSize() - msgSendPhoton->m_posY - 1][msgSendPhoton->m_posX] = msgSendPhoton->m_color;
+				m_eyeUpdateTimeArray[GetObserverEyeSize() - msgSendPhoton->m_posY - 1][msgSendPhoton->m_posX] = timeOfTheUniverse;
 			}
 			else if (const MsgGetStatisticsResponse *msgRcv = QueryMessage<MsgGetStatisticsResponse>(buffer))
 			{

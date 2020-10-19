@@ -118,6 +118,7 @@ namespace PPh
 	public:
 		EtherColor() = default;
 		EtherColor(uint8_t colorR, uint8_t colorG, uint8_t colorB);
+		EtherColor(uint8_t colorR, uint8_t colorG, uint8_t colorB, uint8_t colorA);
 
 		static const EtherColor ZeroColor;
 
@@ -133,6 +134,19 @@ namespace PPh
 		}
 	};
 
+	typedef int8_t PhotonParam; // warning! OBSERVER_EYE_SIZE should be max 16
+	typedef int8_t DaphniaIdType; // max 256 daphnias on server
+	struct Photon
+	{
+		Photon() = default;
+		explicit Photon(const OrientationVectorMath &orientation) : m_orientation(orientation)
+		{}
+		EtherColor m_color;
+		OrientationVectorMath m_orientation;
+		PhotonParam m_param; // used to store coordinates of neuron which sent this photon
+		DaphniaIdType m_param2; // used to store daphnia id who sent this photon
+	};
+
 	int64_t GetTimeMs();
 
 	int32_t Rand32(int32_t iRandMax);
@@ -142,4 +156,6 @@ namespace PPh
 	{
 		return (x > 0) - (x < 0);
 	}
+
+#define CHECK_BIT(var,pos) ((var) & (1<<(pos)))
 }
