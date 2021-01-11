@@ -14,6 +14,8 @@
 #include "ParallelPhysics/PPSettings.h"
 #include "ParallelPhysics/ObserverClient.h"
 #include "ParallelPhysics/AdminTcpClient.h"
+#include "Engine/Engine.h"
+#include "ParallelPhysics/AdminProtocol.h"
 
 // **************************** FRoomVolumeSettings *********************************
 FRoomVolumeSettings::FRoomVolumeSettings()
@@ -113,8 +115,29 @@ void ALevelSettings::LoadCrumbsFromServer()
 	bool bResult = PPh::AdminTcp::Connect();
 	if (bResult)
 	{
-		PPh::AdminTcp::LoadCrumbs();
+		uint32_t serverVersion = 0;
+		bool bResult2 = PPh::AdminTcp::CheckVersion(serverVersion);
+		if (bResult2)
+		{
+			PPh::AdminTcp::LoadCrumbs();
+		}
+		else
+		{
+			if (!serverVersion)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Error. Admin socket CheckVersion timeout.");
+			}
+			else
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Error. Admin protocol wrong version. Client is: " +
+					FString::FromInt(PPh::ADMIN_PROTOCOL_VERSION) + ". Server is: " + FString::FromInt(serverVersion) + ".");
+			}
+		}
 		PPh::AdminTcp::Disconnect();
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Error. Can't connect to the server.");
 	}
 }
 

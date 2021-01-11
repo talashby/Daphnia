@@ -9,15 +9,18 @@
 
 namespace PPh
 {
+constexpr int32_t ADMIN_PROTOCOL_VERSION = 1;
+
 namespace MsgTypeAdmin
 {
 	enum MsgTypeAdmin
 	{
 		// client to server
-		RegisterObserver = 0,
+		CheckVersion = 0,
 		GetNextCrumb,
 		RegisterAdminObserver,
 		// server to client
+		CheckVersionResponse,
 		GetNextCrumbResponse
 	};
 }
@@ -26,6 +29,14 @@ namespace MsgTypeAdmin
 //**************************************************************************************
 //************************************** Client ****************************************
 //**************************************************************************************
+class MsgAdminCheckVersion : public MsgBase
+{
+public:
+	MsgAdminCheckVersion() : MsgBase(GetType()) {}
+	static uint8_t GetType() { return MsgTypeAdmin::CheckVersion; }
+	uint32_t m_clientVersion;
+};
+
 class MsgAdminGetNextCrumb : public MsgBase
 {
 public:
@@ -38,11 +49,20 @@ class MsgRegisterAdminObserver : public MsgBase
 public:
 	MsgRegisterAdminObserver() : MsgBase(GetType()) {}
 	static uint8_t GetType() { return MsgTypeAdmin::RegisterAdminObserver; }
-	uint64_t m_observerId;
+	uint64_t m_adminObserverId; // used to send other daphnias position
 };
 //**************************************************************************************
 //************************************** Server ****************************************
 //**************************************************************************************
+class MsgAdminCheckVersionResponse : public MsgBase
+{
+public:
+	MsgAdminCheckVersionResponse() : MsgBase(GetType()) {}
+	static uint8_t GetType() { return MsgTypeAdmin::CheckVersionResponse; }
+	uint32_t m_serverVersion;
+	uint32_t m_universeScale;
+};
+
 class MsgAdminGetNextCrumbResponse : public MsgBase
 {
 public:

@@ -190,6 +190,9 @@ bool Connect()
 	{
 		printf("Client: socket() is OK!\n");
 	}
+
+	DWORD timeout = 1000; // ms
+	setsockopt(SendingSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
 	// Set up a SOCKADDR_IN structure that will be used to connect
 	// to a listening server.
 	ServerAddr.sin_family = AF_INET;
@@ -217,6 +220,26 @@ bool Connect()
 	}
 
 	return true;
+}
+
+bool CheckVersion(uint32_t &serverVersion)
+{
+	PPh::MsgAdminCheckVersion msg;
+	msg.m_clientVersion = ADMIN_PROTOCOL_VERSION;
+	send(SendingSocket, (const char*)&msg, sizeof(msg), 0);
+	char buffer[CommonParams::DEFAULT_BUFLEN];
+	if (recv(SendingSocket, buffer, sizeof(buffer), 0) != SOCKET_ERROR)
+	{
+		if (const MsgAdminCheckVersionResponse *msgRcv = PPh::QueryMessage<MsgAdminCheckVersionResponse>(buffer))
+		{
+			serverVersion = msgRcv->m_serverVersion;
+			if (msgRcv->m_serverVersion == ADMIN_PROTOCOL_VERSION)
+			{
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 void LoadCrumbs()
@@ -261,7 +284,7 @@ void Disconnect()
 void RegisterAdminObserver(uint64_t observerId)
 {
 	PPh::MsgRegisterAdminObserver msg;
-	msg.m_observerId = observerId;
+	msg.m_adminObserverId = observerId;
 	send(SendingSocket, (const char*)&msg, sizeof(msg), 0);
 }
 

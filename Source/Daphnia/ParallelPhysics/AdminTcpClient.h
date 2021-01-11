@@ -25,6 +25,7 @@ namespace AdminUniverse // used to load server universe data for client administ
 namespace AdminTcp
 {
 	bool Connect();
+	bool CheckVersion(uint32_t &serverVersion);
 	void LoadCrumbs();
 	void RegisterAdminObserver(uint64_t observerId);
 	void Disconnect();
