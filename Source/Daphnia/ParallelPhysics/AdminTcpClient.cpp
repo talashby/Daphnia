@@ -18,8 +18,9 @@ namespace PPh
 {
 namespace AdminUniverse
 {
-std::vector< std::vector< std::vector<struct EtherCell> > > s_universe;
-VectorInt32Math s_universeSize = VectorInt32Math::ZeroVector;
+static std::vector< std::vector< std::vector<struct EtherCell> > > s_universe;
+static VectorInt32Math s_universeSize = VectorInt32Math::ZeroVector;
+static uint32_t s_universeScale = 1;
 
 struct EtherCell
 {
@@ -154,6 +155,10 @@ AActor* EtherCellGetCrumbActor(const VectorInt32Math &pos)
 	return cell.m_crumbActor;
 }
 
+uint32_t GetUniverseScale()
+{
+	return s_universeScale;
+}
 } // namespace AdminUniverse
 
 namespace AdminTcp
@@ -235,6 +240,7 @@ bool CheckVersion(uint32_t &serverVersion)
 			serverVersion = msgRcv->m_serverVersion;
 			if (msgRcv->m_serverVersion == ADMIN_PROTOCOL_VERSION)
 			{
+				AdminUniverse::s_universeScale = msgRcv->m_universeScale;
 				return true;
 			}
 		}

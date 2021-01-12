@@ -20,6 +20,7 @@ namespace AdminUniverse // used to load server universe data for client administ
 	bool GetNextCrumb(VectorInt32Math &outCrumbPos, EtherColor &outCrumbColor);
 	void EtherCellSetCrumbActor(const VectorInt32Math &pos, AActor *crumbActor);
 	AActor* EtherCellGetCrumbActor(const VectorInt32Math &pos);
+	uint32_t GetUniverseScale();
 }
 
 namespace AdminTcp

@@ -7,7 +7,7 @@
 #include "Engine/StaticMeshActor.h"
 #include "EngineUtils.h"
 #include "array"
-
+#include "AdminTcpClient.h"
 
 
 static UPPSettings *s_PPSettings = nullptr;
@@ -35,7 +35,9 @@ UPPSettings* UPPSettings::GetInstance()
 void UPPSettings::InitParallelPhysics()
 {
 	FVector UniverseSize = UniverseBox.GetSize();
-	PPh::VectorInt32Math pphUniverseSize(UniverseSize.X / UniverseEtherCellSize, UniverseSize.Y / UniverseEtherCellSize, UniverseSize.Z / UniverseEtherCellSize);
+	PPh::VectorInt32Math pphUniverseSize(UniverseSize.X * PPh::AdminUniverse::GetUniverseScale() / UniverseEtherCellSize,
+		UniverseSize.Y * PPh::AdminUniverse::GetUniverseScale() / UniverseEtherCellSize,
+		UniverseSize.Z * PPh::AdminUniverse::GetUniverseScale() / UniverseEtherCellSize);
 	bool bParallelPhysicsInit = PPh::AdminUniverse::Init(pphUniverseSize);
 	check(bParallelPhysicsInit);
 }
@@ -168,9 +170,9 @@ FVector UPPSettings::ConvertPPhPositionToLocation(const PPh::VectorInt32Math &po
 	FVector UniverseBoxMin = UPPSettings::GetInstance()->UniverseBox.Min;
 	int32 UniverseEtherCellSize = UPPSettings::GetInstance()->UniverseEtherCellSize;
 	FVector location;
-	location.X = UniverseBoxMin.X + UniverseEtherCellSize / 2 + UniverseEtherCellSize * pos.m_posX;
-	location.Y = UniverseBoxMin.Y + UniverseEtherCellSize / 2 + UniverseEtherCellSize * pos.m_posY;
-	location.Z = UniverseBoxMin.Z + UniverseEtherCellSize / 2 + UniverseEtherCellSize * pos.m_posZ;
+	location.X = UniverseBoxMin.X + (UniverseEtherCellSize / 2 + UniverseEtherCellSize * pos.m_posX) / PPh::AdminUniverse::GetUniverseScale();
+	location.Y = UniverseBoxMin.Y + (UniverseEtherCellSize / 2 + UniverseEtherCellSize * pos.m_posY) / PPh::AdminUniverse::GetUniverseScale();
+	location.Z = UniverseBoxMin.Z + (UniverseEtherCellSize / 2 + UniverseEtherCellSize * pos.m_posZ) / PPh::AdminUniverse::GetUniverseScale();
 	return location;
 }
 

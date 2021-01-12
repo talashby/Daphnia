@@ -13,6 +13,7 @@
 #include <windows.h>
 #include <winsock2.h>
 #include "mutex"
+#include "AdminTcpClient.h"
 #undef min
 #undef max
 
@@ -192,13 +193,13 @@ void ObserverClient::PPhTick()
 		if (m_isForward)
 		{
 			MsgMoveForward msgMove;
-			msgMove.m_value = 16;
+			msgMove.m_value = 16 * PPh::AdminUniverse::GetUniverseScale();
 			SendServerMsg(msgMove, sizeof(msgMove));
 		}
 		if (m_isBackward)
 		{
 			MsgMoveBackward msgMove;
-			msgMove.m_value = 16;
+			msgMove.m_value = 16 * PPh::AdminUniverse::GetUniverseScale();
 			SendServerMsg(msgMove, sizeof(msgMove));
 		}
 

@@ -112,33 +112,8 @@ void ALevelSettings::OnMapLoaded()
 
 void ALevelSettings::LoadCrumbsFromServer()
 {
-	bool bResult = PPh::AdminTcp::Connect();
-	if (bResult)
-	{
-		uint32_t serverVersion = 0;
-		bool bResult2 = PPh::AdminTcp::CheckVersion(serverVersion);
-		if (bResult2)
-		{
-			PPh::AdminTcp::LoadCrumbs();
-		}
-		else
-		{
-			if (!serverVersion)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Error. Admin socket CheckVersion timeout.");
-			}
-			else
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Error. Admin protocol wrong version. Client is: " +
-					FString::FromInt(PPh::ADMIN_PROTOCOL_VERSION) + ". Server is: " + FString::FromInt(serverVersion) + ".");
-			}
-		}
-		PPh::AdminTcp::Disconnect();
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Error. Can't connect to the server.");
-	}
+
+	PPh::AdminTcp::LoadCrumbs();
 }
 
 ALevelSettings::~ALevelSettings()
@@ -159,12 +134,11 @@ void ALevelSettings::BeginPlay()
 
 	OnMapLoaded();
 
-	PPSettings->InitParallelPhysics();
-
 	bool bSaveUniverseToDisk = false;
 
 	if (bSaveUniverseToDisk)
 	{
+		PPSettings->InitParallelPhysics();
 		for (const auto & Settings : RoomVolumeSettings)
 		{
 			GenerateItems(Settings);
@@ -177,41 +151,68 @@ void ALevelSettings::BeginPlay()
 	}
 	else
 	{
-		LoadCrumbsFromServer();
-		while (true)
+		bool bResultConnect = PPh::AdminTcp::Connect();
+		if (bResultConnect)
 		{
-			PPh::VectorInt32Math outCrumbPos;
-			PPh::EtherColor outCrumbColor;
-			bool bResult = PPh::AdminUniverse::GetNextCrumb(outCrumbPos, outCrumbColor);
-			if (!bResult)
+			uint32_t serverVersion = 0;
+			bool bResultCheckVersion = PPh::AdminTcp::CheckVersion(serverVersion);
+			if (bResultCheckVersion)
 			{
-				break;
-			}
-			FVector location = UPPSettings::ConvertPPhPositionToLocation(outCrumbPos);
-			//static std::array<FColor, 4> Colors = { FColor::Green, FColor::Yellow, FColor::Red, FColor::Blue };
-			int32 materialNum = 0;
-			if (outCrumbColor.m_colorR == 255 && outCrumbColor.m_colorG == 255)
-			{
-				materialNum = 1;
-			}
-			else if (outCrumbColor.m_colorG == 255)
-			{
-				materialNum = 0;
-			}
-			else if (outCrumbColor.m_colorR == 255)
-			{
-				materialNum = 2;
-			}
-			else if (outCrumbColor.m_colorB == 255)
-			{
-				materialNum = 3;
+				PPSettings->InitParallelPhysics();
+				LoadCrumbsFromServer();
+				PPh::AdminTcp::Disconnect();
+				while (true)
+				{
+					PPh::VectorInt32Math outCrumbPos;
+					PPh::EtherColor outCrumbColor;
+					bool bResult = PPh::AdminUniverse::GetNextCrumb(outCrumbPos, outCrumbColor);
+					if (!bResult)
+					{
+						break;
+					}
+					FVector location = UPPSettings::ConvertPPhPositionToLocation(outCrumbPos);
+					//static std::array<FColor, 4> Colors = { FColor::Green, FColor::Yellow, FColor::Red, FColor::Blue };
+					int32 materialNum = 0;
+					if (outCrumbColor.m_colorR == 255 && outCrumbColor.m_colorG == 255)
+					{
+						materialNum = 1;
+					}
+					else if (outCrumbColor.m_colorG == 255)
+					{
+						materialNum = 0;
+					}
+					else if (outCrumbColor.m_colorR == 255)
+					{
+						materialNum = 2;
+					}
+					else if (outCrumbColor.m_colorB == 255)
+					{
+						materialNum = 3;
+					}
+					else
+					{
+						check(false);
+					}
+					AActor *crumb = SpawnCrumb(location, materialNum);
+					PPh::AdminUniverse::EtherCellSetCrumbActor(outCrumbPos, crumb);
+				}
 			}
 			else
 			{
-				check(false);
+				if (!serverVersion)
+				{
+					GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Error. Admin socket CheckVersion timeout.");
+				}
+				else
+				{
+					GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Error. Admin protocol wrong version. Client is: " +
+						FString::FromInt(PPh::ADMIN_PROTOCOL_VERSION) + ". Server is: " + FString::FromInt(serverVersion) + ".");
+				}
 			}
-			AActor *crumb = SpawnCrumb(location, materialNum);
-			PPh::AdminUniverse::EtherCellSetCrumbActor(outCrumbPos, crumb);
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Error. Can't connect to the server.");
 		}
 	}
 }
