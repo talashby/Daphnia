@@ -171,6 +171,9 @@ void ALevelSettings::BeginPlay()
 						break;
 					}
 					FVector location = UPPSettings::ConvertPPhPositionToLocation(outCrumbPos);
+					int32 UniverseEtherCellSize = UPPSettings::GetInstance()->UniverseEtherCellSize;
+					float shift = UniverseEtherCellSize * (PPh::AdminUniverse::GetUniverseScale() - 1) / (PPh::AdminUniverse::GetUniverseScale() * 2.0f);
+					location += FVector(shift, shift, shift);
 					//static std::array<FColor, 4> Colors = { FColor::Green, FColor::Yellow, FColor::Red, FColor::Blue };
 					int32 materialNum = 0;
 					if (outCrumbColor.m_colorR == 255 && outCrumbColor.m_colorG == 255)

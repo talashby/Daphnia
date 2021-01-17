@@ -31,10 +31,10 @@ public:
 	static PPh::OrientationVectorMath ConvertRotationToPPhOrientation(const FVector &orientationVector);
 	static PPh::OrientationVectorMath ConvertRotationToPPhOrientation(const FRotator &Rotator);
 	
-private:
-
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	int32 UniverseEtherCellSize = 100;
+
+private:
 
 	/** Set universe size from cpp code. */
 	UPROPERTY(EditAnywhere, Category = "Settings")
