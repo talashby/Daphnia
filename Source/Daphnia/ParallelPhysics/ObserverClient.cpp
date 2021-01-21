@@ -169,37 +169,37 @@ void ObserverClient::PPhTick()
 		if (m_isLeft)
 		{
 			MsgRotateLeft msgMove;
-			msgMove.m_value = 4;
+			msgMove.m_value = 16;
 			SendServerMsg(msgMove, sizeof(msgMove));
 		}
 		if (m_isRight)
 		{
 			MsgRotateRight msgMove;
-			msgMove.m_value = 4;
+			msgMove.m_value = 16;
 			SendServerMsg(msgMove, sizeof(msgMove));
 		}
 		if (m_isUp)
 		{
 			MsgRotateDown msgMove;
-			msgMove.m_value = 4;
+			msgMove.m_value = 16;
 			SendServerMsg(msgMove, sizeof(msgMove));
 		}
 		if (m_isDown)
 		{
 			MsgRotateUp msgMove;
-			msgMove.m_value = 4;
+			msgMove.m_value = 16;
 			SendServerMsg(msgMove, sizeof(msgMove));
 		}
 		if (m_isForward)
 		{
 			MsgMoveForward msgMove;
-			msgMove.m_value = 16 * PPh::AdminUniverse::GetUniverseScale();
+			msgMove.m_value = 32 * PPh::AdminUniverse::GetUniverseScale();
 			SendServerMsg(msgMove, sizeof(msgMove));
 		}
 		if (m_isBackward)
 		{
 			MsgMoveBackward msgMove;
-			msgMove.m_value = 16 * PPh::AdminUniverse::GetUniverseScale();
+			msgMove.m_value = 32 * PPh::AdminUniverse::GetUniverseScale();
 			SendServerMsg(msgMove, sizeof(msgMove));
 		}
 

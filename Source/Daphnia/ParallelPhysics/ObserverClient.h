@@ -81,7 +81,7 @@ private:
 	uint32_t m_socketC;
 	uint32_t m_port;
 
-	const int32_t EYE_IMAGE_DELAY = 5000; // quantum of time
+	const int32_t EYE_IMAGE_DELAY = 1000; // quantum of time
 	const int32_t ECHOLOCATION_FREQUENCY = 1; // quantum of time
 	int32_t m_echolocationCounter = 0;
 
